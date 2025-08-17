@@ -10,6 +10,9 @@ import {
 	Globe,
 	Menu,
 	Search,
+	LogOut,
+	Settings,
+	BadgeInfo,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -43,12 +46,12 @@ export default function Sidebar() {
 
 				<div className="bg-base-200 text-base-content min-h-full w-80 flex flex-col">
 					{/* Navigation Menu */}
-					<nav className="flex-1 p-4">
-						<ul className="menu space-y-2  w-full ">
+					<nav className="flex-1 p-2">
+						<ul className="menu space-y-2  h-full w-full ">
 							<label className="input mb-6 bg-base-100 hover:bg-base-200 border-1">
 								<Search />
 								<input type="search" className="grow" placeholder="Search" />
-								<kbd className="kbd kbd-sm rounded-sm">ctrl</kbd>
+								<kbd className="kbd kbd-sm rounded-sm px-3">ctrl</kbd>
 								<kbd className="kbd kbd-sm rounded-sm">K</kbd>
 							</label>
 
@@ -65,6 +68,41 @@ export default function Sidebar() {
 							))}
 						</ul>
 					</nav>
+					{/* Card bottom content */}
+					<div className="flex flex-col h-full p-2 ">
+						{/* Helper and widget */}
+						<div className="w-full border-dashed flex justify-between items-center gap-4">
+							<button className="btn btn-sm btn-circle btn-ghost">
+								<Settings className="w-4 h-4" />
+							</button>
+
+							<button className="btn-sm btn rounded-full btn-soft">
+								Add Widget
+							</button>
+
+							<button className="btn btn-sm btn-circle btn-ghost">
+								<BadgeInfo className="w-4 h-4" />
+							</button>
+						</div>
+
+						{/* Profile bottom */}
+						<div className="transition-all hover:bg-base-100 rounded-box w-full items-center px-4 py-4 border-1 border-base-200 flex gap-3 relative">
+							<div className="avatar avatar-online">
+								<div className="w-10 rounded-full">
+									<img src="https://img.daisyui.com/images/profile/demo/gordon@192.webp" />
+								</div>
+							</div>
+							<div className="flex flex-col text-sm">
+								<span className="font-medium text-base-content">
+									Ahmad Fauzan
+								</span>
+								<p className="text-base-content/50">buildfrombed@gmail.com</p>
+							</div>
+							<button className="btn btn-sm btn-square btn-ghost  absolute right-2">
+								<LogOut className="w-4 h-4" />
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
