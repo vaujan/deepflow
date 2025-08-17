@@ -1,6 +1,24 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* Custom font configuration */
+:root {
+	--font-figtree: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI",
+		Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Configure Tailwind font families */
+@theme {
+	--font-family-sans: var(--font-figtree);
+	--font-family-serif: var(--font-figtree);
+	--font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+		"Liberation Mono", Menlo, monospace;
+}
+
+body {
+	font-family: var(--font-figtree);
+}
+
 @plugin "daisyui/theme" {
 	name: "free";
 	default: true;
