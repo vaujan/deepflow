@@ -1,9 +1,10 @@
 import Dock from "@/src/components/ui/dock";
 import SessionCard from "@/src/components/ui/session-card";
 import Sidebar from "@/src/components/ui/sidebar";
-import Stats from "@/src/components/ui/stats";
+import SessionTable from "@/src/components/ui/session-table";
 import useWidgets from "@/src/hooks/useWidgets";
 import React from "react";
+import SessionGraph from "@/src/components/ui/session-graph";
 
 export default function page() {
 	return (
@@ -14,7 +15,10 @@ export default function page() {
 				<div className="flex w-full h-fit flex-col">
 					<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
-						<Stats />
+						<div className="flex flex-col">
+							{/* <SessionGraph /> */}
+							<SessionTable />
+						</div>
 					</div>
 				</div>
 
