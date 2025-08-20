@@ -1,22 +1,24 @@
 "use client";
 
-import { Play, Clock, Timer, Target } from "lucide-react";
+import { Play, Clock, Timer } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 
 export default function SessionCard() {
 	const [duration, setDuration] = useState(25);
-	const [focusLevel, setFocusLevel] = useState("2");
+	const [focusLevel, setFocusLevel] = useState("5");
 	const [goal, setGoal] = useState("");
+	const [tags, setTags] = useState("");
+	const [additionalNotes, setAdditionalNotes] = useState("");
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const placeholders = [
-		"e.g., Complete the project proposal...",
-		"e.g., Read chapter 5 of the book...",
-		"e.g., Write 500 words for the blog...",
-		"e.g., Review and fix 3 bugs...",
-		"e.g., Design the landing page...",
-		"e.g., Practice piano for 30 minutes...",
+		"Complete the project proposal...",
+		"Read chapter 5 of the book...",
+		"Write 500 words for the blog...",
+		"Review and fix 3 bugs...",
+		"Design the landing page...",
+		"Practice piano for 30 minutes...",
 	];
 
 	// Auto-focus textarea when component mounts
@@ -39,12 +41,45 @@ export default function SessionCard() {
 		setDuration(parseInt(e.target.value));
 	};
 
-	const handleFocusLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+	const handleFocusLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setFocusLevel(e.target.value);
 	};
 
 	const handleGoalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setGoal(e.target.value);
+	};
+
+	const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setTags(e.target.value);
+	};
+
+	const renderTags = (tagsString: string) => {
+		if (!tagsString.trim()) return null;
+		const tagArray = tagsString
+			.trim()
+			.split(/\s+/)
+			.filter((tag) => tag.length > 0)
+			.map((tag) => tag.replace(/^#+/, "")) // Remove leading # symbols
+			.filter((tag, index, array) => array.indexOf(tag) === index); // Remove duplicates
+
+		return (
+			<div className="flex flex-wrap gap-2 mt-2">
+				{tagArray.map((tag, index) => (
+					<span
+						key={index}
+						className="badge rounded-sm badge-secondary badge-sm"
+					>
+						#{tag}
+					</span>
+				))}
+			</div>
+		);
+	};
+
+	const handleAdditionalNotesChange = (
+		e: React.ChangeEvent<HTMLTextAreaElement>
+	) => {
+		setAdditionalNotes(e.target.value);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -65,6 +100,16 @@ export default function SessionCard() {
 		return `${hours}h ${mins > 0 ? `${mins}m` : ""}`.trim();
 	};
 
+	const getEndTime = (durationMinutes: number) => {
+		const now = new Date();
+		const endTime = new Date(now.getTime() + durationMinutes * 60 * 1000);
+		return endTime.toLocaleTimeString("en-US", {
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: true,
+		});
+	};
+
 	const isGoalValid = goal.trim().length > 0;
 	const goalPreview = goal.trim().slice(0, 30);
 
@@ -73,7 +118,7 @@ export default function SessionCard() {
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
-					Choose duration and start a focus session
+					Write down your goal and start a focus session
 				</p>
 			</div>
 
@@ -137,7 +182,7 @@ export default function SessionCard() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-box bg-primary/20 text-primary border-primary/30">
+							<span className="badge rounded-box bg-secondary/20 text-secondary border-secondary/30">
 								Time-boxed
 							</span>
 						</div>
@@ -145,7 +190,7 @@ export default function SessionCard() {
 							<input
 								type="range"
 								min="5"
-								max="120"
+								max="240"
 								step={5}
 								value={duration}
 								onChange={handleDurationChange}
@@ -153,12 +198,13 @@ export default function SessionCard() {
 							/>
 							<div className="flex justify-between text-xs text-base-content/60">
 								<span>5 min</span>
-								<span>60 min</span>
 								<span>120 min</span>
+								<span>240 min</span>
 							</div>
 						</div>
 						<p className="text-xs text-base-content/60">
-							Session will automatically end after {formatTime(duration)}
+							Session will automatically end after {formatTime(duration)} at{" "}
+							<span className="font-semibold">{getEndTime(duration)}</span>
 						</p>
 					</div>
 				</div>
@@ -179,7 +225,7 @@ export default function SessionCard() {
 						</div>
 						<div className="bg-base-200 p-3 rounded-box text-center">
 							<p className="text-sm text-base-content/70">
-								Start when ready, end when you naturally complete your task
+								Start when ready, end when you naturally done
 							</p>
 						</div>
 						<p className="text-xs text-base-content/60">
@@ -189,21 +235,90 @@ export default function SessionCard() {
 				</div>
 			</div>
 
-			<select
-				value={focusLevel}
-				onChange={handleFocusLevelChange}
-				className="select w-full"
-			>
-				<option disabled={true}>Your focus level</option>
-				<option value="1">1 - Light focus</option>
-				<option value="2">2 - Moderate focus</option>
-				<option value="3">3 - Deep focus</option>
-			</select>
+			{/* Optional Inputs Group */}
+			<div className="collapse border border-base-100 bg-base-200">
+				<input type="checkbox" className="peer" />
+				<div className="collapse-title text-sm font-medium">
+					Additional Options (Optional)
+				</div>
+				<div className="collapse-content">
+					<div className="space-y-4 pt-2">
+						{/* Focus Level */}
+						<div className="form-control">
+							<label className="label w-full justify-between">
+								<span className="label-text text-sm font-medium">
+									Focus Level: {focusLevel}
+								</span>
+								<span className="label-text-alt text-xs text-base-content/60">
+									{parseInt(focusLevel) <= 3
+										? "Light focus - Easy tasks"
+										: parseInt(focusLevel) <= 7
+										? "Moderate focus - Regular work"
+										: "Deep focus - Complex tasks"}
+								</span>
+							</label>
+							<div className="space-y-2">
+								<input
+									type="range"
+									min="1"
+									max="10"
+									step="1"
+									value={focusLevel}
+									onChange={handleFocusLevelChange}
+									className="range range-xs range-secondary w-full"
+								/>
+								<div className="flex justify-between text-xs text-base-content/60">
+									<span>1</span>
+									<span>5</span>
+									<span>10</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Tags */}
+						<div className="form-control">
+							<label className="label">
+								<span className="label-text text-sm font-medium">Tags</span>
+								<span className="label-text-alt text-xs text-base-content/60">
+									Separate with spaces
+								</span>
+							</label>
+							<input
+								type="text"
+								placeholder="blog essay urgent work"
+								value={tags}
+								onChange={handleTagsChange}
+								className="input input-sm w-full bg-base-200"
+							/>
+							{renderTags(tags)}
+						</div>
+
+						{/* Additional Notes */}
+						{/* <div className="form-control">
+							<label className="label">
+								<span className="label-text text-sm font-medium">
+									Additional Notes
+								</span>
+								<span className="label-text-alt text-xs text-base-content/60">
+									Optional context
+								</span>
+							</label>
+							<textarea
+								placeholder="Any additional context or reminders..."
+								value={additionalNotes}
+								onChange={handleAdditionalNotesChange}
+								className="textarea textarea-sm w-full bg-base-200 resize-none"
+								rows={2}
+							/>
+						</div> */}
+					</div>
+				</div>
+			</div>
 
 			<div className="card-actions">
 				<button
-					className={`btn btn-block transition-all duration-200 ${
-						isGoalValid ? "btn-neutral hover:scale-[1.02]" : "btn-disabled"
+					className={`btn btn-block h-14 transition-all duration-200 ${
+						isGoalValid ? "btn-neutral" : "btn-disabled"
 					}`}
 					disabled={!isGoalValid}
 				>
