@@ -11,6 +11,7 @@ export default function DeepWork() {
 				</p>
 			</div>
 
+			<div className=""></div>
 			<div className="flex flex-col gap-1">
 				<div className="flex text-sm justify-between">
 					<p>Duration: 10 min.</p>
