@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import React from "react";
 
 export default function RightCard() {
@@ -30,22 +31,24 @@ export default function RightCard() {
 			<div className="flex flex-col lg:flex-row w-full gap-3">
 				<ul className="list bg-base-200 rounded-box w-full">
 					<li className="list-row">
-						<div className="badge badge-neutral badge-sm">list of songs</div>
+						<div className="badge badge-neutral rounded-md badge-sm">
+							list of songs
+						</div>
 					</li>
 					{songs.map((song) => (
-						<li className="list-row flex items-center">
+						<li key={song.id} className="list-row flex items-center">
 							{song.title}
 							<p className="text-sm text-base-content/50">{song.artist}</p>
 						</li>
 					))}
 				</ul>
 				<div className="overflow-x-auto w-full">
-					<div className="flex overflow-y-auto max-h-[350px] rounded-box overflow-hidden">
-						<table className="table table-zebra table-pin-rows table-pin-cols table-md overflow-y-auto">
+					<div className="flex overflow-y-auto max-h-[350px] border border-base-100 rounded-box overflow-hidden">
+						<table className="table table-pin-rows table-pin-cols table-md overflow-y-auto">
 							{/* head */}
 							<thead>
 								<tr className="text-sm">
-									<th className="w-0 bg-base-300/50 hover:bg-base-300"></th>
+									<th className="w-0 p-0 bg-base-300/50 hover:bg-base-300"></th>
 									<th className="bg-base-300/50 hover:bg-base-300">Artist</th>
 									<th className="bg-base-300/50 hover:bg-base-300">Song</th>
 								</tr>
@@ -53,9 +56,9 @@ export default function RightCard() {
 							<tbody>
 								{/* row 1 */}
 								{songs.map((song, index) => (
-									<tr>
+									<tr key={song.id}>
 										<th className="border-r border-base-100 text-base-content/50 font-medium items-center justify-center flex">
-											{index}
+											{index + 1}
 										</th>
 										<td className="font-medium">{song.artist}</td>
 										<td>{song.title}</td>

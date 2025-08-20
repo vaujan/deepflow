@@ -59,7 +59,7 @@ export default function Sidebar() {
 								<li key={item.href}>
 									<a
 										href={item.href}
-										className="flex items-center gap-3 transition-colors duration-200"
+										className="flex border border-base-200  items-center gap-3 transition-colors duration-200"
 									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
 										<span>{item.label}</span>

@@ -7,7 +7,7 @@ export default function LeftCard() {
 	const [count, setCount] = React.useState(0);
 
 	return (
-		<div className="card p-6 gap-8 bg-base-200 max-w-[550px] w-full h-full">
+		<div className="card p-5 gap-8 bg-base-100 max-w-[550px] w-full">
 			<div className="flex flex-col gap-4">
 				<div className="card-title flex justify-between">
 					<h1>Hello</h1>
@@ -15,8 +15,8 @@ export default function LeftCard() {
 						<summary className="btn btn-circle text-base-content/50 btn-ghost btn-sm">
 							<Ellipsis className="w-4 h-4" />
 						</summary>
-						<div className="card bg-base-200 border-base-300 dropdown-content z-1 w-52 p-2 shadow-sm">
-							<h1>Hello world</h1>
+						<div className="card bg-base-100 border-base-200 border dropdown-content z-1 w-52 p-2 shadow-md">
+							<h1 className="text-sm text-base-content/50">Hello world</h1>
 						</div>
 					</details>
 				</div>
@@ -28,12 +28,29 @@ export default function LeftCard() {
 				</p>
 			</div>
 			<div className="flex flex-col gap-6">
-				<input
-					type="range"
-					min={0}
-					max={100}
-					className="range range-sm w-full"
-				/>
+				<div className="w-full">
+					<input
+						type="range"
+						min={0}
+						max="100"
+						step={25}
+						className="range w-full"
+					/>
+					<div className="flex justify-between px-2.5 mt-2 text-xs">
+						<span>|</span>
+						<span>|</span>
+						<span>|</span>
+						<span>|</span>
+						<span>|</span>
+					</div>
+					<div className="flex justify-between px-2.5 mt-2 text-xs">
+						<span>1</span>
+						<span>2</span>
+						<span>3</span>
+						<span>4</span>
+						<span>5</span>
+					</div>
+				</div>
 
 				<select defaultValue="Pick a color" className="select w-full">
 					<option disabled={true}>Your focus level</option>
