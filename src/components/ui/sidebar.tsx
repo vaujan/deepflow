@@ -13,6 +13,7 @@ import {
 	LogOut,
 	Settings,
 	BadgeInfo,
+	Kanban,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -22,13 +23,13 @@ interface SidebarItem {
 }
 
 const navigationItems: SidebarItem[] = [
-	{ label: "Home", href: "/", icon: Home },
-	{ label: "About", href: "/about", icon: User },
-	{ label: "Experience", href: "/experience", icon: Briefcase },
-	{ label: "Projects", href: "/projects", icon: Code2 },
-	{ label: "Education", href: "/education", icon: GraduationCap },
-	{ label: "Resume", href: "/resume", icon: FileText },
-	{ label: "Contact", href: "/contact", icon: Mail },
+	{ label: "Placeholder", href: "/", icon: Kanban },
+	// { label: "About", href: "/about", icon: User },
+	// { label: "Experience", href: "/experience", icon: Briefcase },
+	// { label: "Projects", href: "/projects", icon: Code2 },
+	// { label: "Education", href: "/education", icon: GraduationCap },
+	// { label: "Resume", href: "/resume", icon: FileText },
+	// { label: "Contact", href: "/contact", icon: Mail },
 ];
 
 export default function Sidebar() {
@@ -70,8 +71,16 @@ export default function Sidebar() {
 					</nav>
 					{/* Card bottom content */}
 					<div className="flex flex-col h-full p-2 ">
+						<div className="alert alert-info">
+							<span>Tips</span>
+							<p>
+								Lorem, ipsum dolor sit amet consectetur adipisicing elit.
+								Voluptas aspernatur ab quibusdam quos minus facere, totam sequi,
+								laboriosam optio nostrum ullam sed velit.
+							</p>
+						</div>{" "}
 						{/* Helper and widget */}
-						<div className="w-full border-dashed flex justify-between items-center gap-4">
+						{/* <div className="w-full border-dashed flex justify-between items-center gap-4">
 							<button className="btn btn-sm btn-circle btn-ghost">
 								<Settings className="w-4 h-4" />
 							</button>
@@ -83,8 +92,7 @@ export default function Sidebar() {
 							<button className="btn btn-sm btn-circle btn-ghost">
 								<BadgeInfo className="w-4 h-4" />
 							</button>
-						</div>
-
+						</div> */}
 						{/* Profile bottom */}
 						<div className="transition-all hover:bg-base-100 rounded-box w-full items-center px-4 py-4 border-1 border-base-200 flex gap-3 relative">
 							<div className="avatar avatar-online">
