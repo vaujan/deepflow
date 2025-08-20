@@ -43,7 +43,7 @@ export default function RightCard() {
 					))}
 				</ul>
 				<div className="overflow-x-auto w-full">
-					<div className="flex overflow-y-auto max-h-[350px] border border-base-100 rounded-box overflow-hidden">
+					<div className="flex overflow-y-auto h-20 border border-base-100 rounded-box overflow-hidden">
 						<table className="table table-pin-rows table-pin-cols table-md overflow-y-auto">
 							{/* head */}
 							<thead>
