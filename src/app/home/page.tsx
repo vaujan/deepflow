@@ -1,6 +1,7 @@
 import Dock from "@/src/components/ui/dock";
 import SessionCard from "@/src/components/ui/session-card";
 import Sidebar from "@/src/components/ui/sidebar";
+import Stats from "@/src/components/ui/stats";
 import useWidgets from "@/src/hooks/useWidgets";
 import React from "react";
 
@@ -10,9 +11,10 @@ export default function page() {
 			<Sidebar />
 			{/* Container */}
 			<main className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
-				<div className="flex w-full h-full flex-col">
-					<div className="max-w-8xl items-center h-full flex gap-6 w-full px-8 py-8">
+				<div className="flex w-full h-fit flex-col">
+					<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
+						<Stats />
 					</div>
 				</div>
 
