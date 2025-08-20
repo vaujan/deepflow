@@ -14,6 +14,9 @@ import {
 	Settings,
 	BadgeInfo,
 	Kanban,
+	Lightbulb,
+	ChevronLeft,
+	ChevronRight,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -71,13 +74,26 @@ export default function Sidebar() {
 					</nav>
 					{/* Card bottom content */}
 					<div className="flex flex-col h-full p-2 ">
-						<div className="alert alert-info">
-							<span>Tips</span>
-							<p>
-								Lorem, ipsum dolor sit amet consectetur adipisicing elit.
-								Voluptas aspernatur ab quibusdam quos minus facere, totam sequi,
-								laboriosam optio nostrum ullam sed velit.
-							</p>
+						<div className="alert items-start justify-start flex flex-col alert-vertical text-left bg-base-100">
+							<div className="badge bg-white text-primary px-2 py-4 gap-1 rounded-lg ">
+								<Lightbulb className="size-6" />
+								<span className="text-left w-full font-semibold">Tips</span>
+							</div>
+							<div className="flex flex-col gap-2">
+								<p className="text-base-content/80 ">
+									Lorem, ipsum dolor sit amet consectetur adipisicing elit.
+									Voluptas aspernatur ab quibusdam quos minus facere, totam
+									sequi, laboriosam optio nostrum ullam sed velit.
+								</p>
+							</div>
+							<div className="w-full justify-between flex">
+								<button className="btn btn-ghost btn-sm btn-circle btn-info">
+									<ChevronLeft className="size-4" />
+								</button>
+								<button className="btn btn-ghost btn-circle btn-sm btn-info">
+									<ChevronRight className="size-4" />
+								</button>
+							</div>
 						</div>{" "}
 						{/* Helper and widget */}
 						{/* <div className="w-full border-dashed flex justify-between items-center gap-4">
