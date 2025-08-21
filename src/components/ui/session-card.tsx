@@ -16,7 +16,9 @@ export default function SessionCard() {
 	const [activeTab, setActiveTab] = useState<"planned" | "open">("planned");
 	const [isHolding, setIsHolding] = useState(false);
 	const [holdProgress, setHoldProgress] = useState(0);
-	const [completedSession, setCompletedSession] = useState<Session | null>(null);
+	const [completedSession, setCompletedSession] = useState<Session | null>(
+		null
+	);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
@@ -166,7 +168,7 @@ export default function SessionCard() {
 		setTags("");
 		setAdditionalNotes("");
 		setActiveTab("planned");
-		
+
 		// Focus back to goal input
 		if (textareaRef.current) {
 			textareaRef.current.focus();
@@ -250,7 +252,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card max-w-xl w-full border-base-100 border bg-transparent p-6 gap-8">
+		<div className="card max-w-xl w-full border-base-100 border p-6 gap-8">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">

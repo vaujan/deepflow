@@ -257,24 +257,11 @@ export default function ActiveSession({
 					</p>
 				</div>
 
-				{/* Goal Display */}
-				<div className="bg-base-100/50 backdrop-blur-sm rounded-box p-4 border border-base-200">
-					<div className="flex items-start gap-3">
-						<Target className="size-5 text-primary mt-0.5 flex-shrink-0" />
-						<div className="flex-1">
-							<h3 className="font-medium text-sm text-base-content/70 mb-1">
-								Goal
-							</h3>
-							<p className="text-base-content">{session.goal}</p>
-						</div>
-					</div>
-				</div>
-
 				{/* Timer Display */}
-				<div className="text-center">
+				<div className="text-center bg-base-100 group flex flex-col rounded-box gap-8 p-8">
 					{isPlannedSession ? (
 						<div className="space-y-2">
-							<div className="text-4xl font-mono font-bold text-primary">
+							<div className="text-4xl font-mono font-bold text-base-content">
 								{remainingTime ? formatTime(remainingTime) : "00:00"}
 							</div>
 							<p className="text-sm text-base-content/60">
@@ -283,7 +270,7 @@ export default function ActiveSession({
 						</div>
 					) : (
 						<div className="space-y-2">
-							<div className="text-4xl font-mono font-bold text-primary">
+							<div className="text-4xl font-mono font-bold text-base-content">
 								{formatTime(elapsedTime)}
 							</div>
 							<p className="text-sm text-base-content/60">
@@ -291,38 +278,40 @@ export default function ActiveSession({
 							</p>
 						</div>
 					)}
+
+					{isPlannedSession && (
+						<div className="space-y-2">
+							<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
+								<span className="text-base-content/70 font-medium">
+									Progress
+								</span>
+								<span className="text-base-content font-medium">
+									{Math.round(progressPercentage)}%
+								</span>
+							</div>
+
+							<input
+								type="range"
+								className="range cursor-auto [--range-thumb:transparent] disabled w-full range-xs"
+								value={progressPercentage}
+								readOnly
+							/>
+						</div>
+					)}
 				</div>
 
 				{/* Progress Bar for Planned Sessions */}
-				{isPlannedSession && (
-					<div className="space-y-2">
-						<div className="flex justify-between text-sm">
-							<span className="text-base-content/70">Progress</span>
-							<span className="text-primary font-medium">
-								{Math.round(progressPercentage)}%
-							</span>
-						</div>
-						<div className="w-full bg-base-200 rounded-full h-2">
-							<div
-								className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
-								style={{ width: `${progressPercentage}%` }}
-							/>
-						</div>
-					</div>
-				)}
 
 				{/* Session Info */}
-				<div className="grid grid-cols-2 gap-4 text-sm">
-					<div className="flex items-center gap-2">
+				<div className="grid grid-cols-2 gap-4 text-sm bg-base-200 card rounded-box p-4">
+					<div className="flex align-middle items-center gap-2">
 						<Clock className="size-4 text-base-content/50" />
 						<span className="text-base-content/70">Started:</span>
 						<span>{session.startTime.toLocaleTimeString()}</span>
 					</div>
 					<div className="flex items-center gap-2">
-						<div className="size-4 rounded-full bg-secondary flex items-center justify-center">
-							<span className="text-xs font-bold text-secondary-content">
-								{session.focusLevel}
-							</span>
+						<div className="badge badge-ghost badge-primary">
+							{session.focusLevel}
 						</div>
 						<span className="text-base-content/70">Focus Level</span>
 					</div>
@@ -346,13 +335,11 @@ export default function ActiveSession({
 				)}
 
 				{/* Session Controls */}
-				<div className="card-actions justify-center gap-3">
+				<div className="flex gap-3 w-full">
 					{/* Pause/Resume Button */}
 					<button
 						onClick={handlePauseResume}
-						className={`btn btn-circle btn-lg ${
-							isPaused ? "btn-primary" : "btn-outline"
-						}`}
+						className={`btn btn-lg ${isPaused ? "btn-primary" : ""}`}
 						title={
 							isPaused ? "Resume session (Space)" : "Pause session (Space)"
 						}
@@ -367,7 +354,7 @@ export default function ActiveSession({
 					{/* Stop Button */}
 					<button
 						onClick={handleStop}
-						className="btn btn-circle btn-lg btn-outline btn-error"
+						className="btn btn-lg btn-error"
 						title="Stop session (Esc)"
 					>
 						<Square className="size-5" />
@@ -376,7 +363,7 @@ export default function ActiveSession({
 					{/* Complete Button */}
 					<button
 						onClick={handleSessionComplete}
-						className="btn btn-circle btn-lg btn-success"
+						className="btn btn-lg  btn-success"
 						title="Complete session"
 					>
 						<Check className="size-5" />
