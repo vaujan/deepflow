@@ -1,7 +1,10 @@
 "use client";
 
-import { Play, Clock, Timer } from "lucide-react";
+import { Play, Clock, Timer, Check } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
+import { useSession, Session } from "../../hooks/useSession";
+import ActiveSession from "./active-session";
+import SessionCompletion from "./session-completion";
 
 export default function SessionCard() {
 	const [duration, setDuration] = useState(25);
@@ -11,7 +14,18 @@ export default function SessionCard() {
 	const [additionalNotes, setAdditionalNotes] = useState("");
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
 	const [activeTab, setActiveTab] = useState<"planned" | "open">("planned");
+	const [isHolding, setIsHolding] = useState(false);
+	const [holdProgress, setHoldProgress] = useState(0);
+	const [completedSession, setCompletedSession] = useState<Session | null>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
+
+	const HOLD_DURATION = 1500; // 1.5 seconds in milliseconds
+	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
+
+	// Session management
+	const { currentSession, isActive, startSession } = useSession();
 
 	const placeholders = [
 		"Complete the project proposal...",
@@ -115,8 +129,125 @@ export default function SessionCard() {
 		});
 	};
 
+	const handleStartSession = () => {
+		const sessionConfig = {
+			goal: goal.trim(),
+			duration: activeTab === "planned" ? duration : undefined,
+			focusLevel: parseInt(focusLevel),
+			tags: tags
+				.trim()
+				.split(/\s+/)
+				.filter((tag) => tag.length > 0),
+			notes: additionalNotes.trim() || undefined,
+			sessionType: activeTab as "planned" | "open",
+		};
+
+		startSession(sessionConfig);
+	};
+
+	const handleSessionComplete = (session: Session) => {
+		setCompletedSession(session);
+	};
+
+	const handleSessionStop = () => {
+		// Reset form for next session
+		resetForm();
+	};
+
+	const handleStartNewSession = () => {
+		setCompletedSession(null);
+		resetForm();
+	};
+
+	const resetForm = () => {
+		setGoal("");
+		setDuration(25);
+		setFocusLevel("5");
+		setTags("");
+		setAdditionalNotes("");
+		setActiveTab("planned");
+		
+		// Focus back to goal input
+		if (textareaRef.current) {
+			textareaRef.current.focus();
+		}
+	};
+
+	const handleMouseDown = () => {
+		if (!isGoalValid) return;
+
+		setIsHolding(true);
+		setHoldProgress(0);
+
+		// Start progress bar animation
+		holdProgressRef.current = setInterval(() => {
+			setHoldProgress((prev) => {
+				const newProgress =
+					prev + (PROGRESS_UPDATE_INTERVAL / HOLD_DURATION) * 100;
+				return Math.min(newProgress, 100);
+			});
+		}, PROGRESS_UPDATE_INTERVAL);
+
+		// Start hold timer
+		holdTimerRef.current = setTimeout(() => {
+			handleStartSession();
+			setIsHolding(false);
+			setHoldProgress(0);
+		}, HOLD_DURATION);
+	};
+
+	const handleMouseUp = () => {
+		if (holdTimerRef.current) {
+			clearTimeout(holdTimerRef.current);
+			holdTimerRef.current = null;
+		}
+		if (holdProgressRef.current) {
+			clearInterval(holdProgressRef.current);
+			holdProgressRef.current = null;
+		}
+		setIsHolding(false);
+		setHoldProgress(0);
+	};
+
+	const handleMouseLeave = () => {
+		handleMouseUp();
+	};
+
+	// Cleanup timers on unmount
+	useEffect(() => {
+		return () => {
+			if (holdTimerRef.current) {
+				clearTimeout(holdTimerRef.current);
+			}
+			if (holdProgressRef.current) {
+				clearInterval(holdProgressRef.current);
+			}
+		};
+	}, []);
+
 	const isGoalValid = goal.trim().length > 0;
 	const goalPreview = goal.trim().slice(0, 30);
+
+	// If there's a completed session, show the completion component
+	if (completedSession) {
+		return (
+			<SessionCompletion
+				session={completedSession}
+				onStartNewSession={handleStartNewSession}
+			/>
+		);
+	}
+
+	// If there's an active session, show the active session component
+	if (isActive && currentSession) {
+		return (
+			<ActiveSession
+				session={currentSession}
+				onSessionComplete={handleSessionComplete}
+				onSessionStop={handleSessionStop}
+			/>
+		);
+	}
 
 	return (
 		<div className="card max-w-xl w-full border-base-100 border bg-transparent p-6 gap-8">
@@ -340,14 +471,56 @@ export default function SessionCard() {
 
 			<div className="card-actions">
 				<button
-					className={`btn btn-block h-14 transition-all duration-200 ${
-						isGoalValid ? "btn-neutral" : "btn-disabled"
+					className={`btn btn-block h-14 transition-all duration-200 relative overflow-hidden ${
+						isGoalValid
+							? isHolding
+								? "btn-primary"
+								: "btn-neutral "
+							: "btn-disabled"
 					}`}
 					disabled={!isGoalValid}
+					onMouseDown={handleMouseDown}
+					onMouseUp={handleMouseUp}
+					onMouseLeave={handleMouseLeave}
+					onTouchStart={handleMouseDown}
+					onTouchEnd={handleMouseUp}
 				>
-					<Play className="size-4 text-primary" />
-					Start {activeTab === "planned" ? formatTime(duration) : "Open"}{" "}
-					Session
+					{/* Progress bar overlay */}
+					{isHolding && (
+						<div
+							className="absolute inset-0 bg-primary/20 transition-all duration-75 ease-out"
+							style={{
+								width: `${holdProgress}%`,
+								transition: `width ${PROGRESS_UPDATE_INTERVAL}ms linear`,
+							}}
+						/>
+					)}
+
+					{/* Button content */}
+					<div className="relative z-10 flex items-center gap-2">
+						{isHolding && holdProgress >= 100 ? (
+							<Check className="size-4" />
+						) : (
+							<Play className="size-4" />
+						)}
+						<span>
+							{isHolding && holdProgress >= 100
+								? "Session Starting..."
+								: `Hold to Start ${
+										activeTab === "planned" ? formatTime(duration) : "Open"
+								  } Session`}
+						</span>
+					</div>
+
+					{/* Hold indicator */}
+					{isHolding && (
+						<div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-primary-content/80">
+							{Math.ceil(
+								(HOLD_DURATION - (holdProgress / 100) * HOLD_DURATION) / 1000
+							)}
+							s
+						</div>
+					)}
 				</button>
 			</div>
 		</div>
