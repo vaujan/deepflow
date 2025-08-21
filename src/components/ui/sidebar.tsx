@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import {
 	Home,
 	User,
@@ -25,7 +27,56 @@ interface SidebarItem {
 	icon: React.ComponentType<{ className?: string }>;
 }
 
+interface DeepWorkTip {
+	title: string;
+	description: string;
+}
+
+const deepWorkTips: DeepWorkTip[] = [
+	{
+		title: "Time Blocking",
+		description:
+			"Schedule dedicated 90-minute blocks for deep work. Protect these times from meetings and interruptions.",
+	},
+	{
+		title: "Environment Setup",
+		description:
+			"Create a distraction-free workspace. Remove notifications, close unnecessary tabs, and use noise-canceling if needed.",
+	},
+	{
+		title: "The 20-Minute Rule",
+		description:
+			"If you're struggling to focus, commit to just 20 minutes. Often, momentum builds and you'll want to continue.",
+	},
+	{
+		title: "Energy Management",
+		description:
+			"Schedule deep work during your peak energy hours. Most people are most focused in the morning.",
+	},
+	{
+		title: "Single Task Focus",
+		description:
+			"Work on one task at a time. Multitasking reduces quality and increases time to completion.",
+	},
+	{
+		title: "Break Strategy",
+		description:
+			"Take 5-10 minute breaks every 90 minutes. Use this time to stretch, walk, or do something completely different.",
+	},
+	{
+		title: "Goal Clarity",
+		description:
+			"Define what 'done' looks like before starting. Clear objectives help maintain focus and motivation.",
+	},
+	{
+		title: "Digital Minimalism",
+		description:
+			"Use apps and tools that support deep work, not distract from it. Consider website blockers during focus sessions.",
+	},
+];
+
 const navigationItems: SidebarItem[] = [
+	{ label: "Home", href: "/home", icon: Home },
 	{ label: "Placeholder", href: "/", icon: Kanban },
 	// { label: "About", href: "/about", icon: User },
 	// { label: "Experience", href: "/experience", icon: Briefcase },
@@ -36,6 +87,27 @@ const navigationItems: SidebarItem[] = [
 ];
 
 export default function Sidebar() {
+	const [currentTipIndex, setCurrentTipIndex] = useState(0);
+	const [isAnimating, setIsAnimating] = useState(false);
+
+	const nextTip = () => {
+		if (isAnimating) return;
+		setIsAnimating(true);
+		setCurrentTipIndex((prev) => (prev + 1) % deepWorkTips.length);
+		setTimeout(() => setIsAnimating(false), 150);
+	};
+
+	const previousTip = () => {
+		if (isAnimating) return;
+		setIsAnimating(true);
+		setCurrentTipIndex(
+			(prev) => (prev - 1 + deepWorkTips.length) % deepWorkTips.length
+		);
+		setTimeout(() => setIsAnimating(false), 150);
+	};
+
+	const currentTip = deepWorkTips[currentTipIndex];
+
 	return (
 		<div className="lg:drawer-open">
 			<input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
@@ -73,28 +145,64 @@ export default function Sidebar() {
 						</ul>
 					</nav>
 					{/* Card bottom content */}
-					<div className="flex flex-col h-full p-2 ">
+					<div className="flex flex-col h-full p-2 gap-2">
+						{/* Tips card */}
 						<div className="alert items-start justify-start flex flex-col alert-vertical text-left bg-base-100">
-							<div className="badge bg-white text-primary px-2 py-4 gap-1 rounded-lg ">
-								<Lightbulb className="size-6" />
-								<span className="text-left w-full font-semibold">Tips</span>
+							<div className="badge badge-sm bg-secondary/25 border-secondary/50 gap-1 rounded-sm">
+								<span className="text-left w-full font-semibold">
+									Deep Work Tip
+								</span>
 							</div>
-							<div className="flex flex-col gap-2">
-								<p className="text-base-content/80 ">
-									Lorem, ipsum dolor sit amet consectetur adipisicing elit.
-									Voluptas aspernatur ab quibusdam quos minus facere, totam
-									sequi, laboriosam optio nostrum ullam sed velit.
-								</p>
+
+							{/* Tips for deep work */}
+							<div className="flex flex-col gap-2 overflow-hidden">
+								<div
+									className={`transition-all duration-150 ease-out ${
+										isAnimating
+											? "opacity-0 -translate-y-1"
+											: "opacity-100 translate-y-0"
+									}`}
+								>
+									<span className="font-semibold text-base-content">
+										{currentTip.title}
+									</span>
+								</div>
+								<div
+									className={`transition-all duration-150 ease-out delay-75 ${
+										isAnimating
+											? "opacity-0 translate-y-1"
+											: "opacity-100 translate-y-0"
+									}`}
+								>
+									<p className="text-base-content/80 text-sm leading-relaxed">
+										{currentTip.description}
+									</p>
+								</div>
 							</div>
-							<div className="w-full justify-between flex">
-								<button className="btn btn-ghost btn-sm btn-circle btn-info">
+							<div className="w-full justify-between flex items-center">
+								<button
+									onClick={previousTip}
+									className="btn btn-ghost btn-sm btn-square"
+									title="Previous tip"
+								>
 									<ChevronLeft className="size-4" />
 								</button>
-								<button className="btn btn-ghost btn-circle btn-sm btn-info">
+
+								<div className="text-xs text-base-content/50 flex items-center gap-1">
+									<span>{currentTipIndex + 1}</span>
+									<span className="text-base-content/30">of</span>
+									<span>{deepWorkTips.length}</span>
+								</div>
+
+								<button
+									onClick={nextTip}
+									className="btn btn-ghost btn-sm btn-square "
+									title="Next tip"
+								>
 									<ChevronRight className="size-4" />
 								</button>
 							</div>
-						</div>{" "}
+						</div>
 						{/* Helper and widget */}
 						{/* <div className="w-full border-dashed flex justify-between items-center gap-4">
 							<button className="btn btn-sm btn-circle btn-ghost">
