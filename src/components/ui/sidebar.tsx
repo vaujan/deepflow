@@ -19,6 +19,7 @@ import {
 	Lightbulb,
 	ChevronLeft,
 	ChevronRight,
+	X,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -145,62 +146,69 @@ export default function Sidebar() {
 						</ul>
 					</nav>
 					{/* Card bottom content */}
-					<div className="flex flex-col h-full p-2 gap-2">
+					<div className="flex flex-col h-full p-4 gap-2">
 						{/* Tips card */}
-						<div className="alert items-start justify-start flex flex-col alert-vertical text-left bg-base-100">
-							<div className="badge badge-sm bg-secondary/25 border-secondary/50 gap-1 rounded-sm">
-								<span className="text-left w-full font-semibold">
-									Deep Work Tip
-								</span>
+						<div className="card items-start group justify-start flex text-left p-4 gap-6 bg-base-100">
+							{/* badge */}
+							<div className="flex w-full justify-between">
+								<div className="h-full badge-soft border p-2 rounded-lg flex">
+									<Lightbulb className="size-4 text-accent transition-all ease-out animate-pulse" />
+								</div>
+
+								<button className="btn-ghost group-hover:visible invisible btn btn-sm btn-square ">
+									<X className="size-4 text-base-content/50" />
+								</button>
 							</div>
 
-							{/* Tips for deep work */}
-							<div className="flex flex-col gap-2 overflow-hidden">
-								<div
-									className={`transition-all duration-150 ease-out ${
-										isAnimating
-											? "opacity-0 -translate-y-1"
-											: "opacity-100 translate-y-0"
-									}`}
-								>
-									<span className="font-semibold text-base-content">
-										{currentTip.title}
-									</span>
+							<div className="flex gap-6 w-full h-full flex-col">
+								{/* Tips for deep work */}
+								<div className="flex flex-col gap-2 overflow-hidden">
+									<div
+										className={`transition-all duration-150 ease-out ${
+											isAnimating
+												? "opacity-0 -translate-y-1"
+												: "opacity-100 translate-y-0"
+										}`}
+									>
+										<span className="font-semibold text-base-content">
+											{currentTip.title}
+										</span>
+									</div>
+									<div
+										className={`transition-all duration-150 ease-out delay-75 ${
+											isAnimating
+												? "opacity-0 translate-y-1"
+												: "opacity-100 translate-y-0"
+										}`}
+									>
+										<p className="text-base-content/80 text-sm leading-relaxed">
+											{currentTip.description}
+										</p>
+									</div>
 								</div>
-								<div
-									className={`transition-all duration-150 ease-out delay-75 ${
-										isAnimating
-											? "opacity-0 translate-y-1"
-											: "opacity-100 translate-y-0"
-									}`}
-								>
-									<p className="text-base-content/80 text-sm leading-relaxed">
-										{currentTip.description}
-									</p>
-								</div>
-							</div>
-							<div className="w-full justify-between flex items-center">
-								<button
-									onClick={previousTip}
-									className="btn btn-ghost btn-sm btn-square"
-									title="Previous tip"
-								>
-									<ChevronLeft className="size-4" />
-								</button>
+								<div className="w-full justify-between flex items-center">
+									<button
+										onClick={previousTip}
+										className="btn btn-ghost btn-sm btn-square"
+										title="Previous tip"
+									>
+										<ChevronLeft className="size-4" />
+									</button>
 
-								<div className="text-xs text-base-content/50 flex items-center gap-1">
-									<span>{currentTipIndex + 1}</span>
-									<span className="text-base-content/30">of</span>
-									<span>{deepWorkTips.length}</span>
-								</div>
+									<div className="text-xs text-base-content/50 flex items-center gap-1">
+										<span>{currentTipIndex + 1}</span>
+										<span className="text-base-content/30">of</span>
+										<span>{deepWorkTips.length}</span>
+									</div>
 
-								<button
-									onClick={nextTip}
-									className="btn btn-ghost btn-sm btn-square "
-									title="Next tip"
-								>
-									<ChevronRight className="size-4" />
-								</button>
+									<button
+										onClick={nextTip}
+										className="btn btn-ghost btn-sm btn-square "
+										title="Next tip"
+									>
+										<ChevronRight className="size-4" />
+									</button>
+								</div>
 							</div>
 						</div>
 						{/* Helper and widget */}
