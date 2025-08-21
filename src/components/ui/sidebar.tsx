@@ -173,7 +173,7 @@ export default function Sidebar() {
 
 							<li>
 								<a href="#feedback" className="gap-3">
-									<Mail className="w-full w-4 h-4 text-base-content/50" />
+									<Mail className="w-4 h-4 text-base-content/50" />
 									<span>Feedback</span>
 								</a>
 							</li>
