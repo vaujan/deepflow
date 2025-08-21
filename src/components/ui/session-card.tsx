@@ -10,6 +10,7 @@ export default function SessionCard() {
 	const [tags, setTags] = useState("");
 	const [additionalNotes, setAdditionalNotes] = useState("");
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+	const [activeTab, setActiveTab] = useState<"planned" | "open">("planned");
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const placeholders = [
@@ -80,6 +81,10 @@ export default function SessionCard() {
 		e: React.ChangeEvent<HTMLTextAreaElement>
 	) => {
 		setAdditionalNotes(e.target.value);
+	};
+
+	const handleTabChange = (tab: "planned" | "open") => {
+		setActiveTab(tab);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -173,7 +178,12 @@ export default function SessionCard() {
 			{/* Session Mode Tabs */}
 			<div className="tabs tabs-border">
 				<label className="tab font-medium">
-					<input type="radio" name="session_tabs" defaultChecked />
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "planned"}
+						onChange={() => handleTabChange("planned")}
+					/>
 					<Clock className="size-4 me-2" />
 					Planned Session
 				</label>
@@ -210,7 +220,12 @@ export default function SessionCard() {
 				</div>
 
 				<label className="font-medium tab">
-					<input type="radio" name="session_tabs" />
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "open"}
+						onChange={() => handleTabChange("open")}
+					/>
 					<Timer className="size-4 me-2" />
 					Open Session
 				</label>
@@ -267,10 +282,18 @@ export default function SessionCard() {
 									onChange={handleFocusLevelChange}
 									className="range range-xs range-secondary w-full"
 								/>
+
 								<div className="flex justify-between text-xs text-base-content/60">
-									<span>1</span>
-									<span>5</span>
-									<span>10</span>
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+								</div>
+
+								<div className="flex justify-between text-xs text-base-content/60">
+									<span>Light focus</span>
+									<span>Deep focus</span>
 								</div>
 							</div>
 						</div>
@@ -323,7 +346,8 @@ export default function SessionCard() {
 					disabled={!isGoalValid}
 				>
 					<Play className="size-4 text-primary" />
-					Start {duration ? `${formatTime(duration)}` : "Open"} Session
+					Start {activeTab === "planned" ? formatTime(duration) : "Open"}{" "}
+					Session
 				</button>
 			</div>
 		</div>
