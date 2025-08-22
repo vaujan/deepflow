@@ -10,7 +10,7 @@ export default function Page() {
 	return (
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
 			<Sidebar />
-			<main className="w-full relative flex flex-col gap-6 flex-1 items-center justify-start ">
+			<main className="w-full relative flex flex-col gap-6 flex-1 items-center ustify-start ">
 				{/* Container */}
 				<div className="max-w-8xl flex flex-col gap-6 w-full px-8 py-16">
 					<div className="w-full gap-8 flex">

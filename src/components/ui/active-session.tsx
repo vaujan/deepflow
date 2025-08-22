@@ -26,19 +26,35 @@ export default function ActiveSession({
 	} | null>(null);
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
-	const startTimeRef = useRef<Date>(session.startTime);
-	const pauseTimeRef = useRef<Date | null>(null);
+	const startTimeRef = useRef<number>(Date.now());
+	const pauseTimeRef = useRef<number | null>(null);
 	const totalPausedTimeRef = useRef(0);
 
 	// Start timer when component mounts
 	useEffect(() => {
 		startTimer();
+
+		// Handle tab visibility changes
+		const handleVisibilityChange = () => {
+			if (!document.hidden && !isPaused) {
+				// Tab became visible, update timer immediately
+				const now = Date.now();
+				const newElapsed = Math.floor(
+					(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+				);
+				setElapsedTime(newElapsed);
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+
 		return () => {
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
 			}
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
 		};
-	}, []);
+	}, [isPaused]);
 
 	// Keyboard shortcuts
 	useEffect(() => {
@@ -58,17 +74,17 @@ export default function ActiveSession({
 
 	const startTimer = () => {
 		timerRef.current = setInterval(() => {
-			setElapsedTime((prev) => {
-				const newElapsed = prev + 1;
+			const now = Date.now();
+			const newElapsed = Math.floor(
+				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+			);
 
-				// For planned sessions, check if time is up
-				if (session.duration && newElapsed >= session.duration * 60) {
-					handleSessionComplete();
-					return newElapsed;
-				}
+			setElapsedTime(newElapsed);
 
-				return newElapsed;
-			});
+			// For planned sessions, check if time is up
+			if (session.duration && newElapsed >= session.duration * 60) {
+				handleSessionComplete();
+			}
 		}, 1000);
 	};
 
@@ -82,7 +98,7 @@ export default function ActiveSession({
 
 	const pauseSession = () => {
 		setIsPaused(true);
-		pauseTimeRef.current = new Date();
+		pauseTimeRef.current = Date.now();
 
 		// Play pause sound
 		playSound(400, 0.2, 0.3);
@@ -103,7 +119,7 @@ export default function ActiveSession({
 	const resumeSession = () => {
 		setIsPaused(false);
 		if (pauseTimeRef.current) {
-			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current.getTime();
+			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
 			pauseTimeRef.current = null;
 		}
 
@@ -246,7 +262,7 @@ export default function ActiveSession({
 				/>
 			)}
 
-			<div className="card max-w-xl w-full border-base-100 border bg-transparent p-6 gap-6">
+			<div className="card max-w-xl w-full bg-transparent p-6 gap-6">
 				{/* Session Header */}
 				<div className="flex flex-col text-center">
 					<h1 className="font-semibold text-lg">Active Session</h1>
@@ -261,8 +277,46 @@ export default function ActiveSession({
 				<div className="text-center bg-base-100 group flex flex-col rounded-box gap-8 p-8">
 					{isPlannedSession ? (
 						<div className="space-y-2">
-							<div className="text-4xl font-mono font-bold text-base-content">
-								{remainingTime ? formatTime(remainingTime) : "00:00"}
+							<div className="countdown text-4xl font-bold text-base-content">
+								{remainingTime ? (
+									<>
+										<span
+											style={
+												{
+													"--value": Math.floor(remainingTime / 3600),
+												} as React.CSSProperties
+											}
+										></span>
+										:
+										<span
+											style={
+												{
+													"--value": Math.floor((remainingTime % 3600) / 60),
+												} as React.CSSProperties
+											}
+										></span>
+										:
+										<span
+											style={
+												{ "--value": remainingTime % 60 } as React.CSSProperties
+											}
+										></span>
+									</>
+								) : (
+									<>
+										<span
+											style={{ "--value": 0 } as React.CSSProperties}
+										></span>
+										:
+										<span
+											style={{ "--value": 0 } as React.CSSProperties}
+										></span>
+										:
+										<span
+											style={{ "--value": 0 } as React.CSSProperties}
+										></span>
+									</>
+								)}
 							</div>
 							<p className="text-sm text-base-content/60">
 								{isPaused ? "Paused" : "Remaining"}
@@ -270,8 +324,26 @@ export default function ActiveSession({
 						</div>
 					) : (
 						<div className="space-y-2">
-							<div className="text-4xl font-mono font-bold text-base-content">
-								{formatTime(elapsedTime)}
+							<div className="countdown text-4xl font-bold text-base-content">
+								<span
+									style={
+										{
+											"--value": Math.floor(elapsedTime / 3600),
+										} as React.CSSProperties
+									}
+								></span>
+								:
+								<span
+									style={
+										{
+											"--value": Math.floor((elapsedTime % 3600) / 60),
+										} as React.CSSProperties
+									}
+								></span>
+								:
+								<span
+									style={{ "--value": elapsedTime % 60 } as React.CSSProperties}
+								></span>
 							</div>
 							<p className="text-sm text-base-content/60">
 								{isPaused ? "Paused" : "Elapsed time"}
@@ -292,7 +364,7 @@ export default function ActiveSession({
 
 							<input
 								type="range"
-								className="range cursor-auto [--range-thumb:transparent] disabled w-full range-xs"
+								className="range range-lg cursor-auto [--range-thumb:transparent] disabled w-full"
 								value={progressPercentage}
 								readOnly
 							/>
