@@ -5,6 +5,7 @@ import RightCard from "../components/ui/right-card";
 import Dock from "../components/ui/dock";
 import Stats from "../components/ui/session-table";
 import DeepWork from "../components/ui/deepwork";
+import TauriDemo from "../components/ui/tauri-demo";
 
 export default function Page() {
 	return (
@@ -26,9 +27,11 @@ export default function Page() {
 						</div>
 					</div>
 
-					<div className="w-full flex">
+					<div className="w-full flex gap-8">
 						{/* Card */}
 						<Stats />
+						{/* Tauri Demo */}
+						<TauriDemo />
 					</div>
 				</div>
 
