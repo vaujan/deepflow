@@ -246,7 +246,6 @@ export default function SessionCard() {
 			<ActiveSession
 				session={currentSession}
 				onSessionComplete={handleSessionComplete}
-				onSessionStop={handleSessionStop}
 			/>
 		);
 	}
@@ -346,7 +345,7 @@ export default function SessionCard() {
 							</div>
 						</div>
 						<p className="text-xs text-base-content/60">
-							Session will automatically end after {formatTime(duration)} at{" "}
+							Session will automatically end after {formatTime(duration)} at
 							<span className="font-semibold">{getEndTime(duration)}</span>
 						</p>
 					</div>
