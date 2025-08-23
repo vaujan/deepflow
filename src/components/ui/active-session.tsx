@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Pause, Play, Square, Check, Clock, Target, Hash } from "lucide-react";
+import { Pause, Play, Check, Clock, Target, Hash } from "lucide-react";
 import { Session } from "../../hooks/useSession";
 import Toast from "./toast";
 
 interface ActiveSessionProps {
 	session: Session;
 	onSessionComplete: (completedSession: Session) => void;
-	onSessionStop: () => void;
 }
 
 export default function ActiveSession({
 	session,
 	onSessionComplete,
-	onSessionStop,
 }: ActiveSessionProps) {
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const [isPaused, setIsPaused] = useState(false);
@@ -62,9 +60,6 @@ export default function ActiveSession({
 			if (e.code === "Space" && !e.repeat) {
 				e.preventDefault();
 				handlePauseResume();
-			} else if (e.code === "Escape") {
-				e.preventDefault();
-				handleStop();
 			}
 		};
 
@@ -134,22 +129,6 @@ export default function ActiveSession({
 		});
 
 		startTimer();
-	};
-
-	const handleStop = () => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-
-		// Show toast notification
-		setToast({
-			message: "Session stopped",
-			type: "error",
-			isVisible: true,
-		});
-
-		onSessionStop();
 	};
 
 	const handleSessionComplete = () => {
@@ -375,43 +354,53 @@ export default function ActiveSession({
 				{/* Progress Bar for Planned Sessions */}
 
 				{/* Session Info */}
-				<div className="grid grid-cols-2 gap-4 text-sm bg-base-200 card rounded-box p-4">
+
+				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-4">
+					{/* Started time */}
 					<div className="flex align-middle items-center gap-2">
 						<Clock className="size-4 text-base-content/50" />
 						<span className="text-base-content/70">Started:</span>
 						<span>{session.startTime.toLocaleTimeString()}</span>
 					</div>
+
+					{/* Focus level */}
+					<div className="flex align-middle items-center gap-2">
+						<Clock className="size-4 text-base-content/50" />
+						<span className="text-base-content/70">Started:</span>
+						<span>{session.startTime.toLocaleTimeString()}</span>
+					</div>
+
 					<div className="flex items-center gap-2">
 						<div className="badge badge-ghost badge-primary">
 							{session.focusLevel}
 						</div>
 						<span className="text-base-content/70">Focus Level</span>
 					</div>
-				</div>
 
-				{/* Tags */}
-				{session.tags.length > 0 && (
-					<div className="flex items-start gap-2">
-						<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex flex-wrap gap-2">
-							{session.tags.map((tag, index) => (
-								<span
-									key={index}
-									className="badge rounded-sm badge-secondary badge-sm"
-								>
-									#{tag}
-								</span>
-							))}
+					{/* Tags */}
+					{session.tags.length > 0 && (
+						<div className="flex items-start gap-2">
+							<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+							<div className="flex flex-wrap gap-2">
+								{session.tags.map((tag, index) => (
+									<span
+										key={index}
+										className="badge rounded-sm badge-secondary badge-sm"
+									>
+										#{tag}
+									</span>
+								))}
+							</div>
 						</div>
-					</div>
-				)}
+					)}
+				</div>
 
 				{/* Session Controls */}
 				<div className="flex gap-3 w-full">
 					{/* Pause/Resume Button */}
 					<button
 						onClick={handlePauseResume}
-						className={`btn btn-lg ${isPaused ? "btn-primary" : ""}`}
+						className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
 						title={
 							isPaused ? "Resume session (Space)" : "Pause session (Space)"
 						}
@@ -423,19 +412,10 @@ export default function ActiveSession({
 						)}
 					</button>
 
-					{/* Stop Button */}
-					<button
-						onClick={handleStop}
-						className="btn btn-lg btn-error"
-						title="Stop session (Esc)"
-					>
-						<Square className="size-5" />
-					</button>
-
 					{/* Complete Button */}
 					<button
 						onClick={handleSessionComplete}
-						className="btn btn-lg  btn-success"
+						className="btn btn-lg btn-success flex-1"
 						title="Complete session"
 					>
 						<Check className="size-5" />
@@ -444,7 +424,7 @@ export default function ActiveSession({
 
 				{/* Keyboard Shortcuts Hint */}
 				<div className="text-center text-xs text-base-content/50">
-					<p>Space: Pause/Resume • Esc: Stop</p>
+					<p>Space: Pause/Resume</p>
 				</div>
 
 				{/* Session Status */}
