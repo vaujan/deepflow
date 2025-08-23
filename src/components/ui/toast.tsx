@@ -23,12 +23,12 @@ const toastColors = {
 	error: "bg-error text-error-content",
 };
 
-export default function Toast({ 
-	message, 
-	type, 
-	isVisible, 
-	onClose, 
-	duration = 3000 
+export default function Toast({
+	message,
+	type,
+	isVisible,
+	onClose,
+	duration = 3000,
 }: ToastProps) {
 	const Icon = toastIcons[type];
 

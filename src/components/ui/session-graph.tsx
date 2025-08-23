@@ -259,27 +259,30 @@ export default function SessionGraph() {
 			<div className="card bg-base-100 p-4">
 				<h4 className="text-md font-medium mb-4">Monthly Deep Work Calendar</h4>
 				<div className="flex justify-center">
-					<calendar-date className="cally bg-base-100 border border-base-300 shadow-lg rounded-box">
-						<svg
-							aria-label="Previous"
-							className="fill-current size-4"
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							{...({ slot: "previous" } as any)}
-						>
-							<path fill="currentColor" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
-						</svg>
-						<svg
-							aria-label="Next"
-							className="fill-current size-4"
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							{...({ slot: "next" } as any)}
-						>
-							<path fill="currentColor" d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
-						</svg>
-						<calendar-month></calendar-month>
-					</calendar-date>
+					<div className="cally bg-base-100 border border-base-300 shadow-lg rounded-box p-4">
+						<div className="flex items-center justify-between mb-4">
+							<svg
+								aria-label="Previous"
+								className="fill-current size-4 cursor-pointer hover:opacity-70"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+							>
+								<path fill="currentColor" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+							</svg>
+							<span className="text-lg font-medium">December 2024</span>
+							<svg
+								aria-label="Next"
+								className="fill-current size-4 cursor-pointer hover:opacity-70"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+							>
+								<path fill="currentColor" d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
+							</svg>
+						</div>
+						<div className="text-center text-base-content/70">
+							Calendar view coming soon...
+						</div>
+					</div>
 				</div>
 
 				{/* Legend */}

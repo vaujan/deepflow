@@ -6,16 +6,16 @@ import useWidgets from "@/src/hooks/useWidgets";
 import React from "react";
 import SessionGraph from "@/src/components/ui/session-graph";
 
-export default function page() {
+export default function Page() {
 	return (
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
 			<Sidebar />
 			{/* Container */}
 			<main className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
-				<div className="flex w-full h-fit flex-col">
-					<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-8">
+				<div className="flex w-full h-full flex-col">
+					<div className="max-w-8xl items-center justify-center h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
-						<SessionTable />
+						{/* <SessionTable /> */}
 					</div>
 				</div>
 
