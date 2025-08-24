@@ -27,7 +27,8 @@ export default function SessionCard() {
 	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
 
 	// Session management
-	const { currentSession, isActive, startSession } = useSession();
+	const { currentSession, isActive, startSession, updateDeepWorkQuality } =
+		useSession();
 
 	const placeholders = [
 		"Complete the project proposal...",
@@ -82,10 +83,7 @@ export default function SessionCard() {
 		return (
 			<div className="flex flex-wrap gap-2 mt-2">
 				{tagArray.map((tag, index) => (
-					<span
-						key={index}
-						className="badge rounded-sm badge-secondary badge-sm"
-					>
+					<span key={index} className="badge rounded-sm badge-neutral badge-sm">
 						#{tag}
 					</span>
 				))}
@@ -149,6 +147,17 @@ export default function SessionCard() {
 
 	const handleSessionComplete = (session: Session) => {
 		setCompletedSession(session);
+	};
+
+	const handleQualityUpdate = (sessionId: string, quality: number) => {
+		updateDeepWorkQuality(sessionId, quality);
+		// Update the completed session with the new quality rating
+		if (completedSession && completedSession.id === sessionId) {
+			setCompletedSession({
+				...completedSession,
+				deepWorkQuality: quality,
+			});
+		}
 	};
 
 	const handleSessionStop = () => {
@@ -232,7 +241,12 @@ export default function SessionCard() {
 
 	// If there's a completed session, show the completion component
 	if (completedSession) {
-		return <SessionCompletion session={completedSession} />;
+		return (
+			<SessionCompletion
+				session={completedSession}
+				onUpdateQuality={handleQualityUpdate}
+			/>
+		);
 	}
 
 	// If there's an active session, show the active session component
@@ -246,7 +260,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card bg-base-100 max-w-xl w-full border-base-100 border p-6 gap-8">
+		<div className="card bg-base-100 max-w-xl w-full border-base-300 border p-6 gap-8">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
@@ -264,9 +278,16 @@ export default function SessionCard() {
 						value={goal}
 						onChange={handleGoalChange}
 						onKeyDown={handleKeyDown}
+						maxLength={200}
 						className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
 							!isGoalValid && goal.length > 0 ? "textarea-error" : ""
-						}`}
+						} ${goal.length >= 200 ? "border-warning" : ""}`}
+						style={{
+							wordWrap: "break-word",
+							overflowWrap: "break-word",
+							whiteSpace: "pre-wrap",
+							lineHeight: "1.5",
+						}}
 						required
 					/>
 					{!goal && (
@@ -296,8 +317,18 @@ export default function SessionCard() {
 					</p>
 				)}
 				{goal.trim().length > 0 && (
-					<div className="flex justify-start items-center text-xs text-base-content/60">
-						<span>{goal.length}/200 characters</span>
+					<div className="flex justify-start items-center text-xs">
+						<span
+							className={`${
+								goal.length >= 180
+									? goal.length >= 200
+										? "text-error"
+										: "text-warning"
+									: "text-base-content/60"
+							}`}
+						>
+							{goal.length}/200 characters
+						</span>
 					</div>
 				)}
 			</div>
@@ -407,7 +438,7 @@ export default function SessionCard() {
 									step="1"
 									value={focusLevel}
 									onChange={handleFocusLevelChange}
-									className="range range-xs dark:range-secondary light:range-neutral w-full"
+									className="range range-xs w-full"
 								/>
 
 								<div className="flex justify-between text-xs text-base-content/60">

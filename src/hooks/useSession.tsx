@@ -12,6 +12,9 @@ export interface Session {
 	elapsedTime: number;
 	endTime?: Date;
 	sessionType: "planned" | "open";
+	deepWorkQuality?: number; // 1-10 rating for session quality
+	expectedEndTime?: Date; // Calculated expected end time for planned sessions
+	completionType?: "completed" | "premature" | "overtime"; // How the session ended
 }
 
 export interface SessionConfig {
@@ -36,10 +39,15 @@ export const useSession = () => {
 	const totalPausedTimeRef = useRef(0);
 
 	const startSession = useCallback((config: SessionConfig) => {
+		const startTime = new Date();
+		const expectedEndTime = config.duration 
+			? new Date(startTime.getTime() + config.duration * 60 * 1000)
+			: undefined;
+
 		const session: Session = {
 			id: Date.now().toString(),
 			goal: config.goal,
-			startTime: new Date(),
+			startTime: startTime,
 			duration: config.duration,
 			focusLevel: config.focusLevel,
 			tags: config.tags,
@@ -47,6 +55,7 @@ export const useSession = () => {
 			status: "active",
 			elapsedTime: 0,
 			sessionType: config.sessionType,
+			expectedEndTime: expectedEndTime,
 		};
 
 		setCurrentSession(session);
@@ -128,11 +137,31 @@ export const useSession = () => {
 		setRemainingTime(null);
 
 		if (currentSession) {
+			const endTime = new Date();
+			let completionType: "completed" | "premature" | "overtime" = "premature";
+
+			// Determine completion type for planned sessions
+			if (currentSession.duration && currentSession.expectedEndTime) {
+				const expectedEnd = currentSession.expectedEndTime.getTime();
+				const actualEnd = endTime.getTime();
+				const timeDiff = actualEnd - expectedEnd;
+				const toleranceMs = 60000; // 1 minute tolerance
+
+				if (timeDiff < -toleranceMs) {
+					completionType = "premature";
+				} else if (timeDiff > toleranceMs) {
+					completionType = "overtime";
+				} else {
+					completionType = "completed";
+				}
+			}
+
 			const stoppedSession: Session = {
 				...currentSession,
 				status: "stopped",
-				endTime: new Date(),
+				endTime: endTime,
 				elapsedTime,
+				completionType,
 			};
 			setCurrentSession(stoppedSession);
 		}
@@ -149,11 +178,31 @@ export const useSession = () => {
 			setIsPaused(false);
 
 			if (currentSession) {
+				const endTime = new Date();
+				let completionType: "completed" | "premature" | "overtime" = "completed";
+
+				// Determine completion type for planned sessions
+				if (currentSession.duration && currentSession.expectedEndTime) {
+					const expectedEnd = currentSession.expectedEndTime.getTime();
+					const actualEnd = endTime.getTime();
+					const timeDiff = actualEnd - expectedEnd;
+					const toleranceMs = 60000; // 1 minute tolerance
+
+					if (timeDiff < -toleranceMs) {
+						completionType = "premature";
+					} else if (timeDiff > toleranceMs) {
+						completionType = "overtime";
+					} else {
+						completionType = "completed";
+					}
+				}
+
 				const completedSession: Session = {
 					...currentSession,
 					status: "completed",
-					endTime: new Date(),
+					endTime: endTime,
 					elapsedTime,
+					completionType,
 				};
 				setCurrentSession(completedSession);
 			}
@@ -196,6 +245,16 @@ export const useSession = () => {
 		return Math.min((elapsedTime / (currentSession.duration * 60)) * 100, 100);
 	};
 
+	const updateDeepWorkQuality = useCallback((sessionId: string, quality: number) => {
+		if (currentSession && currentSession.id === sessionId) {
+			const updatedSession: Session = {
+				...currentSession,
+				deepWorkQuality: Math.max(1, Math.min(10, quality)), // Ensure 1-10 range
+			};
+			setCurrentSession(updatedSession);
+		}
+	}, [currentSession]);
+
 	return {
 		// Session state
 		currentSession,
@@ -210,6 +269,7 @@ export const useSession = () => {
 		resumeSession,
 		stopSession,
 		completeSession,
+		updateDeepWorkQuality,
 
 		// Utility functions
 		formatTime,

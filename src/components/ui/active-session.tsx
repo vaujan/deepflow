@@ -68,75 +68,78 @@ export default function ActiveSession({
 		};
 	}, [isPaused]);
 
+	// Timer logic function to avoid duplication
+	const startTimer = useCallback(() => {
+		// Clear any existing timer first
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+			timerRef.current = null;
+		}
+
+		// Start a new timer that updates every second
+		timerRef.current = setInterval(() => {
+			const now = Date.now();
+			const newElapsed = Math.floor(
+				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+			);
+
+			setElapsedTime(newElapsed);
+
+			// For planned sessions, check if time is up
+			if (
+				sessionRef.current.duration &&
+				newElapsed >= sessionRef.current.duration * 60
+			) {
+				// Clear timer
+				if (timerRef.current) {
+					clearInterval(timerRef.current);
+					timerRef.current = null;
+				}
+
+				// Play completion sound
+				playSound(800, 0.3, 0.5);
+
+				// Create completed session object
+				const endTime = new Date();
+				let completionType: "completed" | "premature" | "overtime" =
+					"completed";
+
+				// Determine completion type for planned sessions
+				if (sessionRef.current.duration && sessionRef.current.expectedEndTime) {
+					const expectedEnd = sessionRef.current.expectedEndTime.getTime();
+					const actualEnd = endTime.getTime();
+					const timeDiff = actualEnd - expectedEnd;
+					const toleranceMs = 60000; // 1 minute tolerance
+
+					if (timeDiff < -toleranceMs) {
+						completionType = "premature";
+					} else if (timeDiff > toleranceMs) {
+						completionType = "overtime";
+					} else {
+						completionType = "completed";
+					}
+				}
+
+				const completedSession = {
+					...sessionRef.current,
+					status: "completed" as const,
+					endTime: endTime,
+					elapsedTime: newElapsed,
+					completionType,
+				};
+
+				onSessionCompleteRef.current(completedSession);
+			}
+		}, 1000);
+	}, []);
+
 	// Start timer immediately when component mounts (if not paused)
 	useEffect(() => {
 		if (!isPaused && !hasInitializedRef.current) {
-			// Clear any existing timer first
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-
-			// Start a new timer that updates every second
-			timerRef.current = setInterval(() => {
-				const now = Date.now();
-				const newElapsed = Math.floor(
-					(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-				);
-
-				setElapsedTime(newElapsed);
-
-				// For planned sessions, check if time is up
-				if (
-					sessionRef.current.duration &&
-					newElapsed >= sessionRef.current.duration * 60
-				) {
-					// Clear timer
-					if (timerRef.current) {
-						clearInterval(timerRef.current);
-						timerRef.current = null;
-					}
-
-					// Play completion sound (if available)
-					try {
-						// Create a simple beep sound using Web Audio API
-						const audioContext = new (window.AudioContext ||
-							(window as any).webkitAudioContext)();
-						const oscillator = audioContext.createOscillator();
-						const gainNode = audioContext.createGain();
-
-						oscillator.connect(gainNode);
-						gainNode.connect(audioContext.destination);
-
-						oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-						gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-						gainNode.gain.exponentialRampToValueAtTime(
-							0.01,
-							audioContext.currentTime + 0.5
-						);
-
-						oscillator.start(audioContext.currentTime);
-						oscillator.stop(audioContext.currentTime + 0.5);
-					} catch (error) {
-						// Fallback if audio is not supported
-						console.log("Session completed!");
-					}
-
-					// Create completed session object
-					const completedSession = {
-						...sessionRef.current,
-						status: "completed" as const,
-						endTime: new Date(),
-						elapsedTime: newElapsed,
-					};
-
-					onSessionCompleteRef.current(completedSession);
-				}
-			}, 1000);
-
+			startTimer();
 			hasInitializedRef.current = true;
 		}
-	}, [isPaused]); // Only depend on isPaused
+	}, [isPaused, startTimer]);
 
 	// Handle timer start/stop based on pause state
 	useEffect(() => {
@@ -148,68 +151,7 @@ export default function ActiveSession({
 			}
 		} else if (hasInitializedRef.current) {
 			// Start timer when resumed (only if already initialized)
-			// Clear any existing timer first
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-
-			// Start a new timer that updates every second
-			timerRef.current = setInterval(() => {
-				const now = Date.now();
-				const newElapsed = Math.floor(
-					(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-				);
-
-				setElapsedTime(newElapsed);
-
-				// For planned sessions, check if time is up
-				if (
-					sessionRef.current.duration &&
-					newElapsed >= sessionRef.current.duration * 60
-				) {
-					// Clear timer
-					if (timerRef.current) {
-						clearInterval(timerRef.current);
-						timerRef.current = null;
-					}
-
-					// Play completion sound (if available)
-					try {
-						// Create a simple beep sound using Web Audio API
-						const audioContext = new (window.AudioContext ||
-							(window as any).webkitAudioContext)();
-						const oscillator = audioContext.createOscillator();
-						const gainNode = audioContext.createGain();
-
-						oscillator.connect(gainNode);
-						gainNode.connect(audioContext.destination);
-
-						oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-						gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-						gainNode.gain.exponentialRampToValueAtTime(
-							0.01,
-							audioContext.currentTime + 0.5
-						);
-
-						oscillator.start(audioContext.currentTime);
-						oscillator.stop(audioContext.currentTime + 0.5);
-					} catch (error) {
-						// Fallback if audio is not supported
-						console.log("Session completed!");
-					}
-
-					// Create completed session object
-					const completedSession = {
-						...sessionRef.current,
-						status: "completed" as const,
-						endTime: new Date(),
-						elapsedTime: newElapsed,
-					};
-
-					onSessionCompleteRef.current(completedSession);
-				}
-			}, 1000);
+			startTimer();
 		}
 	}, [isPaused]); // Only depend on isPaused
 
@@ -361,37 +303,35 @@ export default function ActiveSession({
 				timerRef.current = null;
 			}
 
-			// Play completion sound (if available)
-			try {
-				// Create a simple beep sound using Web Audio API
-				const audioContext = new (window.AudioContext ||
-					(window as any).webkitAudioContext)();
-				const oscillator = audioContext.createOscillator();
-				const gainNode = audioContext.createGain();
-
-				oscillator.connect(gainNode);
-				gainNode.connect(audioContext.destination);
-
-				oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-				gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-				gainNode.gain.exponentialRampToValueAtTime(
-					0.01,
-					audioContext.currentTime + 0.5
-				);
-
-				oscillator.start(audioContext.currentTime);
-				oscillator.stop(audioContext.currentTime + 0.5);
-			} catch (error) {
-				// Fallback if audio is not supported
-				console.log("Session completed!");
-			}
+			// Play completion sound
+			playSound(800, 0.3, 0.5);
 
 			// Create completed session object
+			const endTime = new Date();
+			let completionType: "completed" | "premature" | "overtime" = "completed";
+
+			// Determine completion type for planned sessions
+			if (session.duration && session.expectedEndTime) {
+				const expectedEnd = session.expectedEndTime.getTime();
+				const actualEnd = endTime.getTime();
+				const timeDiff = actualEnd - expectedEnd;
+				const toleranceMs = 60000; // 1 minute tolerance
+
+				if (timeDiff < -toleranceMs) {
+					completionType = "premature";
+				} else if (timeDiff > toleranceMs) {
+					completionType = "overtime";
+				} else {
+					completionType = "completed";
+				}
+			}
+
 			const completedSession = {
 				...session,
 				status: "completed" as const,
-				endTime: new Date(),
+				endTime: endTime,
 				elapsedTime,
+				completionType,
 			};
 
 			onSessionComplete(completedSession);
@@ -416,6 +356,12 @@ export default function ActiveSession({
 	const progressPercentage = getProgressPercentage();
 	const isPlannedSession = session.sessionType === "planned";
 
+	// Helper function to truncate extremely long goals for display
+	const truncateGoal = (goal: string, maxLength: number = 100) => {
+		if (goal.length <= maxLength) return goal;
+		return goal.substring(0, maxLength) + "...";
+	};
+
 	return (
 		<>
 			{/* Toast Notification */}
@@ -432,7 +378,16 @@ export default function ActiveSession({
 			<div className="card max-w-xl w-full bg-transparent p-6 gap-6">
 				{/* Session Header */}
 				<div className="flex flex-col text-center">
-					<h1 className="font-semibold text-lg">{session.goal}</h1>
+					<h1
+						className="font-semibold text-lg break-words"
+						style={{
+							wordWrap: "break-word",
+							overflowWrap: "break-word",
+							whiteSpace: "pre-wrap",
+						}}
+					>
+						{truncateGoal(session.goal, 80)}
+					</h1>
 					<p className="text-base-content/70 text-sm">
 						{isPlannedSession
 							? "Time-boxed focus session"
@@ -489,16 +444,22 @@ export default function ActiveSession({
 
 				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-6">
 					{/* Goal */}
-					<div className="flex items-start gap-2">
+					<div className="flex flex-1 items-start gap-2">
 						<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex-1">
-							<span className="text-base-content/70 block mb-1">Goal:</span>
-							<span className="text-base-content font-medium leading-relaxed">
-								{session.goal || "No goal set"}
+						<div className="flex-1 flex flex-col gap-1">
+							<span className="text-base-content/70 text-sm">Goal:</span>
+							<span
+								className="text-base-content font-medium leading-relaxed break-words"
+								style={{
+									wordWrap: "break-word",
+									overflowWrap: "break-word",
+									whiteSpace: "pre-wrap",
+								}}
+							>
+								{truncateGoal(session.goal, 120) || "No goal set"}
 							</span>
 						</div>
 					</div>
-					<div className="divider my-1"></div>
 
 					{/* Started time */}
 					<div className="flex align-middle items-center gap-2">
@@ -535,7 +496,7 @@ export default function ActiveSession({
 								{session.tags.map((tag, index) => (
 									<span
 										key={index}
-										className="badge rounded-sm badge-secondary badge-sm"
+										className="badge rounded-sm badge-neutral badge-sm"
 									>
 										#{tag}
 									</span>
@@ -558,6 +519,8 @@ export default function ActiveSession({
 							isHoldingComplete ? "btn-neutral" : "btn-ghost"
 						}`}
 						title="End and complete this session (hold for 1.5s to confirm)"
+						aria-label="Complete session (hold for 1.5 seconds to confirm)"
+						aria-describedby="complete-button-description"
 					>
 						{/* Progress bar overlay */}
 						{isHoldingComplete && (
@@ -578,6 +541,8 @@ export default function ActiveSession({
 								? "Resume the focus session (Space key)"
 								: "Pause the focus session (Space key)"
 						}
+						aria-label={isPaused ? "Resume session" : "Pause session"}
+						aria-describedby="pause-button-description"
 					>
 						{isPaused ? (
 							<Play className="size-5" />
@@ -585,6 +550,19 @@ export default function ActiveSession({
 							<Pause className="size-5" />
 						)}
 					</button>
+				</div>
+
+				{/* Accessibility descriptions */}
+				<div className="sr-only">
+					<div id="complete-button-description">
+						Hold this button for 1.5 seconds to complete and end the current
+						focus session.
+					</div>
+					<div id="pause-button-description">
+						{isPaused
+							? "Click to resume the paused focus session. You can also press the Space key."
+							: "Click to pause the active focus session. You can also press the Space key."}
+					</div>
 				</div>
 
 				{/* Keyboard Shortcuts Hint */}
