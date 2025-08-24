@@ -82,10 +82,7 @@ export default function SessionCard() {
 		return (
 			<div className="flex flex-wrap gap-2 mt-2">
 				{tagArray.map((tag, index) => (
-					<span
-						key={index}
-						className="badge rounded-sm badge-secondary badge-sm"
-					>
+					<span key={index} className="badge rounded-sm badge-neutral badge-sm">
 						#{tag}
 					</span>
 				))}
@@ -246,7 +243,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card bg-base-100 max-w-xl w-full border-base-100 border p-6 gap-8">
+		<div className="card bg-base-100 max-w-xl w-full border-base-300 border p-6 gap-8">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
@@ -407,7 +404,7 @@ export default function SessionCard() {
 									step="1"
 									value={focusLevel}
 									onChange={handleFocusLevelChange}
-									className="range range-xs dark:range-secondary light:range-neutral w-full"
+									className="range range-xs w-full"
 								/>
 
 								<div className="flex justify-between text-xs text-base-content/60">
