@@ -27,7 +27,8 @@ export default function SessionCard() {
 	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
 
 	// Session management
-	const { currentSession, isActive, startSession } = useSession();
+	const { currentSession, isActive, startSession, updateDeepWorkQuality } =
+		useSession();
 
 	const placeholders = [
 		"Complete the project proposal...",
@@ -148,6 +149,17 @@ export default function SessionCard() {
 		setCompletedSession(session);
 	};
 
+	const handleQualityUpdate = (sessionId: string, quality: number) => {
+		updateDeepWorkQuality(sessionId, quality);
+		// Update the completed session with the new quality rating
+		if (completedSession && completedSession.id === sessionId) {
+			setCompletedSession({
+				...completedSession,
+				deepWorkQuality: quality,
+			});
+		}
+	};
+
 	const handleSessionStop = () => {
 		// Reset form for next session
 		resetForm();
@@ -229,7 +241,12 @@ export default function SessionCard() {
 
 	// If there's a completed session, show the completion component
 	if (completedSession) {
-		return <SessionCompletion session={completedSession} />;
+		return (
+			<SessionCompletion
+				session={completedSession}
+				onUpdateQuality={handleQualityUpdate}
+			/>
+		);
 	}
 
 	// If there's an active session, show the active session component
