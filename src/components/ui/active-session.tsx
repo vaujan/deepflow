@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Pause, Play, Check, Clock, Target, Hash } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Pause, Play, Clock, Hash, Goal, Square, Target } from "lucide-react";
 import { Session } from "../../hooks/useSession";
 import Toast from "./toast";
 
@@ -22,17 +22,24 @@ export default function ActiveSession({
 		type: "success" | "info" | "warning" | "error";
 		isVisible: boolean;
 	} | null>(null);
+	// Hold-to-confirm state for complete button
+	const [isHoldingComplete, setIsHoldingComplete] = useState(false);
+	const [holdProgress, setHoldProgress] = useState(0);
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
-	const startTimeRef = useRef<number>(Date.now());
+	const startTimeRef = useRef<number>(session.startTime.getTime());
 	const pauseTimeRef = useRef<number | null>(null);
 	const totalPausedTimeRef = useRef(0);
+	// Hold-to-confirm refs for complete button
+	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
 
-	// Start timer when component mounts
+	// Hold duration constants for complete button
+	const HOLD_DURATION = 1500; // 1.5 seconds in milliseconds
+	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
+
+	// Handle tab visibility changes
 	useEffect(() => {
-		startTimer();
-
-		// Handle tab visibility changes
 		const handleVisibilityChange = () => {
 			if (!document.hidden && !isPaused) {
 				// Tab became visible, update timer immediately
@@ -47,91 +54,12 @@ export default function ActiveSession({
 		document.addEventListener("visibilitychange", handleVisibilityChange);
 
 		return () => {
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-			}
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 		};
 	}, [isPaused]);
 
-	// Keyboard shortcuts
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.code === "Space" && !e.repeat) {
-				e.preventDefault();
-				handlePauseResume();
-			}
-		};
-
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, []);
-
-	const startTimer = () => {
-		timerRef.current = setInterval(() => {
-			const now = Date.now();
-			const newElapsed = Math.floor(
-				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-			);
-
-			setElapsedTime(newElapsed);
-
-			// For planned sessions, check if time is up
-			if (session.duration && newElapsed >= session.duration * 60) {
-				handleSessionComplete();
-			}
-		}, 1000);
-	};
-
-	const handlePauseResume = () => {
-		if (isPaused) {
-			resumeSession();
-		} else {
-			pauseSession();
-		}
-	};
-
-	const pauseSession = () => {
-		setIsPaused(true);
-		pauseTimeRef.current = Date.now();
-
-		// Play pause sound
-		playSound(400, 0.2, 0.3);
-
-		// Show toast notification
-		setToast({
-			message: "Session paused",
-			type: "warning",
-			isVisible: true,
-		});
-
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-	};
-
-	const resumeSession = () => {
-		setIsPaused(false);
-		if (pauseTimeRef.current) {
-			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
-			pauseTimeRef.current = null;
-		}
-
-		// Play resume sound
-		playSound(600, 0.2, 0.3);
-
-		// Show toast notification
-		setToast({
-			message: "Session resumed",
-			type: "info",
-			isVisible: true,
-		});
-
-		startTimer();
-	};
-
-	const handleSessionComplete = () => {
+	// Define all functions before using them in useEffect
+	const handleSessionComplete = useCallback(() => {
 		if (timerRef.current) {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
@@ -171,6 +99,104 @@ export default function ActiveSession({
 		};
 
 		onSessionComplete(completedSession);
+	}, [session, elapsedTime, onSessionComplete]);
+
+	const startTimer = useCallback(() => {
+		// Clear any existing timer first
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+			timerRef.current = null;
+		}
+
+		// Start a new timer that updates every second
+		timerRef.current = setInterval(() => {
+			const now = Date.now();
+			const newElapsed = Math.floor(
+				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+			);
+
+			setElapsedTime(newElapsed);
+
+			// For planned sessions, check if time is up
+			if (session.duration && newElapsed >= session.duration * 60) {
+				handleSessionComplete();
+			}
+		}, 1000);
+	}, [handleSessionComplete]);
+
+	// Handle timer start/stop based on pause state and initial start
+	useEffect(() => {
+		if (isPaused) {
+			// Clear timer when paused
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+		} else {
+			// Start timer when resumed or initially
+			startTimer();
+		}
+	}, [isPaused, startTimer]);
+
+	// Cleanup timers on unmount
+	useEffect(() => {
+		return () => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+			}
+			// Cleanup hold timers
+			if (holdTimerRef.current) {
+				clearTimeout(holdTimerRef.current);
+			}
+			if (holdProgressRef.current) {
+				clearInterval(holdProgressRef.current);
+			}
+		};
+	}, []);
+
+	const handlePauseResume = useCallback(() => {
+		if (isPaused) {
+			resumeSession();
+		} else {
+			pauseSession();
+		}
+	}, [isPaused]);
+
+	const pauseSession = () => {
+		setIsPaused(true);
+		pauseTimeRef.current = Date.now();
+
+		// Play pause sound
+		playSound(400, 0.2, 0.3);
+
+		// Show toast notification
+		setToast({
+			message: "Session paused",
+			type: "warning",
+			isVisible: true,
+		});
+
+		// Timer will be cleared by the useEffect
+	};
+
+	const resumeSession = () => {
+		setIsPaused(false);
+		if (pauseTimeRef.current) {
+			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
+			pauseTimeRef.current = null;
+		}
+
+		// Play resume sound
+		playSound(600, 0.2, 0.3);
+
+		// Show toast notification
+		setToast({
+			message: "Session resumed",
+			type: "info",
+			isVisible: true,
+		});
+
+		// Timer will be started by the useEffect
 	};
 
 	// Calculate remaining time for planned sessions
@@ -179,6 +205,19 @@ export default function ActiveSession({
 			setRemainingTime(Math.max(0, session.duration * 60 - elapsedTime));
 		}
 	}, [elapsedTime, session.duration, isPaused]);
+
+	// Keyboard shortcuts
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.code === "Space" && !e.repeat) {
+				e.preventDefault();
+				handlePauseResume();
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [handlePauseResume]);
 
 	// Format time helpers
 	const formatTime = (seconds: number) => {
@@ -225,6 +264,41 @@ export default function ActiveSession({
 		}
 	};
 
+	// Hold-to-confirm handlers for complete button
+	const handleCompleteMouseDown = () => {
+		setIsHoldingComplete(true);
+		setHoldProgress(0);
+
+		// Start progress bar animation
+		holdProgressRef.current = setInterval(() => {
+			setHoldProgress((prev) => {
+				const newProgress =
+					prev + (PROGRESS_UPDATE_INTERVAL / HOLD_DURATION) * 100;
+				return Math.min(newProgress, 100);
+			});
+		}, PROGRESS_UPDATE_INTERVAL);
+
+		// Start hold timer
+		holdTimerRef.current = setTimeout(() => {
+			handleSessionComplete();
+			setIsHoldingComplete(false);
+			setHoldProgress(0);
+		}, HOLD_DURATION);
+	};
+
+	const handleCompleteMouseUp = () => {
+		if (holdTimerRef.current) {
+			clearTimeout(holdTimerRef.current);
+			holdTimerRef.current = null;
+		}
+		if (holdProgressRef.current) {
+			clearInterval(holdProgressRef.current);
+			holdProgressRef.current = null;
+		}
+		setIsHoldingComplete(false);
+		setHoldProgress(0);
+	};
+
 	const progressPercentage = getProgressPercentage();
 	const isPlannedSession = session.sessionType === "planned";
 
@@ -244,7 +318,7 @@ export default function ActiveSession({
 			<div className="card max-w-xl w-full bg-transparent p-6 gap-6">
 				{/* Session Header */}
 				<div className="flex flex-col text-center">
-					<h1 className="font-semibold text-lg">Active Session</h1>
+					<h1 className="font-semibold text-lg">{session.goal}</h1>
 					<p className="text-base-content/70 text-sm">
 						{isPlannedSession
 							? "Time-boxed focus session"
@@ -356,6 +430,18 @@ export default function ActiveSession({
 				{/* Session Info */}
 
 				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-4">
+					{/* Goal */}
+					<div className="flex items-start gap-2">
+						<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+						<div className="flex-1">
+							<span className="text-base-content/70 block mb-1">Goal:</span>
+							<span className="text-base-content font-medium leading-relaxed">
+								{session.goal || "No goal set"}
+							</span>
+						</div>
+					</div>
+					<div className="divider my-1"></div>
+
 					{/* Started time */}
 					<div className="flex align-middle items-center gap-2">
 						<Clock className="size-4 text-base-content/50" />
@@ -363,18 +449,24 @@ export default function ActiveSession({
 						<span>{session.startTime.toLocaleTimeString()}</span>
 					</div>
 
-					{/* Focus level */}
+					{/* End time */}
 					<div className="flex align-middle items-center gap-2">
 						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Started:</span>
-						<span>{session.startTime.toLocaleTimeString()}</span>
+						<span className="text-base-content/70">Ends at:</span>
+						<span>
+							{isPlannedSession && session.duration
+								? new Date(
+										session.startTime.getTime() + session.duration * 60 * 1000
+								  ).toLocaleTimeString()
+								: "-"}
+						</span>
 					</div>
 
-					<div className="flex items-center gap-2">
-						<div className="badge badge-ghost badge-primary">
-							{session.focusLevel}
-						</div>
+					{/* Focus level */}
+					<div className="flex align-middle items-center gap-2">
+						<Target className="size-4 text-base-content/50" />
 						<span className="text-base-content/70">Focus Level</span>
+						<span>{session.focusLevel}</span>
 					</div>
 
 					{/* Tags */}
@@ -397,12 +489,36 @@ export default function ActiveSession({
 
 				{/* Session Controls */}
 				<div className="flex gap-3 w-full">
+					{/* Complete Button */}
+					<button
+						onMouseDown={handleCompleteMouseDown}
+						onMouseUp={handleCompleteMouseUp}
+						onMouseLeave={handleCompleteMouseUp}
+						onTouchStart={handleCompleteMouseDown}
+						onTouchEnd={handleCompleteMouseUp}
+						className={`btn btn-lg relative overflow-hidden ${
+							isHoldingComplete ? "btn-neutral" : "btn-ghost"
+						}`}
+						title="End and complete this session (hold for 1.5s to confirm)"
+					>
+						{/* Progress bar overlay */}
+						{isHoldingComplete && (
+							<div
+								className="absolute inset-0 bg-primary/20 transition-all duration-75 ease-out"
+								style={{ width: `${holdProgress}%` }}
+							/>
+						)}
+						<Square className="size-5 relative z-10" />
+					</button>
+
 					{/* Pause/Resume Button */}
 					<button
 						onClick={handlePauseResume}
 						className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
 						title={
-							isPaused ? "Resume session (Space)" : "Pause session (Space)"
+							isPaused
+								? "Resume the focus session (Space key)"
+								: "Pause the focus session (Space key)"
 						}
 					>
 						{isPaused ? (
@@ -411,24 +527,16 @@ export default function ActiveSession({
 							<Pause className="size-5" />
 						)}
 					</button>
-
-					{/* Complete Button */}
-					<button
-						onClick={handleSessionComplete}
-						className="btn btn-lg btn-success flex-1"
-						title="Complete session"
-					>
-						<Check className="size-5" />
-					</button>
 				</div>
 
 				{/* Keyboard Shortcuts Hint */}
-				<div className="text-center text-xs text-base-content/50">
+				{/* <div className="text-center text-xs text-base-content/50">
 					<p>Space: Pause/Resume</p>
-				</div>
+					<p>Hold Complete button for 1.5s to confirm</p>
+				</div> */}
 
 				{/* Session Status */}
-				<div className="text-center">
+				{/* <div className="text-center">
 					<div
 						className={`badge badge-lg ${
 							isPaused ? "badge-warning" : "badge-success"
@@ -436,7 +544,7 @@ export default function ActiveSession({
 					>
 						{isPaused ? "PAUSED" : "ACTIVE"}
 					</div>
-				</div>
+				</div> */}
 			</div>
 		</>
 	);
