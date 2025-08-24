@@ -65,7 +65,7 @@ export default function Sidebar() {
 					className="drawer-overlay"
 				></label>
 
-				<div className="bg-base-200 text-base-content min-h-full w-80 flex flex-col">
+				<div className="bg-base-200 text-base-content min-h-full w-74 flex flex-col">
 					{/* Navigation Menu */}
 					<nav className="flex-1 p-2">
 						<ul className="menu space-y-2  h-full w-full ">
@@ -180,7 +180,7 @@ export default function Sidebar() {
 						</ul>
 
 						{/* Profile bottom */}
-						<div className="transition-all hover:bg-base-100 rounded-box w-full items-center px-4 py-4 border-1 border-base-200 flex gap-3 relative">
+						<div className="transition-all group hover:bg-base-100 rounded-box w-full items-center px-4 py-4 border-1 border-base-200 flex gap-3 relative">
 							<div className="avatar avatar-online">
 								<div className="w-10 rounded-full">
 									<img src="https://img.daisyui.com/images/profile/demo/gordon@192.webp" />
@@ -192,7 +192,7 @@ export default function Sidebar() {
 								</span>
 								<p className="text-base-content/50">buildfrombed@gmail.com</p>
 							</div>
-							<button className="btn btn-sm btn-square btn-ghost  absolute right-2">
+							<button className="btn z-1 btn-sm btn-square invisible group-hover:visible btn-ghost  absolute right-2">
 								<LogOut className="w-4 h-4" />
 							</button>
 						</div>
