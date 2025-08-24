@@ -261,9 +261,16 @@ export default function SessionCard() {
 						value={goal}
 						onChange={handleGoalChange}
 						onKeyDown={handleKeyDown}
+						maxLength={200}
 						className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
 							!isGoalValid && goal.length > 0 ? "textarea-error" : ""
-						}`}
+						} ${goal.length >= 200 ? "border-warning" : ""}`}
+						style={{
+							wordWrap: "break-word",
+							overflowWrap: "break-word",
+							whiteSpace: "pre-wrap",
+							lineHeight: "1.5",
+						}}
 						required
 					/>
 					{!goal && (
@@ -293,8 +300,18 @@ export default function SessionCard() {
 					</p>
 				)}
 				{goal.trim().length > 0 && (
-					<div className="flex justify-start items-center text-xs text-base-content/60">
-						<span>{goal.length}/200 characters</span>
+					<div className="flex justify-start items-center text-xs">
+						<span
+							className={`${
+								goal.length >= 180
+									? goal.length >= 200
+										? "text-error"
+										: "text-warning"
+									: "text-base-content/60"
+							}`}
+						>
+							{goal.length}/200 characters
+						</span>
 					</div>
 				)}
 			</div>
