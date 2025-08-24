@@ -246,7 +246,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card max-w-xl w-full border-base-100 border p-6 gap-8">
+		<div className="card bg-base-100 max-w-xl w-full border-base-100 border p-6 gap-8">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
@@ -314,7 +314,7 @@ export default function SessionCard() {
 					<Clock className="size-4 me-2" />
 					Planned Session
 				</label>
-				<div className="tab-content rounded-box bg-base-100 p-6">
+				<div className="tab-content rounded-box bg-base-200 p-6">
 					{/* Planned Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
@@ -356,7 +356,7 @@ export default function SessionCard() {
 					<Timer className="size-4 me-2" />
 					Open Session
 				</label>
-				<div className="tab-content rounded-box bg-base-100 p-6">
+				<div className="tab-content rounded-box bg-base-200 p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
@@ -365,7 +365,7 @@ export default function SessionCard() {
 								No time limit
 							</span>
 						</div>
-						<div className="bg-base-200 p-3 rounded-box text-center">
+						<div className="bg-base-300 p-3 rounded-box text-center">
 							<p className="text-sm text-base-content/70">
 								Start when ready, end when you naturally done
 							</p>
@@ -407,7 +407,7 @@ export default function SessionCard() {
 									step="1"
 									value={focusLevel}
 									onChange={handleFocusLevelChange}
-									className="range range-xs range-secondary w-full"
+									className="range range-xs dark:range-secondary light:range-neutral w-full"
 								/>
 
 								<div className="flex justify-between text-xs text-base-content/60">

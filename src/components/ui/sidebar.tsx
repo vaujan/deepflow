@@ -3,25 +3,19 @@
 import React from "react";
 import {
 	Home,
-	User,
-	Briefcase,
-	FileText,
 	Mail,
-	Code2,
-	GraduationCap,
-	Globe,
-	Menu,
 	Search,
-	Settings,
-	BadgeInfo,
-	Kanban,
 	Lightbulb,
 	ChevronLeft,
 	ChevronRight,
 	X,
+	TestTube2,
+	Sun,
+	Moon,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface SidebarItem {
 	label: string;
@@ -30,8 +24,8 @@ interface SidebarItem {
 }
 
 const navigationItems: SidebarItem[] = [
-	{ label: "Home", href: "/home", icon: Home },
-	{ label: "Placeholder", href: "/", icon: Kanban },
+	{ label: "Home", href: "/", icon: Home },
+	{ label: "Test Page", href: "/test", icon: TestTube2 },
 	// { label: "About", href: "/about", icon: User },
 	// { label: "Experience", href: "/experience", icon: Briefcase },
 	// { label: "Projects", href: "/projects", icon: Code2 },
@@ -52,6 +46,8 @@ export default function Sidebar() {
 		showTipsCardHandler,
 		totalTips,
 	} = useTips(deepWorkTips, 60000); // 60000ms = 1 minute
+
+	const { theme, toggleTheme } = useTheme();
 
 	return (
 		<div className="lg:drawer-open">
@@ -176,6 +172,24 @@ export default function Sidebar() {
 									<Mail className="w-4 h-4 text-base-content/50" />
 									<span>Feedback</span>
 								</a>
+							</li>
+
+							{/* Theme Toggle */}
+							<li>
+								<button
+									onClick={toggleTheme}
+									className="gap-3 transition-colors duration-200 hover:bg-base-100"
+									title={`Switch to ${
+										theme === "dark" ? "light" : "dark"
+									} theme`}
+								>
+									{theme === "dark" ? (
+										<Sun className="w-4 h-4 text-base-content/50" />
+									) : (
+										<Moon className="w-4 h-4 text-base-content/50" />
+									)}
+									<span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+								</button>
 							</li>
 						</ul>
 
