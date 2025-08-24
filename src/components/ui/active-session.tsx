@@ -33,10 +33,20 @@ export default function ActiveSession({
 	// Hold-to-confirm refs for complete button
 	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
+	// Refs to access current values in timer
+	const sessionRef = useRef(session);
+	const onSessionCompleteRef = useRef(onSessionComplete);
+	const hasInitializedRef = useRef(false);
 
 	// Hold duration constants for complete button
 	const HOLD_DURATION = 1500; // 1.5 seconds in milliseconds
 	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
+
+	// Update refs when props change
+	useEffect(() => {
+		sessionRef.current = session;
+		onSessionCompleteRef.current = onSessionComplete;
+	}, [session, onSessionComplete]);
 
 	// Handle tab visibility changes
 	useEffect(() => {
@@ -58,73 +68,77 @@ export default function ActiveSession({
 		};
 	}, [isPaused]);
 
-	// Define all functions before using them in useEffect
-	const handleSessionComplete = useCallback(() => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-
-		// Play completion sound (if available)
-		try {
-			// Create a simple beep sound using Web Audio API
-			const audioContext = new (window.AudioContext ||
-				(window as any).webkitAudioContext)();
-			const oscillator = audioContext.createOscillator();
-			const gainNode = audioContext.createGain();
-
-			oscillator.connect(gainNode);
-			gainNode.connect(audioContext.destination);
-
-			oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-			gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-			gainNode.gain.exponentialRampToValueAtTime(
-				0.01,
-				audioContext.currentTime + 0.5
-			);
-
-			oscillator.start(audioContext.currentTime);
-			oscillator.stop(audioContext.currentTime + 0.5);
-		} catch (error) {
-			// Fallback if audio is not supported
-			console.log("Session completed!");
-		}
-
-		// Create completed session object
-		const completedSession = {
-			...session,
-			status: "completed" as const,
-			endTime: new Date(),
-			elapsedTime,
-		};
-
-		onSessionComplete(completedSession);
-	}, [session, elapsedTime, onSessionComplete]);
-
-	const startTimer = useCallback(() => {
-		// Clear any existing timer first
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-
-		// Start a new timer that updates every second
-		timerRef.current = setInterval(() => {
-			const now = Date.now();
-			const newElapsed = Math.floor(
-				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-			);
-
-			setElapsedTime(newElapsed);
-
-			// For planned sessions, check if time is up
-			if (session.duration && newElapsed >= session.duration * 60) {
-				handleSessionComplete();
+	// Start timer immediately when component mounts (if not paused)
+	useEffect(() => {
+		if (!isPaused && !hasInitializedRef.current) {
+			// Clear any existing timer first
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
 			}
-		}, 1000);
-	}, [handleSessionComplete]);
 
-	// Handle timer start/stop based on pause state and initial start
+			// Start a new timer that updates every second
+			timerRef.current = setInterval(() => {
+				const now = Date.now();
+				const newElapsed = Math.floor(
+					(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+				);
+
+				setElapsedTime(newElapsed);
+
+				// For planned sessions, check if time is up
+				if (
+					sessionRef.current.duration &&
+					newElapsed >= sessionRef.current.duration * 60
+				) {
+					// Clear timer
+					if (timerRef.current) {
+						clearInterval(timerRef.current);
+						timerRef.current = null;
+					}
+
+					// Play completion sound (if available)
+					try {
+						// Create a simple beep sound using Web Audio API
+						const audioContext = new (window.AudioContext ||
+							(window as any).webkitAudioContext)();
+						const oscillator = audioContext.createOscillator();
+						const gainNode = audioContext.createGain();
+
+						oscillator.connect(gainNode);
+						gainNode.connect(audioContext.destination);
+
+						oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+						gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+						gainNode.gain.exponentialRampToValueAtTime(
+							0.01,
+							audioContext.currentTime + 0.5
+						);
+
+						oscillator.start(audioContext.currentTime);
+						oscillator.stop(audioContext.currentTime + 0.5);
+					} catch (error) {
+						// Fallback if audio is not supported
+						console.log("Session completed!");
+					}
+
+					// Create completed session object
+					const completedSession = {
+						...sessionRef.current,
+						status: "completed" as const,
+						endTime: new Date(),
+						elapsedTime: newElapsed,
+					};
+
+					onSessionCompleteRef.current(completedSession);
+				}
+			}, 1000);
+
+			hasInitializedRef.current = true;
+		}
+	}, [isPaused]); // Only depend on isPaused
+
+	// Handle timer start/stop based on pause state
 	useEffect(() => {
 		if (isPaused) {
 			// Clear timer when paused
@@ -132,11 +146,72 @@ export default function ActiveSession({
 				clearInterval(timerRef.current);
 				timerRef.current = null;
 			}
-		} else {
-			// Start timer when resumed or initially
-			startTimer();
+		} else if (hasInitializedRef.current) {
+			// Start timer when resumed (only if already initialized)
+			// Clear any existing timer first
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+
+			// Start a new timer that updates every second
+			timerRef.current = setInterval(() => {
+				const now = Date.now();
+				const newElapsed = Math.floor(
+					(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
+				);
+
+				setElapsedTime(newElapsed);
+
+				// For planned sessions, check if time is up
+				if (
+					sessionRef.current.duration &&
+					newElapsed >= sessionRef.current.duration * 60
+				) {
+					// Clear timer
+					if (timerRef.current) {
+						clearInterval(timerRef.current);
+						timerRef.current = null;
+					}
+
+					// Play completion sound (if available)
+					try {
+						// Create a simple beep sound using Web Audio API
+						const audioContext = new (window.AudioContext ||
+							(window as any).webkitAudioContext)();
+						const oscillator = audioContext.createOscillator();
+						const gainNode = audioContext.createGain();
+
+						oscillator.connect(gainNode);
+						gainNode.connect(audioContext.destination);
+
+						oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+						gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+						gainNode.gain.exponentialRampToValueAtTime(
+							0.01,
+							audioContext.currentTime + 0.5
+						);
+
+						oscillator.start(audioContext.currentTime);
+						oscillator.stop(audioContext.currentTime + 0.5);
+					} catch (error) {
+						// Fallback if audio is not supported
+						console.log("Session completed!");
+					}
+
+					// Create completed session object
+					const completedSession = {
+						...sessionRef.current,
+						status: "completed" as const,
+						endTime: new Date(),
+						elapsedTime: newElapsed,
+					};
+
+					onSessionCompleteRef.current(completedSession);
+				}
+			}, 1000);
 		}
-	}, [isPaused, startTimer]);
+	}, [isPaused]); // Only depend on isPaused
 
 	// Cleanup timers on unmount
 	useEffect(() => {
@@ -280,7 +355,46 @@ export default function ActiveSession({
 
 		// Start hold timer
 		holdTimerRef.current = setTimeout(() => {
-			handleSessionComplete();
+			// Clear timer
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+
+			// Play completion sound (if available)
+			try {
+				// Create a simple beep sound using Web Audio API
+				const audioContext = new (window.AudioContext ||
+					(window as any).webkitAudioContext)();
+				const oscillator = audioContext.createOscillator();
+				const gainNode = audioContext.createGain();
+
+				oscillator.connect(gainNode);
+				gainNode.connect(audioContext.destination);
+
+				oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+				gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+				gainNode.gain.exponentialRampToValueAtTime(
+					0.01,
+					audioContext.currentTime + 0.5
+				);
+
+				oscillator.start(audioContext.currentTime);
+				oscillator.stop(audioContext.currentTime + 0.5);
+			} catch (error) {
+				// Fallback if audio is not supported
+				console.log("Session completed!");
+			}
+
+			// Create completed session object
+			const completedSession = {
+				...session,
+				status: "completed" as const,
+				endTime: new Date(),
+				elapsedTime,
+			};
+
+			onSessionComplete(completedSession);
 			setIsHoldingComplete(false);
 			setHoldProgress(0);
 		}, HOLD_DURATION);
@@ -330,46 +444,8 @@ export default function ActiveSession({
 				<div className="text-center bg-base-100 group flex flex-col rounded-box gap-8 p-8">
 					{isPlannedSession ? (
 						<div className="space-y-2">
-							<div className="countdown text-4xl font-bold text-base-content">
-								{remainingTime ? (
-									<>
-										<span
-											style={
-												{
-													"--value": Math.floor(remainingTime / 3600),
-												} as React.CSSProperties
-											}
-										></span>
-										:
-										<span
-											style={
-												{
-													"--value": Math.floor((remainingTime % 3600) / 60),
-												} as React.CSSProperties
-											}
-										></span>
-										:
-										<span
-											style={
-												{ "--value": remainingTime % 60 } as React.CSSProperties
-											}
-										></span>
-									</>
-								) : (
-									<>
-										<span
-											style={{ "--value": 0 } as React.CSSProperties}
-										></span>
-										:
-										<span
-											style={{ "--value": 0 } as React.CSSProperties}
-										></span>
-										:
-										<span
-											style={{ "--value": 0 } as React.CSSProperties}
-										></span>
-									</>
-								)}
+							<div className="text-4xl font-medium text-base-content font-mono">
+								{remainingTime ? formatTime(remainingTime) : "00:00"}
 							</div>
 							<p className="text-sm text-base-content/60">
 								{isPaused ? "Paused" : "Remaining"}
@@ -377,26 +453,8 @@ export default function ActiveSession({
 						</div>
 					) : (
 						<div className="space-y-2">
-							<div className="countdown text-4xl font-bold text-base-content">
-								<span
-									style={
-										{
-											"--value": Math.floor(elapsedTime / 3600),
-										} as React.CSSProperties
-									}
-								></span>
-								:
-								<span
-									style={
-										{
-											"--value": Math.floor((elapsedTime % 3600) / 60),
-										} as React.CSSProperties
-									}
-								></span>
-								:
-								<span
-									style={{ "--value": elapsedTime % 60 } as React.CSSProperties}
-								></span>
+							<div className="text-4xl font-medium text-base-content font-mono">
+								{formatTime(elapsedTime)}
 							</div>
 							<p className="text-sm text-base-content/60">
 								{isPaused ? "Paused" : "Elapsed time"}
@@ -429,7 +487,7 @@ export default function ActiveSession({
 
 				{/* Session Info */}
 
-				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-4">
+				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-6">
 					{/* Goal */}
 					<div className="flex items-start gap-2">
 						<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
