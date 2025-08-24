@@ -13,7 +13,7 @@ export default function Page() {
 			{/* Container */}
 			<main className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
 				<div className="flex w-full h-full flex-col">
-					<div className="max-w-8xl items-center justify-center h-full flex gap-6 w-full px-8 py-8">
+					<div className="max-w-8xl items-start justify-center h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
 						{/* <SessionTable /> */}
 					</div>
