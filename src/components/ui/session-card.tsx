@@ -232,12 +232,7 @@ export default function SessionCard() {
 
 	// If there's a completed session, show the completion component
 	if (completedSession) {
-		return (
-			<SessionCompletion
-				session={completedSession}
-				onStartNewSession={handleStartNewSession}
-			/>
-		);
+		return <SessionCompletion session={completedSession} />;
 	}
 
 	// If there's an active session, show the active session component
