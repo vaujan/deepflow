@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Pause, Play, Clock, Hash, Goal, Square, Target } from "lucide-react";
+import {
+	Pause,
+	Play,
+	Clock,
+	Hash,
+	Goal,
+	Square,
+	Target,
+	ChevronDown,
+	ChevronUp,
+	Eye,
+	EyeOff,
+} from "lucide-react";
 import { Session } from "../../hooks/useSession";
 import Toast from "./toast";
 
@@ -17,6 +29,8 @@ export default function ActiveSession({
 	const [remainingTime, setRemainingTime] = useState<number | null>(
 		session.duration ? session.duration * 60 : null
 	);
+	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
+	const [isTimeVisible, setIsTimeVisible] = useState(true);
 	const [toast, setToast] = useState<{
 		message: string;
 		type: "success" | "info" | "warning" | "error";
@@ -67,6 +81,11 @@ export default function ActiveSession({
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 		};
 	}, [isPaused]);
+
+	// Toggle time visibility
+	const toggleTimeVisibility = useCallback(() => {
+		setIsTimeVisible((prev) => !prev);
+	}, []);
 
 	// Timer logic function to avoid duplication
 	const startTimer = useCallback(() => {
@@ -230,11 +249,15 @@ export default function ActiveSession({
 				e.preventDefault();
 				handlePauseResume();
 			}
+			if (e.code === "KeyT" && !e.repeat) {
+				e.preventDefault();
+				toggleTimeVisibility();
+			}
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [handlePauseResume]);
+	}, [handlePauseResume, toggleTimeVisibility]);
 
 	// Format time helpers
 	const formatTime = (seconds: number) => {
@@ -362,6 +385,10 @@ export default function ActiveSession({
 		return goal.substring(0, maxLength) + "...";
 	};
 
+	const handleTimerClick = () => {
+		setIsTimerExpanded(!isTimerExpanded);
+	};
+
 	return (
 		<>
 			{/* Toast Notification */}
@@ -396,37 +423,66 @@ export default function ActiveSession({
 				</div>
 
 				{/* Timer Display */}
-				<div className="text-center bg-base-100 group flex flex-col rounded-box gap-8 p-8">
-					{isPlannedSession ? (
-						<div className="space-y-2">
-							<div className="text-4xl font-medium text-base-content font-mono">
-								{remainingTime ? formatTime(remainingTime) : "00:00"}
-							</div>
-							<p className="text-sm text-base-content/60">
-								{isPaused ? "Paused" : "Remaining"}
-							</p>
-						</div>
+				<div
+					className={`text-center border border-base-100 bg-base-100 z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer hover:bg-base-200 transition-all duration-300 ease-out transform ${
+						isTimerExpanded ? "bg-base-200" : "bg-base-100 scale-100"
+					}`}
+					onClick={handleTimerClick}
+					title="Click to show/hide session details"
+				>
+					{isTimeVisible ? (
+						<>
+							{isPlannedSession ? (
+								<div className="space-y-2">
+									<div className="text-4xl font-medium text-base-content font-mono">
+										{remainingTime ? formatTime(remainingTime) : "00:00"}
+									</div>
+									<p className="text-sm text-base-content/60">
+										{isPaused ? "Paused" : "Remaining"}
+									</p>
+								</div>
+							) : (
+								<div className="space-y-2">
+									<div className="text-4xl font-medium text-base-content font-mono">
+										{formatTime(elapsedTime)}
+									</div>
+									<p className="text-sm text-base-content/60">
+										{isPaused ? "Paused" : "Elapsed time"}
+									</p>
+								</div>
+							)}
+						</>
 					) : (
 						<div className="space-y-2">
-							<div className="text-4xl font-medium text-base-content font-mono">
-								{formatTime(elapsedTime)}
-							</div>
 							<p className="text-sm text-base-content/60">
-								{isPaused ? "Paused" : "Elapsed time"}
+								{isPaused ? "Paused" : "Deep work in progress"}
 							</p>
+							{/* Show progress bar for non-planned sessions when time is hidden */}
+							{!isPlannedSession && (
+								<div className="w-full">
+									<input
+										type="range"
+										className="range range-lg cursor-auto [--range-thumb:transparent] disabled w-full"
+										value={Math.min((elapsedTime / 3600) * 100, 100)} // Progress based on elapsed time (1 hour = 100%)
+										readOnly
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
 					{isPlannedSession && (
 						<div className="space-y-2">
-							<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
-								<span className="text-base-content/70 font-medium">
-									Progress
-								</span>
-								<span className="text-base-content font-medium">
-									{Math.round(progressPercentage)}%
-								</span>
-							</div>
+							{isTimeVisible && (
+								<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
+									<span className="text-base-content/70 font-medium">
+										Progress
+									</span>
+									<span className="text-base-content font-medium">
+										{Math.round(progressPercentage)}%
+									</span>
+								</div>
+							)}
 
 							<input
 								type="range"
@@ -436,13 +492,27 @@ export default function ActiveSession({
 							/>
 						</div>
 					)}
+
+					{/* Chevron indicator */}
+					<div className="flex invisible group-hover:visible justify-center">
+						{isTimerExpanded ? (
+							<ChevronUp className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+						) : (
+							<ChevronDown className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+						)}
+					</div>
 				</div>
 
 				{/* Progress Bar for Planned Sessions */}
 
 				{/* Session Info */}
-
-				<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-6">
+				<div
+					className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
+						isTimerExpanded
+							? "max-h-96 opacity-100 -mt-14 pt-14"
+							: "max-h-0 opacity-0 p-0 mt-0"
+					}`}
+				>
 					{/* Goal */}
 					<div className="flex flex-1 items-start gap-2">
 						<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
@@ -462,24 +532,28 @@ export default function ActiveSession({
 					</div>
 
 					{/* Started time */}
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Started:</span>
-						<span>{session.startTime.toLocaleTimeString()}</span>
-					</div>
+					{isTimeVisible && (
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Started:</span>
+							<span>{session.startTime.toLocaleTimeString()}</span>
+						</div>
+					)}
 
 					{/* End time */}
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Ends at:</span>
-						<span>
-							{isPlannedSession && session.duration
-								? new Date(
-										session.startTime.getTime() + session.duration * 60 * 1000
-								  ).toLocaleTimeString()
-								: "-"}
-						</span>
-					</div>
+					{isTimeVisible && (
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/50">Ends at:</span>
+							<span>
+								{isPlannedSession && session.duration
+									? new Date(
+											session.startTime.getTime() + session.duration * 60 * 1000
+									  ).toLocaleTimeString()
+									: "-"}
+							</span>
+						</div>
+					)}
 
 					{/* Focus level */}
 					<div className="flex align-middle items-center gap-2">
@@ -563,13 +637,17 @@ export default function ActiveSession({
 							? "Click to resume the paused focus session. You can also press the Space key."
 							: "Click to pause the active focus session. You can also press the Space key."}
 					</div>
+					<div id="time-visibility-description">
+						Toggle time display visibility. You can also press the T key.
+					</div>
 				</div>
 
 				{/* Keyboard Shortcuts Hint */}
-				{/* <div className="text-center text-xs text-base-content/50">
+				<div className="text-center w-full justify-center flex gap-4 text-xs text-base-content/50 space-y-1">
 					<p>Space: Pause/Resume</p>
-					<p>Hold Complete button for 1.5s to confirm</p>
-				</div> */}
+					<p>/</p>
+					<p>T: {isTimeVisible ? "Hide" : "Show"} Time</p>
+				</div>
 
 				{/* Session Status */}
 				{/* <div className="text-center">
