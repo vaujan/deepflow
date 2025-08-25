@@ -350,7 +350,7 @@ export default function SessionCard() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-box bg-secondary/20 text-secondary border-secondary/30">
+							<span className="badge rounded-box badge-outline bg-secondary/20">
 								Time-boxed
 							</span>
 						</div>
@@ -371,7 +371,7 @@ export default function SessionCard() {
 							</div>
 						</div>
 						<p className="text-xs text-base-content/60">
-							Session will automatically end after {formatTime(duration)} at
+							Session will automatically end after {formatTime(duration)} at{" "}
 							<span className="font-semibold">{getEndTime(duration)}</span>
 						</p>
 					</div>
@@ -392,7 +392,7 @@ export default function SessionCard() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
-							<span className="badge rounded-box bg-secondary/20 text-secondary border-secondary/30">
+							<span className="badge rounded-box badge-outline bg-secondary/20">
 								No time limit
 							</span>
 						</div>
