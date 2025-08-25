@@ -245,13 +245,13 @@ export default function SessionCompletion({
 					{/* Interactive Star Rating */}
 					<div className="flex flex-col items-center gap-3">
 						<div className="flex justify-center">
-							<div className="rating rating-lg">
+							<div className="rating">
 								{Array.from({ length: 10 }, (_, i) => (
 									<input
 										key={i + 1}
 										type="radio"
 										name={`rating-${session.id}`}
-										className="mask mask-star-2 bg-orange-400 cursor-pointer"
+										className="mask mask-star cursor-pointer"
 										checked={deepWorkQuality === i + 1}
 										onChange={() => handleQualityRating(i + 1)}
 										onMouseEnter={() => setHoverRating(i + 1)}
@@ -278,18 +278,13 @@ export default function SessionCompletion({
 						)}
 					</div>
 
-					<div className="text-center text-xs text-base-content/50">
-						<span className="text-warning">1</span> = Poor Focus •{" "}
-						<span className="text-warning">10</span> = Excellent Focus
-					</div>
-
 					{/* Current Rating Display */}
 					{hasRated && (
 						<div className="text-center pt-2 border-t border-base-300">
-							<p className="text-sm text-base-content/70">
+							<p className="text-xs text-base-content/70 mt-2">
 								Current rating:{" "}
 								<span
-									className={`font-medium ${getRatingColor(deepWorkQuality)}`}
+									className={`font-medium badge badge-sm badge-soft rounded-sm`}
 								>
 									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
 								</span>
