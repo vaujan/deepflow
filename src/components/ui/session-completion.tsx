@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
 	CheckCircle,
 	Clock,
@@ -26,6 +27,7 @@ export default function SessionCompletion({
 		session.deepWorkQuality || 0
 	);
 	const [hasRated, setHasRated] = useState<boolean>(!!session.deepWorkQuality);
+	const [hoverRating, setHoverRating] = useState<number>(0);
 
 	const isPlannedSession = session.sessionType === "planned";
 
@@ -84,45 +86,74 @@ export default function SessionCompletion({
 	};
 
 	const getCompletionTypeColor = () => {
-		if (!session.completionType) return "text-base-content";
+		if (!session.completionType) return "alert";
 
 		switch (session.completionType) {
 			case "premature":
-				return "text-warning";
+				return "alert alert-soft alert-warning";
 			case "overtime":
-				return "text-info";
+				return "alert alert-soft alert-info";
 			case "completed":
-				return "text-success";
+				return "alert alert-soft  alert-success";
 			default:
-				return "text-base-content";
+				return "alert";
 		}
 	};
 
+	const getRatingLabel = (rating: number) => {
+		switch (rating) {
+			case 1:
+				return "Distracted";
+			case 2:
+				return "Poor Focus";
+			case 3:
+				return "Below Average";
+			case 4:
+				return "Average";
+			case 5:
+				return "Good";
+			case 6:
+				return "Above Average";
+			case 7:
+				return "Very Good";
+			case 8:
+				return "Excellent";
+			case 9:
+				return "Outstanding";
+			case 10:
+				return "Perfect Focus";
+			default:
+				return "";
+		}
+	};
+
+	const getRatingColor = (rating: number) => {
+		if (rating <= 3) return "text-error";
+		if (rating <= 5) return "text-warning";
+		if (rating <= 7) return "text-info";
+		return "text-success";
+	};
+
 	return (
-		<div className="card max-w-xl w-full border-base-100 border p-6 gap-6">
+		<div className="card max-w-xl w-full border-base-300 border gap-6">
 			{/* Completion Header */}
-			<div className="flex flex-col text-center items-center gap-3">
-				<div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center">
-					<CheckCircle className="size-8 text-success" />
-				</div>
-				<h1 className="font-semibold text-xl text-success">
-					Session Complete!
-				</h1>
-				<p className="text-base-content/70 text-sm">{getCompletionMessage()}</p>
+			<div className="flex flex-col text-center">
+				<h1 className="font-semibold">Session Complete</h1>
+				<p className="text-base-content/50">{getCompletionMessage()}</p>
 			</div>
+
+			{/* Completion Type Indicator */}
+			{session.completionType && (
+				<div className={`${getCompletionTypeColor()} gap-2`}>
+					<AlertCircle className="size-4" />
+					<span className="text-sm font-medium">
+						{getCompletionTypeMessage()}
+					</span>
+				</div>
+			)}
 
 			{/* Session Summary */}
 			<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-6">
-				{/* Completion Type Indicator */}
-				{session.completionType && (
-					<div className="flex items-center gap-2 p-3 bg-base-100 rounded-box border-l-4 border-l-warning">
-						<AlertCircle className="size-4 text-warning" />
-						<span className={`text-sm font-medium ${getCompletionTypeColor()}`}>
-							{getCompletionTypeMessage()}
-						</span>
-					</div>
-				)}
-
 				{/* Goal */}
 				<div className="flex flex-1 items-start gap-2">
 					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
@@ -139,6 +170,13 @@ export default function SessionCompletion({
 							{session.goal}
 						</span>
 					</div>
+				</div>
+
+				{/* Session Type */}
+				<div className="flex align-middle items-center gap-2">
+					<Target className="size-4 text-base-content/50" />
+					<span className="text-base-content/70">Session Type:</span>
+					<span className="font-medium">{getSessionTypeLabel()}</span>
 				</div>
 
 				{/* Started time */}
@@ -194,19 +232,18 @@ export default function SessionCompletion({
 			</div>
 
 			{/* Deep Work Quality Rating */}
-			<div className="bg-base-200 rounded-box p-6">
-				<h3 className="font-medium text-base-content mb-4 flex items-center gap-2">
-					<Star className="size-5 text-warning" />
-					Rate Your Deep Work Quality
-				</h3>
-
-				{!hasRated ? (
-					<div className="space-y-4">
-						<p className="text-sm text-base-content/70 text-center">
-							How would you rate the quality of your focus during this session?
-						</p>
-
-						{/* DaisyUI Rating Component */}
+			<div className="card bg-base-200 p-6 gap-6">
+				<div className="flex flex-col gap-1 text-center">
+					<h3 className="font-medium text-base-content w-full text-center">
+						Rate Your Deep Work Quality
+					</h3>
+					<p className="text-sm text-base-content/70">
+						How would you rate the quality of your focus during this session?
+					</p>
+				</div>
+				<div className="space-y-4">
+					{/* Interactive Star Rating */}
+					<div className="flex flex-col items-center gap-3">
 						<div className="flex justify-center">
 							<div className="rating rating-lg">
 								{Array.from({ length: 10 }, (_, i) => (
@@ -214,49 +251,52 @@ export default function SessionCompletion({
 										key={i + 1}
 										type="radio"
 										name={`rating-${session.id}`}
-										className="mask mask-star-2 bg-orange-400"
+										className="mask mask-star-2 bg-orange-400 cursor-pointer"
 										checked={deepWorkQuality === i + 1}
 										onChange={() => handleQualityRating(i + 1)}
+										onMouseEnter={() => setHoverRating(i + 1)}
+										onMouseLeave={() => setHoverRating(0)}
 									/>
 								))}
 							</div>
 						</div>
 
-						<div className="text-center text-xs text-base-content/50">
-							<span className="text-warning">1</span> = Poor Focus •{" "}
-							<span className="text-warning">10</span> = Excellent Focus
-						</div>
-					</div>
-				) : (
-					<div className="text-center">
-						<div className="flex justify-center mb-2">
-							<div className="rating rating-md">
-								{Array.from({ length: 10 }, (_, i) => (
-									<input
-										key={i + 1}
-										type="radio"
-										name={`rating-display-${session.id}`}
-										className="mask mask-star-2 bg-orange-400"
-										checked={deepWorkQuality >= i + 1}
-										disabled
-									/>
-								))}
+						{/* Rating Label Display */}
+						{hoverRating > 0 && (
+							<div className={`text-center ${getRatingColor(hoverRating)}`}>
+								<span className="font-medium text-lg">
+									{hoverRating}/10 - {getRatingLabel(hoverRating)}
+								</span>
 							</div>
-						</div>
-						<p className="text-sm text-base-content/70">
-							You rated this session:{" "}
-							<span className="font-medium text-warning">
-								{deepWorkQuality}/10
-							</span>
-						</p>
-						<button
-							onClick={() => setHasRated(false)}
-							className="btn btn-ghost btn-xs mt-2"
-						>
-							Change Rating
-						</button>
+						)}
+						{!hoverRating && deepWorkQuality > 0 && (
+							<div className={`text-center ${getRatingColor(deepWorkQuality)}`}>
+								<span className="font-medium text-lg">
+									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+								</span>
+							</div>
+						)}
 					</div>
-				)}
+
+					<div className="text-center text-xs text-base-content/50">
+						<span className="text-warning">1</span> = Poor Focus •{" "}
+						<span className="text-warning">10</span> = Excellent Focus
+					</div>
+
+					{/* Current Rating Display */}
+					{hasRated && (
+						<div className="text-center pt-2 border-t border-base-300">
+							<p className="text-sm text-base-content/70">
+								Current rating:{" "}
+								<span
+									className={`font-medium ${getRatingColor(deepWorkQuality)}`}
+								>
+									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+								</span>
+							</p>
+						</div>
+					)}
+				</div>
 			</div>
 
 			{/* Action Buttons */}
