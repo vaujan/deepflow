@@ -16,11 +16,13 @@ import { useRouter } from "next/navigation";
 interface SessionCompletionProps {
 	session: Session;
 	onUpdateQuality?: (sessionId: string, quality: number) => void;
+	onUpdateNotes?: (sessionId: string, notes: string) => void;
 }
 
 export default function SessionCompletion({
 	session,
 	onUpdateQuality,
+	onUpdateNotes,
 }: SessionCompletionProps) {
 	const router = useRouter();
 	const [deepWorkQuality, setDeepWorkQuality] = useState<number>(
@@ -28,6 +30,7 @@ export default function SessionCompletion({
 	);
 	const [hasRated, setHasRated] = useState<boolean>(!!session.deepWorkQuality);
 	const [hoverRating, setHoverRating] = useState<number>(0);
+	const [notes, setNotes] = useState<string>(session.notes || "");
 
 	const isPlannedSession = session.sessionType === "planned";
 
@@ -62,6 +65,13 @@ export default function SessionCompletion({
 		setHasRated(true);
 		if (onUpdateQuality) {
 			onUpdateQuality(session.id, rating);
+		}
+	};
+
+	const handleNotesChange = (newNotes: string) => {
+		setNotes(newNotes);
+		if (onUpdateNotes) {
+			onUpdateNotes(session.id, newNotes);
 		}
 	};
 
@@ -281,7 +291,7 @@ export default function SessionCompletion({
 					{/* Current Rating Display */}
 					{hasRated && (
 						<div className="text-center pt-2 border-t border-base-300">
-							<p className="text-xs text-base-content/70 mt-2">
+							<p className="text-xs text-base-content/70 mt-mp1">
 								Current rating:{" "}
 								<span
 									className={`font-medium badge badge-sm badge-soft rounded-sm`}
@@ -291,6 +301,31 @@ export default function SessionCompletion({
 							</p>
 						</div>
 					)}
+				</div>
+			</div>
+
+			{/* Additional Notes */}
+			<div className="collapse border border-base-100 bg-base-200">
+				<input type="checkbox" className="peer" />
+				<div className="collapse-title text-sm font-medium">
+					Notes (Optional)
+				</div>
+				<div className="collapse-content">
+					<div className="space-y-4 pt-2">
+						<div className="form-control">
+							<textarea
+								className="textarea w-full min-h-[100px] resize-none"
+								placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
+								value={notes}
+								onChange={(e) => handleNotesChange(e.target.value)}
+							/>
+							<label className="label">
+								<span className="label-text-alt text-xs text-base-content/60">
+									Add any thoughts, insights, or observations
+								</span>
+							</label>
+						</div>
+					</div>
 				</div>
 			</div>
 
