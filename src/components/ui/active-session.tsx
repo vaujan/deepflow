@@ -9,8 +9,6 @@ import {
 	Target,
 	ChevronDown,
 	ChevronUp,
-	Eye,
-	EyeOff,
 } from "lucide-react";
 import { Session } from "../../hooks/useSession";
 import Toast from "./toast";
@@ -455,24 +453,37 @@ export default function ActiveSession({
 					) : (
 						<div className="space-y-2">
 							<p className="text-sm text-base-content/60">
-								{isPaused ? "Paused" : "Deep work in progress"}
+								{isPaused ? "Paused" : " "}
 							</p>
-							{/* Show progress bar for non-planned sessions when time is hidden */}
+							{/* Show enhanced progress bar for non-planned sessions when time is hidden */}
 							{!isPlannedSession && (
 								<div className="w-full">
-									<input
-										type="range"
-										className="range range-lg cursor-auto [--range-thumb:transparent] disabled w-full"
-										value={Math.min((elapsedTime / 3600) * 100, 100)} // Progress based on elapsed time (1 hour = 100%)
-										readOnly
-									/>
+									{/* Enhanced Progress Bar for Flow Sessions */}
+									<div className="relative">
+										{/* Background track */}
+										<div className="w-full h-3 bg-base-300 rounded-full overflow-hidden">
+											{/* Progress fill with gradient */}
+											<div
+												className="h-full bg-gradient-to-r from-secondary via-secondary to-secondary/80 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+												style={{
+													width: `${Math.min(
+														(elapsedTime / 3600) * 100,
+														100
+													)}%`,
+												}}
+											>
+												{/* Animated shine effect */}
+												<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+											</div>
+										</div>
+									</div>
 								</div>
 							)}
 						</div>
 					)}
 
 					{isPlannedSession && (
-						<div className="space-y-2">
+						<div className="space-y-3">
 							{isTimeVisible && (
 								<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
 									<span className="text-base-content/70 font-medium">
@@ -484,12 +495,17 @@ export default function ActiveSession({
 								</div>
 							)}
 
-							<input
-								type="range"
-								className="range range-lg cursor-auto [--range-thumb:transparent] disabled w-full"
-								value={progressPercentage}
-								readOnly
-							/>
+							{/* Enhanced Progress Bar */}
+							<div className="relative">
+								{/* Background track */}
+								<div className="w-full flex align-middle items-center h-2 bg-base-300">
+									{/* Progress fill with gradient */}
+									<div
+										className="h-4 bg-base-content transition-all ease-out relative "
+										style={{ width: `${progressPercentage}%` }}
+									></div>
+								</div>
+							</div>
 						</div>
 					)}
 
