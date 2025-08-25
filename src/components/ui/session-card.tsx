@@ -27,8 +27,13 @@ export default function SessionCard() {
 	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
 
 	// Session management
-	const { currentSession, isActive, startSession, updateDeepWorkQuality } =
-		useSession();
+	const {
+		currentSession,
+		isActive,
+		startSession,
+		updateDeepWorkQuality,
+		updateSessionNotes,
+	} = useSession();
 
 	const placeholders = [
 		"Complete the project proposal...",
@@ -160,6 +165,17 @@ export default function SessionCard() {
 		}
 	};
 
+	const handleNotesUpdate = (sessionId: string, notes: string) => {
+		updateSessionNotes(sessionId, notes);
+		// Update the completed session with the new notes
+		if (completedSession && completedSession.id === sessionId) {
+			setCompletedSession({
+				...completedSession,
+				notes,
+			});
+		}
+	};
+
 	const handleSessionStop = () => {
 		// Reset form for next session
 		resetForm();
@@ -245,6 +261,7 @@ export default function SessionCard() {
 			<SessionCompletion
 				session={completedSession}
 				onUpdateQuality={handleQualityUpdate}
+				onUpdateNotes={handleNotesUpdate}
 			/>
 		);
 	}
@@ -502,7 +519,7 @@ export default function SessionCard() {
 						isGoalValid
 							? isHolding
 								? "btn-primary"
-								: "btn-neutral "
+								: "btn-neutral"
 							: "btn-disabled"
 					}`}
 					disabled={!isGoalValid}

@@ -515,7 +515,7 @@ export default function ActiveSession({
 						onMouseLeave={handleCompleteMouseUp}
 						onTouchStart={handleCompleteMouseDown}
 						onTouchEnd={handleCompleteMouseUp}
-						className={`btn btn-lg relative overflow-hidden ${
+						className={`btn btn-lg group relative overflow-hidden ${
 							isHoldingComplete ? "btn-neutral" : "btn-ghost"
 						}`}
 						title="End and complete this session (hold for 1.5s to confirm)"
@@ -525,11 +525,11 @@ export default function ActiveSession({
 						{/* Progress bar overlay */}
 						{isHoldingComplete && (
 							<div
-								className="absolute inset-0 bg-primary/20 transition-all duration-75 ease-out"
+								className="absolute inset-0 bg-error/50 transition-all duration-75 ease-out"
 								style={{ width: `${holdProgress}%` }}
 							/>
 						)}
-						<Square className="size-5 relative z-10" />
+						<Square className="size-5 group-hover:text-error relative z-10" />
 					</button>
 
 					{/* Pause/Resume Button */}

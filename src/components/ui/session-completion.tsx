@@ -9,6 +9,7 @@ import {
 	Goal,
 	Star,
 	AlertCircle,
+	Trash,
 } from "lucide-react";
 import { Session } from "../../hooks/useSession";
 import { useRouter } from "next/navigation";
@@ -61,10 +62,19 @@ export default function SessionCompletion({
 	};
 
 	const handleQualityRating = (rating: number) => {
-		setDeepWorkQuality(rating);
-		setHasRated(true);
-		if (onUpdateQuality) {
-			onUpdateQuality(session.id, rating);
+		if (rating === 0) {
+			// Reset rating
+			setDeepWorkQuality(0);
+			setHasRated(false);
+			if (onUpdateQuality) {
+				onUpdateQuality(session.id, 0);
+			}
+		} else {
+			setDeepWorkQuality(rating);
+			setHasRated(true);
+			if (onUpdateQuality) {
+				onUpdateQuality(session.id, rating);
+			}
 		}
 	};
 
@@ -113,25 +123,25 @@ export default function SessionCompletion({
 	const getRatingLabel = (rating: number) => {
 		switch (rating) {
 			case 1:
-				return "Distracted";
+				return "Distracted - Mind wandering, easily interrupted";
 			case 2:
-				return "Poor Focus";
+				return "Poor Focus - Struggling to concentrate";
 			case 3:
-				return "Below Average";
+				return "Below Average - Some focus but inconsistent";
 			case 4:
-				return "Average";
+				return "Average - Moderate concentration";
 			case 5:
-				return "Good";
+				return "Good - Decent focus maintained";
 			case 6:
-				return "Above Average";
+				return "Above Average - Strong concentration";
 			case 7:
-				return "Very Good";
+				return "Very Good - Deep focus with few distractions";
 			case 8:
-				return "Excellent";
+				return "Excellent - Sustained deep work";
 			case 9:
-				return "Outstanding";
+				return "Outstanding - Exceptional focus and flow";
 			case 10:
-				return "Perfect Focus";
+				return "In Flow - Perfect focus, time flies by";
 			default:
 				return "";
 		}
@@ -152,8 +162,8 @@ export default function SessionCompletion({
 				<p className="text-base-content/50">{getCompletionMessage()}</p>
 			</div>
 
-			{/* Completion Type Indicator */}
-			{session.completionType && (
+			{/* Completion Type Indicator - Only for planned sessions */}
+			{session.completionType && isPlannedSession && (
 				<div className={`${getCompletionTypeColor()} gap-2`}>
 					<AlertCircle className="size-4" />
 					<span className="text-sm font-medium">
@@ -196,16 +206,27 @@ export default function SessionCompletion({
 					<span>{session.startTime.toLocaleTimeString()}</span>
 				</div>
 
-				{/* Expected End time */}
+				{/* Session Duration */}
 				<div className="flex align-middle items-center gap-2">
 					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Expected End:</span>
-					<span>
-						{isPlannedSession && session.expectedEndTime
-							? session.expectedEndTime.toLocaleTimeString()
-							: "-"}
+					<span className="text-base-content/70">Duration:</span>
+					<span className="font-medium">
+						{Math.round(session.elapsedTime / 60)} minutes
 					</span>
 				</div>
+
+				{/* Expected End time - Only for planned sessions */}
+				{isPlannedSession && (
+					<div className="flex align-middle items-center gap-2">
+						<Clock className="size-4 text-base-content/50" />
+						<span className="text-base-content/70">Expected End:</span>
+						<span>
+							{session.expectedEndTime
+								? session.expectedEndTime.toLocaleTimeString()
+								: "-"}
+						</span>
+					</div>
+				)}
 
 				{/* Actual End time */}
 				<div className="flex align-middle items-center gap-2">
@@ -274,14 +295,14 @@ export default function SessionCompletion({
 						{/* Rating Label Display */}
 						{hoverRating > 0 && (
 							<div className={`text-center ${getRatingColor(hoverRating)}`}>
-								<span className="font-medium text-lg">
+								<span className="font-medium text-sm">
 									{hoverRating}/10 - {getRatingLabel(hoverRating)}
 								</span>
 							</div>
 						)}
 						{!hoverRating && deepWorkQuality > 0 && (
 							<div className={`text-center ${getRatingColor(deepWorkQuality)}`}>
-								<span className="font-medium text-lg">
+								<span className="font-medium text-sm">
 									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
 								</span>
 							</div>
@@ -293,11 +314,18 @@ export default function SessionCompletion({
 						<div className="text-center pt-2 border-t border-base-300">
 							<p className="text-xs text-base-content/70 mt-mp1">
 								Current rating:{" "}
-								<span
-									className={`font-medium badge badge-sm badge-soft rounded-sm`}
+								<button
+									className={`font-medium badge badge-sm badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
+									onClick={() => handleQualityRating(0)}
+									title="Reset Rating"
 								>
-									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
-								</span>
+									<span className="group-hover:hidden">
+										{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+									</span>
+									<span className="hidden group-hover:inline">
+										Reset Rating
+									</span>
+								</button>
 							</p>
 						</div>
 					)}
@@ -338,14 +366,6 @@ export default function SessionCompletion({
 				>
 					{hasRated ? "Save Session" : "Rate Session to Continue"}
 				</button>
-			</div>
-
-			{/* Motivational Message */}
-			<div className="text-center text-sm text-base-content/60">
-				<p>
-					Keep up the great work! Consistency is key to building lasting focus
-					habits.
-				</p>
 			</div>
 		</div>
 	);
