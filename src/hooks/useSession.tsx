@@ -40,7 +40,7 @@ export const useSession = () => {
 
 	const startSession = useCallback((config: SessionConfig) => {
 		const startTime = new Date();
-		const expectedEndTime = config.duration 
+		const expectedEndTime = config.duration
 			? new Date(startTime.getTime() + config.duration * 60 * 1000)
 			: undefined;
 
@@ -179,7 +179,8 @@ export const useSession = () => {
 
 			if (currentSession) {
 				const endTime = new Date();
-				let completionType: "completed" | "premature" | "overtime" = "completed";
+				let completionType: "completed" | "premature" | "overtime" =
+					"completed";
 
 				// Determine completion type for planned sessions
 				if (currentSession.duration && currentSession.expectedEndTime) {
@@ -245,15 +246,31 @@ export const useSession = () => {
 		return Math.min((elapsedTime / (currentSession.duration * 60)) * 100, 100);
 	};
 
-	const updateDeepWorkQuality = useCallback((sessionId: string, quality: number) => {
-		if (currentSession && currentSession.id === sessionId) {
-			const updatedSession: Session = {
-				...currentSession,
-				deepWorkQuality: Math.max(1, Math.min(10, quality)), // Ensure 1-10 range
-			};
-			setCurrentSession(updatedSession);
-		}
-	}, [currentSession]);
+	const updateDeepWorkQuality = useCallback(
+		(sessionId: string, quality: number) => {
+			if (currentSession && currentSession.id === sessionId) {
+				const updatedSession: Session = {
+					...currentSession,
+					deepWorkQuality: Math.max(1, Math.min(10, quality)), // Ensure 1-10 range
+				};
+				setCurrentSession(updatedSession);
+			}
+		},
+		[currentSession]
+	);
+
+	const updateSessionNotes = useCallback(
+		(sessionId: string, notes: string) => {
+			if (currentSession && currentSession.id === sessionId) {
+				const updatedSession: Session = {
+					...currentSession,
+					notes,
+				};
+				setCurrentSession(updatedSession);
+			}
+		},
+		[currentSession]
+	);
 
 	return {
 		// Session state
@@ -270,6 +287,7 @@ export const useSession = () => {
 		stopSession,
 		completeSession,
 		updateDeepWorkQuality,
+		updateSessionNotes,
 
 		// Utility functions
 		formatTime,
