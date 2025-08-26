@@ -40,6 +40,7 @@ export type DataItem = {
 	quality: number; // 1-10
 	notes: string;
 	tags: string[]; // optional tags for categorization
+	sessionDate: string; // when the session was taken
 	// Legacy fields to avoid breaking other components; optional
 	name?: string;
 	status?: "active" | "inactive" | "pending";
@@ -60,6 +61,7 @@ const sampleData: DataItem[] = [
 		notes:
 			"Had some interruptions but managed to complete the core functionality",
 		tags: ["coding", "api", "backend"],
+		sessionDate: "2024-01-15",
 	},
 	{
 		id: "2",
@@ -70,6 +72,7 @@ const sampleData: DataItem[] = [
 		quality: 8,
 		notes: "Good flow; outline is comprehensive",
 		tags: ["writing", "content"],
+		sessionDate: "2024-01-14",
 	},
 	{
 		id: "3",
@@ -80,6 +83,7 @@ const sampleData: DataItem[] = [
 		quality: 10,
 		notes: "Excellent focus; design came together",
 		tags: ["design", "ui", "frontend"],
+		sessionDate: "2024-01-13",
 	},
 ];
 
@@ -122,6 +126,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		quality: true,
 		notes: true,
 		tags: true,
+		sessionDate: true,
 	});
 
 	const columns: ColumnDef<DataItem>[] = useMemo(
@@ -130,7 +135,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				accessorKey: "goal",
 				header: () => <span className="text-xs">Goal</span>,
 				cell: ({ row }) => (
-					<div className="font-medium">{row.getValue("goal")}</div>
+					<div className="font-medium min-w-[200px] max-w-[300px]">{row.getValue("goal")}</div>
 				),
 			},
 			{
@@ -186,7 +191,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					const sessionType = row.getValue("sessionType") as string;
 					const isPlanned = sessionType === "planned session";
 					return (
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 min-w-[120px]">
 							<span
 								className={`badge badge-sm badge-secondary ${
 									isPlanned ? "badge-soft" : ""
@@ -225,13 +230,37 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					const hours = Math.floor(duration / 60);
 					const minutes = duration % 60;
 					return (
-						<div>
+						<div className="min-w-[80px]">
 							{hours > 0 && `${hours}h `}
 							{minutes}m
 						</div>
 					);
 				},
 				filterFn: durationFilter,
+			},
+			{
+				accessorKey: "sessionDate",
+				header: ({ column }) => (
+					<button
+						className="btn btn-sm"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					>
+						Session Date
+						{column.getIsSorted() === "asc" ? (
+							<ArrowUp className="ml-2 h-4 w-4" />
+						) : column.getIsSorted() === "desc" ? (
+							<ArrowDown className="ml-2 h-4 w-4" />
+						) : (
+							<ArrowUpDown className="ml-2 h-4 w-4" />
+						)}
+					</button>
+				),
+				cell: ({ row }) => {
+					const date = row.getValue("sessionDate") as string;
+					return (
+						<div className="text-sm min-w-[100px]">{new Date(date).toLocaleDateString()}</div>
+					);
+				},
 			},
 			{
 				accessorKey: "focusLevel",
@@ -299,7 +328,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				accessorKey: "notes",
 				header: () => <span className="text-xs">Notes</span>,
 				cell: ({ row }) => (
-					<div className="min-w-[200px]">{row.getValue("notes")}</div>
+					<div className="min-w-[250px] max-w-[400px]">{row.getValue("notes")}</div>
 				),
 			},
 		],
@@ -381,6 +410,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											? "Focus Level"
 											: columnId === "sessionType"
 											? "Session Type"
+											: columnId === "sessionDate"
+											? "Session Date"
 											: columnId === "notes"
 											? "Notes"
 											: columnId === "tags"
@@ -395,8 +426,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			</div>
 
 			{/* Table */}
-			<div className="overflow-x-auto">
-				<table className="table table-sm table-zebra w-full">
+			<div className="overflow-x-auto rounded-box border-base-100 border">
+				<table className="table table-sm table-zebra w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
