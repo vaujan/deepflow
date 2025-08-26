@@ -12,6 +12,8 @@ import {
 	TestTube2,
 	Sun,
 	Moon,
+	Table,
+	Edit3,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
@@ -26,6 +28,8 @@ interface SidebarItem {
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
 	{ label: "Test Page", href: "/test", icon: TestTube2 },
+	{ label: "Data Table", href: "/data-table-demo", icon: Table },
+	{ label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 	// { label: "About", href: "/about", icon: User },
 	// { label: "Experience", href: "/experience", icon: Briefcase },
 	// { label: "Projects", href: "/projects", icon: Code2 },
