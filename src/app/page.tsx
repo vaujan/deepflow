@@ -1,10 +1,8 @@
 import Dock from "@/src/components/ui/dock";
 import SessionCard from "@/src/components/ui/session-card";
 import Sidebar from "@/src/components/ui/sidebar";
-import SessionTable from "@/src/components/ui/session-table";
-import useWidgets from "@/src/hooks/useWidgets";
 import React from "react";
-import SessionGraph from "@/src/components/ui/session-graph";
+import { DataTable } from "../components/ui/data-table";
 
 export default function Page() {
 	return (
@@ -16,6 +14,8 @@ export default function Page() {
 					<div className="max-w-8xl items-start justify-center h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
 						{/* <SessionTable /> */}
+						<DataTable />
+						{/* <SessionGraph /> */}
 					</div>
 				</div>
 

@@ -96,12 +96,6 @@ export default function SessionCard() {
 		);
 	};
 
-	const handleAdditionalNotesChange = (
-		e: React.ChangeEvent<HTMLTextAreaElement>
-	) => {
-		setAdditionalNotes(e.target.value);
-	};
-
 	const handleTabChange = (tab: "planned" | "open") => {
 		setActiveTab(tab);
 	};
@@ -143,7 +137,6 @@ export default function SessionCard() {
 				.trim()
 				.split(/\s+/)
 				.filter((tag) => tag.length > 0),
-			notes: additionalNotes.trim() || undefined,
 			sessionType: activeTab as "planned" | "open",
 		};
 
@@ -175,31 +168,6 @@ export default function SessionCard() {
 			});
 		}
 	};
-
-	const handleSessionStop = () => {
-		// Reset form for next session
-		resetForm();
-	};
-
-	const handleStartNewSession = () => {
-		setCompletedSession(null);
-		resetForm();
-	};
-
-	const resetForm = () => {
-		setGoal("");
-		setDuration(25);
-		setFocusLevel("5");
-		setTags("");
-		setAdditionalNotes("");
-		setActiveTab("planned");
-
-		// Focus back to goal input
-		if (textareaRef.current) {
-			textareaRef.current.focus();
-		}
-	};
-
 	const handleMouseDown = () => {
 		if (!isGoalValid) return;
 
@@ -253,7 +221,6 @@ export default function SessionCard() {
 	}, []);
 
 	const isGoalValid = goal.trim().length > 0;
-	const goalPreview = goal.trim().slice(0, 30);
 
 	// If there's a completed session, show the completion component
 	if (completedSession) {

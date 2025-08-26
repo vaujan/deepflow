@@ -144,7 +144,7 @@ export default function SessionTable() {
 	};
 
 	return (
-		<div className="overflow-x-auto h-full border rounded-box border-base-100">
+		<div className="overflow-x-auto h-full rounded-box bg-base-200">
 			<table className="table h-full">
 				<thead>
 					<tr>
