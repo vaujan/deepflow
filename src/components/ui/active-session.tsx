@@ -458,7 +458,7 @@ export default function ActiveSession({
 							{/* Show simple message for non-planned sessions when time is hidden */}
 							{!isPlannedSession && (
 								<div className="w-full text-center">
-									<p className="badge badge-xl badge-secondary rounded-box text-base-content/70 text-sm font-medium">
+									<p className="badge badge-xl rounded-box">
 										Session is running
 									</p>
 								</div>
