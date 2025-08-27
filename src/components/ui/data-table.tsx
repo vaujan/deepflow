@@ -13,6 +13,7 @@ import {
 	FilterFn,
 	ColumnFiltersState,
 	VisibilityState,
+	ColumnOrderState,
 } from "@tanstack/react-table";
 import {
 	Search,
@@ -26,6 +27,8 @@ import {
 	Play,
 	TimerReset,
 	Timer,
+	Check,
+	X,
 } from "lucide-react";
 
 // Session row type - represents a single deep work session
@@ -94,8 +97,19 @@ const durationFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
 	return duration >= min && duration <= max;
 };
 
+// Custom filter function for tags
+const tagsFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
+	const tags = row.getValue(columnId) as string[];
+	const selectedTags = filterValue as string[];
+
+	if (!selectedTags || selectedTags.length === 0) return true;
+
+	// Check if any of the selected tags exist in the row's tags
+	return selectedTags.some((selectedTag) => tags.includes(selectedTag));
+};
+
 // Global filter function
-const globalFilter = (row: any, columnId: any, filterValue: any) => {
+const globalFilterFn = (row: any, columnId: any, filterValue: any) => {
 	const searchValue = filterValue.toLowerCase();
 	const cellValue = row.getValue(columnId);
 
@@ -122,12 +136,143 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		goal: true,
 		sessionType: true,
 		duration: true,
-		focusLevel: true,
-		quality: true,
+		focusLevel: false,
+		quality: false,
 		notes: true,
 		tags: true,
 		sessionDate: true,
 	});
+	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([
+		"goal",
+		"sessionType",
+		"duration",
+		"sessionDate",
+		"focusLevel",
+		"quality",
+		"tags",
+		"notes",
+	]);
+	const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+	const [tagsSearchTerm, setTagsSearchTerm] = useState("");
+
+	// Helper function to safely get filter value as string array
+	const getFilterValueAsStringArray = (column: any): string[] => {
+		const value = column.getFilterValue();
+		return Array.isArray(value) ? value : [];
+	};
+
+	// Helper component for selected tags display
+	const SelectedTagsDisplay = ({ column }: { column: any }) => {
+		const filterValue = getFilterValueAsStringArray(column);
+		if (filterValue.length === 0) return null;
+
+		return (
+			<div className="mb-2">
+				<div className="text-xs text-base-content/70 mb-1">Selected:</div>
+				<div className="flex flex-wrap gap-1">
+					{filterValue.map((tag, index) => (
+						<span
+							key={index}
+							className="badge rounded-sm badge-sm badge-primary"
+						>
+							#{tag}
+							<button
+								onClick={() => {
+									const newTags = filterValue.filter((_, i) => i !== index);
+									column.setFilterValue(
+										newTags.length > 0 ? newTags : undefined
+									);
+								}}
+								className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
+							>
+								×
+							</button>
+						</span>
+					))}
+				</div>
+			</div>
+		);
+	};
+
+	// Helper component for available tags list
+	const AvailableTagsList = ({
+		column,
+		data,
+		searchTerm,
+	}: {
+		column: any;
+		data: DataItem[];
+		searchTerm: string;
+	}) => {
+		// Count occurrences of each tag, filtering out invalid tags
+		const tagCounts = data.reduce((acc, item) => {
+			(item.tags || []).forEach((tag) => {
+				if (tag && typeof tag === "string" && tag.trim() !== "") {
+					acc[tag] = (acc[tag] || 0) + 1;
+				}
+			});
+			return acc;
+		}, {} as Record<string, number>);
+
+		// Filter and sort tags by count (highest first)
+		const sortedTags = Object.entries(tagCounts)
+			.filter(([tag]) => {
+				// Ensure tag is valid before filtering
+				if (!tag || typeof tag !== "string") return false;
+
+				return (
+					searchTerm === "" ||
+					tag.toLowerCase().includes(searchTerm.toLowerCase())
+				);
+			})
+			.sort(([, a], [, b]) => b - a)
+			.map(([tag]) => tag)
+			.filter((tag): tag is string => tag !== null && typeof tag === "string");
+
+		return (
+			<ul className="max-h-52 overflow-y-auto space-y-1">
+				{sortedTags.length === 0 ? (
+					<li className="text-center text-sm text-base-content/60 py-4">
+						No tags found matching "{searchTerm}"
+					</li>
+				) : (
+					sortedTags.map((tag) => {
+						const currentTags = getFilterValueAsStringArray(column);
+						const isSelected = currentTags.includes(tag);
+						const count = tagCounts[tag];
+
+						return (
+							<li key={tag}>
+								<button
+									onClick={() => {
+										if (isSelected) {
+											// Remove tag
+											const newTags = currentTags.filter((t) => t !== tag);
+											column.setFilterValue(
+												newTags.length > 0 ? newTags : undefined
+											);
+										} else {
+											// Add tag
+											const newTags = [...currentTags, tag];
+											column.setFilterValue(newTags);
+										}
+									}}
+									className={`w-full text-left p-2 rounded hover:bg-base-200 transition-colors flex justify-between items-center ${
+										isSelected ? "bg-primary/20 text-primary" : ""
+									}`}
+								>
+									<span>#{tag}</span>
+									<span className="badge rounded-sm aspect-square badge-xs badge-neutral ml-2">
+										{count}
+									</span>
+								</button>
+							</li>
+						);
+					})
+				)}
+			</ul>
+		);
+	};
 
 	const columns: ColumnDef<DataItem>[] = useMemo(
 		() => [
@@ -135,7 +280,9 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				accessorKey: "goal",
 				header: () => <span className="text-xs">Goal</span>,
 				cell: ({ row }) => (
-					<div className="font-medium min-w-[200px] max-w-[300px]">{row.getValue("goal")}</div>
+					<div className="font-medium min-w-[200px] max-w-[300px]">
+						{row.getValue("goal")}
+					</div>
 				),
 			},
 			{
@@ -148,7 +295,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 						</label>
 						<ul
 							tabIndex={0}
-							className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
+							className="dropdown-content border border-base-200 z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
 						>
 							<li>
 								<button
@@ -181,6 +328,9 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											: ""
 									}`}
 								>
+									{column.getFilterValue() === "openx	 session" && (
+										<Check className="size-3" />
+									)}
 									Open
 								</button>
 							</li>
@@ -258,7 +408,9 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				cell: ({ row }) => {
 					const date = row.getValue("sessionDate") as string;
 					return (
-						<div className="text-sm min-w-[100px]">{new Date(date).toLocaleDateString()}</div>
+						<div className="text-xs min-w-[100px]">
+							{new Date(date).toLocaleDateString()}
+						</div>
 					);
 				},
 			},
@@ -303,7 +455,65 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			},
 			{
 				accessorKey: "tags",
-				header: () => <span className="text-xs">Tags</span>,
+				header: ({ column }) => (
+					<div className="dropdown dropdown-bottom">
+						<label tabIndex={0} className="btn btn-sm">
+							Tags
+							<Filter className="ml-1 h-3 w-3" />
+						</label>
+						<div
+							tabIndex={0}
+							className="dropdown-content border border-base-200 z-[1] p-2 shadow bg-base-100 rounded-box w-64"
+						>
+							{/* Search Input */}
+							<div className="form-control mb-2">
+								<div className="input-group">
+									<input
+										type="text"
+										placeholder="Search tags..."
+										className="input input-sm input-bordered w-full"
+										value={tagsSearchTerm}
+										onChange={(e) => setTagsSearchTerm(e.target.value)}
+									/>
+									{tagsSearchTerm && (
+										<button
+											className="btn btn-sm btn-square"
+											onClick={() => setTagsSearchTerm("")}
+											title="Clear search"
+										>
+											<X className="h-3 w-3" />
+										</button>
+									)}
+								</div>
+							</div>
+
+							{/* Selected Tags Display */}
+							<SelectedTagsDisplay column={column} />
+
+							{/* Available Tags List */}
+							<AvailableTagsList
+								column={column}
+								data={data}
+								searchTerm={tagsSearchTerm}
+							/>
+
+							{/* Clear All Button */}
+							{column.getFilterValue() && (
+								<div className="mt-2 pt-2 border-t border-base-200">
+									<button
+										onClick={() => {
+											column.setFilterValue(undefined);
+											setTagsSearchTerm("");
+										}}
+										className="btn btn-sm btn-soft btn-error w-full"
+									>
+										Clear All
+									</button>
+								</div>
+							)}
+						</div>
+					</div>
+				),
 				cell: ({ row }) => {
 					const tags = row.getValue("tags") as string[];
 					if (!tags || tags.length === 0) {
@@ -314,8 +524,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							{tags.map((tag, index) => (
 								<span
 									key={index}
-									className="badge badge-sm rounded-sm badge-neutral
-								"
+									className="badge badge-sm rounded-sm badge-neutral"
 								>
 									#{tag}
 								</span>
@@ -323,12 +532,15 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 						</div>
 					);
 				},
+				filterFn: tagsFilter,
 			},
 			{
 				accessorKey: "notes",
 				header: () => <span className="text-xs">Notes</span>,
 				cell: ({ row }) => (
-					<div className="min-w-[250px] max-w-[400px]">{row.getValue("notes")}</div>
+					<div className="min-w-[250px] max-w-[400px]">
+						{row.getValue("notes")}
+					</div>
 				),
 			},
 		],
@@ -343,18 +555,21 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			columnFilters,
 			globalFilter,
 			columnVisibility,
+			columnOrder,
 		},
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onGlobalFilterChange: setGlobalFilter,
 		onColumnVisibilityChange: setColumnVisibility,
+		onColumnOrderChange: setColumnOrder,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
-		globalFilterFn: globalFilter,
+		globalFilterFn: globalFilterFn,
 		filterFns: {
 			durationFilter,
+			tagsFilter,
 		},
 	});
 
@@ -362,7 +577,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	// No longer needed since we removed the filters
 
 	return (
-		<div className="w-full space-y-4">
+		<div className="w-full max-w-7xl  space-y-4">
 			{/* Search and Filters */}
 			<div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
 				{/* Global Search */}
@@ -379,66 +594,138 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					</label>
 				</div>
 
-				{/* Column Visibility Filter */}
-				<div className="dropdown dropdown-end">
-					<label tabIndex={0} className="btn btn-sm">
-						<Eye className="h-4 w-4 mr-1" />
-						Columns
-					</label>
-					<ul
-						tabIndex={0}
-						className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
-					>
-						{Object.keys(columnVisibility).map((columnId) => (
-							<li key={columnId}>
-								<label className="flex items-center gap-2 cursor-pointer">
-									<input
-										type="checkbox"
-										className="checkbox checkbox-sm"
-										checked={
-											columnVisibility[columnId as keyof VisibilityState]
-										}
-										onChange={(e) => {
-											setColumnVisibility((prev) => ({
-												...prev,
-												[columnId]: e.target.checked,
-											}));
-										}}
-									/>
-									<span className="capitalize">
-										{columnId === "focusLevel"
-											? "Focus Level"
-											: columnId === "sessionType"
-											? "Session Type"
-											: columnId === "sessionDate"
-											? "Session Date"
-											: columnId === "notes"
-											? "Notes"
-											: columnId === "tags"
-											? "Tags"
-											: columnId}
-									</span>
-								</label>
-							</li>
-						))}
-					</ul>
+				<div className="flex gap-2">
+					{/* Reset Filters Button - Only show when filters are applied */}
+					{(globalFilter ||
+						columnFilters.length > 0 ||
+						sorting.length > 0 ||
+						(table.getColumn("sessionType")?.getFilterValue() as string)) && (
+						<button
+							onClick={() => {
+								// Reset all filters
+								setGlobalFilter("");
+								setColumnFilters([]);
+								setSorting([]);
+								// Reset session type filter specifically
+								table.getColumn("sessionType")?.setFilterValue(undefined);
+							}}
+							className="btn btn-sm btn-soft btn-error"
+							title="Reset all filters and sorting"
+						>
+							<X className="h-4 w-4 mr-1" />
+							Reset Filters
+						</button>
+					)}
+
+					{/* Column Visibility Filter */}
+					<div className="dropdown dropdown-end">
+						<label tabIndex={0} className="btn btn-sm">
+							<Eye className="h-4 w-4 mr-1" />
+							Columns
+						</label>
+						<ul
+							tabIndex={0}
+							className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+						>
+							{Object.keys(columnVisibility).map((columnId) => (
+								<li key={columnId}>
+									<label className="flex items-center gap-2 cursor-pointer">
+										<input
+											type="checkbox"
+											className="checkbox checkbox-sm"
+											checked={
+												columnVisibility[columnId as keyof VisibilityState]
+											}
+											onChange={(e) => {
+												setColumnVisibility((prev) => ({
+													...prev,
+													[columnId]: e.target.checked,
+												}));
+											}}
+										/>
+										<span className="capitalize">
+											{columnId === "focusLevel"
+												? "Focus Level"
+												: columnId === "sessionType"
+												? "Session Type"
+												: columnId === "sessionDate"
+												? "Session Date"
+												: columnId === "notes"
+												? "Notes"
+												: columnId === "tags"
+												? "Tags"
+												: columnId}
+										</span>
+									</label>
+								</li>
+							))}
+						</ul>
+					</div>
 				</div>
 			</div>
 
 			{/* Table */}
-			<div className="overflow-x-auto rounded-box border-base-100 border">
-				<table className="table table-sm table-zebra w-full min-w-full">
+			<div className="rounded-box border-base-200 border">
+				<table className="table table-sm w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
 								{headerGroup.headers.map((header) => (
-									<th key={header.id} className="bg-base-200 p-1 ">
+									<th
+										key={header.id}
+										className={`bg-base-200 p-1 cursor-move hover:bg-base-300 transition-all duration-200 relative ${
+											dragOverColumn === header.id
+												? "ring-2 ring-primary ring-opacity-50 bg-primary/10"
+												: ""
+										}`}
+										onDragStart={(e) => {
+											e.dataTransfer.effectAllowed = "move";
+											e.dataTransfer.setData("text/plain", header.id);
+										}}
+										onDragOver={(e) => {
+											e.preventDefault();
+											e.dataTransfer.dropEffect = "move";
+											setDragOverColumn(header.id);
+										}}
+										onDragLeave={() => {
+											setDragOverColumn(null);
+										}}
+										onDrop={(e) => {
+											e.preventDefault();
+											setDragOverColumn(null);
+											const draggedId = e.dataTransfer.getData("text/plain");
+											const dropId = header.id;
+
+											if (draggedId !== dropId) {
+												const oldIndex = table
+													.getState()
+													.columnOrder.indexOf(draggedId);
+												const newIndex = table
+													.getState()
+													.columnOrder.indexOf(dropId);
+
+												const newOrder = [...table.getState().columnOrder];
+												const [draggedColumn] = newOrder.splice(oldIndex, 1);
+												newOrder.splice(newIndex, 0, draggedColumn);
+
+												setColumnOrder(newOrder);
+											}
+										}}
+										draggable
+									>
 										{header.isPlaceholder
 											? null
 											: flexRender(
 													header.column.columnDef.header,
 													header.getContext()
 											  )}
+
+										{/* Drop indicator */}
+										{dragOverColumn === header.id && (
+											<div className="absolute inset-0 pointer-events-none">
+												<div className="absolute top-0 left-0 w-full h-1 bg-primary rounded-full animate-pulse"></div>
+											</div>
+										)}
 									</th>
 								))}
 							</tr>
@@ -447,7 +734,10 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					<tbody>
 						{table.getRowModel().rows?.length ? (
 							table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="hover">
+								<tr
+									key={row.id}
+									className="hover hover:bg-base-300/50 transition-all ease-out"
+								>
 									{row.getVisibleCells().map((cell) => (
 										<td key={cell.id}>
 											{flexRender(
@@ -460,8 +750,39 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							))
 						) : (
 							<tr>
-								<td colSpan={columns.length} className="h-24 text-center">
-									No results found.
+								<td colSpan={columns.length} className="h-32 text-center">
+									<div className="flex flex-col items-center justify-center space-y-3 py-8">
+										<div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center">
+											<Search className="w-8 h-8 text-base-content/40" />
+										</div>
+										<div className="text-center">
+											<h3 className="text-lg font-semibold text-base-content mb-2">
+												No results found
+											</h3>
+											<p className="text-base-content/60 text-sm max-w-md">
+												Try adjusting your search terms or filters to find what
+												you're looking for.
+											</p>
+										</div>
+										{(globalFilter ||
+											columnFilters.length > 0 ||
+											(table
+												.getColumn("sessionType")
+												?.getFilterValue() as string)) && (
+											<button
+												onClick={() => {
+													setGlobalFilter("");
+													setColumnFilters([]);
+													table
+														.getColumn("sessionType")
+														?.setFilterValue(undefined);
+												}}
+												className="btn btn-sm "
+											>
+												Clear all filters
+											</button>
+										)}
+									</div>
 								</td>
 							</tr>
 						)}
@@ -488,11 +809,13 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					</button>
 				</div>
 
+				{/* Results Summary */}
+				<div className="text-xs text-base-content/50">
+					Showing {table.getFilteredRowModel().rows.length} of {data.length}{" "}
+					total results
+				</div>
+
 				<div className="flex items-center gap-2">
-					<span className="text-sm text-base-content">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
-						{table.getPageCount()}
-					</span>
 					<select
 						className="select select-bordered select-sm"
 						value={table.getState().pagination.pageSize}
@@ -507,12 +830,6 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 						))}
 					</select>
 				</div>
-			</div>
-
-			{/* Results Summary */}
-			<div className="text-sm text-base-content opacity-70">
-				Showing {table.getFilteredRowModel().rows.length} of {data.length} total
-				results
 			</div>
 		</div>
 	);
