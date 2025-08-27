@@ -14,10 +14,12 @@ import {
 	Moon,
 	Table,
 	Edit3,
+	Menu,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useSidebar } from "../../contexts/SidebarContext";
 
 interface SidebarItem {
 	label: string;
@@ -39,6 +41,7 @@ const navigationItems: SidebarItem[] = [
 ];
 
 export default function Sidebar() {
+	const { isHidden, toggleSidebar } = useSidebar();
 	const {
 		currentTipIndex,
 		isAnimating,
@@ -54,33 +57,64 @@ export default function Sidebar() {
 	const { theme, toggleTheme } = useTheme();
 
 	return (
-		<div className="lg:drawer-open">
-			<input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
+		<div className="lg:drawer-open ">
+			<input id="my-drawer-2" type="checkbox" className="drawer-toggle " />
 
 			{/* Sidebar */}
-			<div className="drawer-side">
+			<div className="drawer-side w-full">
 				<label
 					htmlFor="my-drawer-2"
 					aria-label="close sidebar"
 					className="drawer-overlay"
 				></label>
 
-				<div className="bg-base-200 text-base-content min-h-full w-74 flex flex-col">
+				<div
+					className={`bg-base-200 text-base-content min-h-full w-74 flex flex-col transition-all duration-500 ease-in-out transform ${
+						isHidden
+							? "translate-x-[-100%] opacity-0 scale-95"
+							: "translate-x-0 opacity-100 scale-100"
+					}`}
+				>
+					{/* Toggle Button */}
+					<div className="flex justify-end p-2">
+						<button
+							onClick={toggleSidebar}
+							className="btn btn-ghost btn-sm btn-square transition-transform duration-300 hover:rotate-90"
+							title="Hide sidebar"
+						>
+							<X className="w-4 h-4" />
+						</button>
+					</div>
+
 					{/* Navigation Menu */}
 					<nav className="flex-1 p-2">
-						<ul className="menu space-y-2  h-full w-full ">
-							<label className="input mb-6 bg-base-100 hover:bg-base-200 border-1">
+						<ul className="menu space-y-2 h-full w-full">
+							<label
+								className={`input mb-6 bg-base-100 hover:bg-base-200 border-1 transition-all duration-300 ease-out transform ${
+									isHidden
+										? "opacity-0 translate-y-2"
+										: "opacity-100 translate-y-0"
+								}`}
+							>
 								<Search />
 								<input type="search" className="grow" placeholder="Search" />
 								<kbd className="kbd kbd-sm rounded-sm px-3">ctrl</kbd>
 								<kbd className="kbd kbd-sm rounded-sm">K</kbd>
 							</label>
 
-							{navigationItems.map((item) => (
-								<li key={item.href}>
+							{navigationItems.map((item, index) => (
+								<li
+									key={item.href}
+									className={`transition-all duration-300 ease-out transform ${
+										isHidden
+											? "opacity-0 translate-x-4"
+											: "opacity-100 translate-x-0"
+									}`}
+									style={{ transitionDelay: `${index * 50}ms` }}
+								>
 									<a
 										href={item.href}
-										className="flex border border-base-200  items-center gap-3 transition-colors duration-200"
+										className="flex border border-base-200 items-center gap-3 transition-colors duration-200"
 									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
 										<span>{item.label}</span>
@@ -89,6 +123,7 @@ export default function Sidebar() {
 							))}
 						</ul>
 					</nav>
+
 					{/* Card bottom content */}
 					<div className="flex flex-col h-full p-2 gap-2">
 						{/* Tips card */}
@@ -198,7 +233,15 @@ export default function Sidebar() {
 						</ul>
 
 						{/* Profile bottom */}
-						<Profile />
+						<div
+							className={`transition-all duration-300 ease-out transform ${
+								isHidden
+									? "opacity-0 translate-y-2"
+									: "opacity-100 translate-y-0"
+							}`}
+						>
+							<Profile />
+						</div>
 					</div>
 				</div>
 			</div>
