@@ -1,8 +1,9 @@
 import Dock from "@/src/components/ui/dock";
 import SessionCard from "@/src/components/ui/session-card";
-import Sidebar from "@/src/components/ui/sidebar";
+import Sidebar from "../components/ui/sidebar";
 import React from "react";
 import { DataTable } from "../components/ui/data-table";
+import Header from "../components/ui/header";
 
 export default function Page() {
 	return (
@@ -10,6 +11,7 @@ export default function Page() {
 			<Sidebar />
 			{/* Container */}
 			<main className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
+				<Header />
 				<div className="flex w-full h-full flex-col">
 					<div className="max-w-8xl items-start justify-center h-full flex gap-6 w-full px-8 py-8">
 						<SessionCard />
@@ -23,6 +25,7 @@ export default function Page() {
 				<div className="min-h-screen w-full justify-center items-center flex flex-col gap-4 ">
 					{/* Kanban widget */}
 					{/* <div className="flex flex-col w-full h-fit px-4">
+					
 						<div className="w-full h-128 rounded-box bg-base-100 border border-base-100"></div>
 					</div> */}
 
