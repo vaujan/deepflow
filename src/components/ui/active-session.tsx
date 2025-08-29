@@ -28,7 +28,7 @@ export default function ActiveSession({
 		session.duration ? session.duration * 60 : null
 	);
 	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
-	const [isTimeVisible, setIsTimeVisible] = useState(true);
+	const [isTimeVisible, setIsTimeVisible] = useState(false); // Changed from true to false to hide time by default
 	const [toast, setToast] = useState<{
 		message: string;
 		type: "success" | "info" | "warning" | "error";
@@ -240,22 +240,22 @@ export default function ActiveSession({
 		}
 	}, [elapsedTime, session.duration, isPaused]);
 
-	// Keyboard shortcuts
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.code === "Space" && !e.repeat) {
-				e.preventDefault();
-				handlePauseResume();
-			}
-			if (e.code === "KeyT" && !e.repeat) {
-				e.preventDefault();
-				toggleTimeVisibility();
-			}
-		};
+	// Remove the keyboard shortcuts useEffect entirely
+	// useEffect(() => {
+	// 	const handleKeyDown = (e: KeyboardEvent) => {
+	// 		if (e.code === "Space" && !e.repeat) {
+	// 			e.preventDefault();
+	// 			handlePauseResume();
+	// 		}
+	// 		if (e.code === "KeyT" && !e.repeat) {
+	// 			e.preventDefault();
+	// 			toggleTimeVisibility();
+	// 		}
+	// 	};
 
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [handlePauseResume, toggleTimeVisibility]);
+	// 	window.addEventListener("keydown", handleKeyDown);
+	// 	return () => window.removeEventListener("keydown", handleKeyDown);
+	// }, [handlePauseResume, toggleTimeVisibility]);
 
 	// Format time helpers
 	const formatTime = (seconds: number) => {
@@ -461,7 +461,8 @@ export default function ActiveSession({
 									<p className="badge badge-sm badge-soft rounded-box">
 										Session is running
 									</p>
-								</div=======
+								</div>
+							)}
 							{/* Show "Session is running..." only for flow-based sessions when time is hidden */}
 							{!isPlannedSession && (
 								<p className="text-sm text-base-content/60">
@@ -616,9 +617,7 @@ export default function ActiveSession({
 						onClick={handlePauseResume}
 						className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
 						title={
-							isPaused
-								? "Resume the focus session (Space key)"
-								: "Pause the focus session (Space key)"
+							isPaused ? "Resume the focus session" : "Pause the focus session"
 						}
 						aria-label={isPaused ? "Resume session" : "Pause session"}
 						aria-describedby="pause-button-description"
@@ -639,19 +638,31 @@ export default function ActiveSession({
 					</div>
 					<div id="pause-button-description">
 						{isPaused
-							? "Click to resume the paused focus session. You can also press the Space key."
-							: "Click to pause the active focus session. You can also press the Space key."}
+							? "Click to resume the paused focus session."
+							: "Click to pause the active focus session."}
 					</div>
 					<div id="time-visibility-description">
-						Toggle time display visibility. You can also press the T key.
+						Toggle time display visibility.
 					</div>
 				</div>
 
-				{/* Keyboard Shortcuts Hint */}
-				<div className="text-center w-full justify-center flex gap-4 text-xs text-base-content/50 space-y-1">
+				{/* Remove the Keyboard Shortcuts Hint section entirely */}
+				{/* <div className="text-center w-full justify-center flex gap-4 text-xs text-base-content/50 space-y-1">
 					<p>Space: Pause/Resume</p>
 					<p>/</p>
 					<p>T: {isTimeVisible ? "Hide" : "Show"} Time</p>
+				</div> */}
+
+				{/* Time Visibility Toggle Button */}
+				<div className="text-center w-full justify-center">
+					<button
+						onClick={toggleTimeVisibility}
+						className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
+						title={isTimeVisible ? "Hide time display" : "Show time display"}
+						aria-label={isTimeVisible ? "Hide time" : "Show time"}
+					>
+						{isTimeVisible ? "Hide Time" : "Show Time"}
+					</button>
 				</div>
 
 				{/* Session Status */}

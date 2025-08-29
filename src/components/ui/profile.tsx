@@ -18,7 +18,7 @@ export default function Profile({ isCollapsed = false }: ProfileProps) {
 	return (
 		<button
 			onClick={navigateToProfile}
-			className={`transition-all group hover:bg-base-100 rounded-box w-full items-center border-1 border-base-200 flex gap-3 relative cursor-pointer ${
+			className={`transition-all group hover:bg-base-100 rounded-box w-full items-center border-base-200 flex gap-3 relative cursor-pointer ${
 				isCollapsed
 					? "btn btn-ghost btn-square justify-center px-2 py-2"
 					: "px-4 py-4"
