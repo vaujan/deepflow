@@ -4,7 +4,6 @@ import React from "react";
 import {
 	Home,
 	Mail,
-	Search,
 	Lightbulb,
 	ChevronLeft,
 	ChevronRight,
@@ -12,13 +11,19 @@ import {
 	TestTube2,
 	Sun,
 	Moon,
-	Table,
-	Edit3,
+
+	Folder,
+	GraduationCap,
+	Code,
+	Plus,
+	Activity,
+	ChartAreaIcon,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useRouter } from "next/navigation";
+import { useSidebar } from "../../contexts/SidebarContext";
+
 
 interface SidebarItem {
 	label: string;
@@ -26,21 +31,31 @@ interface SidebarItem {
 	icon: React.ComponentType<{ className?: string }>;
 }
 
+interface WorkspaceItem {
+	id: string;
+	name: string;
+	icon: React.ComponentType<{ className?: string }>;
+}
+
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
-	{ label: "Test Page", href: "/test", icon: TestTube2 },
-	{ label: "Data Table", href: "/data-table-demo", icon: Table },
-	{ label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
-	// { label: "About", href: "/about", icon: User },
-	// { label: "Experience", href: "/experience", icon: Briefcase },
-	// { label: "Projects", href: "/projects", icon: Code2 },
-	// { label: "Education", href: "/education", icon: GraduationCap },
-	// { label: "Resume", href: "/resume", icon: FileText },
-	// { label: "Contact", href: "/contact", icon: Mail },
+	{ label: "Stats", href: "/test", icon: ChartAreaIcon },
+	// { label: "Data Table", href: "/data-table-demo", icon: Table },
+	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
+];
+
+const workspaceItems: WorkspaceItem[] = [
+	{
+		id: "master-degree",
+		name: "master degree prep 2026 yessir fjaslkfjsdlkafjldksa",
+		icon: GraduationCap,
+	},
+	{ id: "deepflow-dev", name: "deepflow dev", icon: Code },
+	{ id: "ai-python", name: "python ai study", icon: Folder },
 ];
 
 export default function Sidebar() {
-	const route = useRouter();
+	const { isCollapsed } = useSidebar();
 	const {
 		currentTipIndex,
 		isAnimating,
@@ -51,7 +66,7 @@ export default function Sidebar() {
 		hideTipsCard,
 		showTipsCardHandler,
 		totalTips,
-	} = useTips(deepWorkTips, 60000); // 60000ms = 1 minute
+	} = useTips(deepWorkTips, 60000);
 
 	const { theme, toggleTheme } = useTheme();
 
@@ -67,31 +82,59 @@ export default function Sidebar() {
 					className="drawer-overlay"
 				></label>
 
-				<div className="bg-base-200 text-base-content min-h-full w-74 flex flex-col">
+				<div
+					className={`text-base-content min-h-full transition-all duration-300 ease-in-out ${
+						isCollapsed
+							? "w-16 border-r-1 border-base-100"
+							: "bg-base-200/50 w-74"
+					} flex flex-col`}
+				>
 					{/* Navigation Menu */}
 					<nav className="flex p-2">
-						<ul className="menu space-y-2  w-full ">
+						<ul className="menu space-y-2 w-full">
 							{navigationItems.map((item) => (
 								<li key={item.href}>
-									<a href={item.href} className="gap-3">
+									<a
+										href={item.href}
+										className={`gap-3 ${
+											isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
+										}`}
+										title={isCollapsed ? item.label : undefined}
+									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
-										<span>{item.label}</span>
+										{!isCollapsed && <span>{item.label}</span>}
 									</a>
 								</li>
 							))}
 						</ul>
 					</nav>
 
+					{/* Workspaces Section */}
 					<nav className="flex-1 p-2">
-						<ul className="menu bg-base-100 rounded-box  h-full w-full ">
-							{navigationItems.map((item) => (
-								<li key={item.href}>
+						{!isCollapsed && (
+							<div className="flex justify-between items-center p-2 rounded-b-none -mb-2 rounded-lg bg-base-100">
+								<span className="bg-base-300 inline-flex w-fit py-1 px-2 text-xs rounded-sm text-base-content/50 font-medium">
+									Workspaces
+								</span>
+								<button className="btn-square btn-ghost btn btn-xs">
+									<Plus className="size-3 text-base-content/50" />
+								</button>
+							</div>
+						)}
+						<ul className="menu bg-base-100 rounded-box h-full w-full">
+							{workspaceItems.map((item) => (
+								<li key={item.id}>
 									<a
-										href={item.href}
-										className="btn btn-sm btn-ghost gap-3 text-left justify-start"
+										href={`/workspaces/${item.id}`}
+										className={`btn btn-sm btn-ghost gap-3 text-left ${
+											isCollapsed ? "btn-square" : "justify-start"
+										}`}
+										title={isCollapsed ? item.name : undefined}
 									>
 										<item.icon className="size-4 text-base-content/50" />
-										<span>{item.label}</span>
+										{!isCollapsed && (
+											<span className="line-clamp-1 ">{item.name}</span>
+										)}
 									</a>
 								</li>
 							))}
@@ -101,7 +144,7 @@ export default function Sidebar() {
 					{/* Card bottom content */}
 					<div className="flex flex-col h-full p-2 gap-2">
 						{/* Tips card */}
-						{showTipsCard && (
+						{showTipsCard && !isCollapsed && (
 							<div className="card items-start group justify-start flex text-left p-4 gap-6 bg-base-100">
 								<div className="flex w-full justify-between">
 									<div className="h-full badge-soft border p-2 rounded-lg flex">
@@ -173,17 +216,29 @@ export default function Sidebar() {
 						<ul className="menu w-full space-y-2">
 							{!showTipsCard && (
 								<li>
-									<button className="gap-3" onClick={showTipsCardHandler}>
+									<button
+										className={`gap-3 ${
+											isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
+										}`}
+										onClick={showTipsCardHandler}
+										title={isCollapsed ? "Tips" : undefined}
+									>
 										<Lightbulb className="w-4 h-4 text-base-content/50" />
-										<span className="text-sm">Tips</span>
+										{!isCollapsed && <span className="text-sm">Tips</span>}
 									</button>
 								</li>
 							)}
 
 							<li>
-								<a href="#feedback" className="gap-3">
+								<a
+									href="#feedback"
+									className={`gap-3 ${
+										isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
+									}`}
+									title={isCollapsed ? "Feedback" : undefined}
+								>
 									<Mail className="w-4 h-4 text-base-content/50" />
-									<span>Feedback</span>
+									{!isCollapsed && <span>Feedback</span>}
 								</a>
 							</li>
 
@@ -191,23 +246,29 @@ export default function Sidebar() {
 							<li>
 								<button
 									onClick={toggleTheme}
-									className="gap-3"
-									title={`Switch to ${
-										theme === "dark" ? "light" : "dark"
-									} theme`}
+									className={`gap-3 ${
+										isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
+									}`}
+									title={
+										isCollapsed
+											? `Switch to ${theme === "dark" ? "light" : "dark"} theme`
+											: `Switch to ${theme === "dark" ? "light" : "dark"} theme`
+									}
 								>
 									{theme === "dark" ? (
 										<Sun className="w-4 h-4 text-base-content/50" />
 									) : (
 										<Moon className="w-4 h-4 text-base-content/50" />
 									)}
-									<span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+									{!isCollapsed && (
+										<span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+									)}
 								</button>
 							</li>
 						</ul>
 
 						{/* Profile bottom */}
-						<Profile />
+						<Profile isCollapsed={isCollapsed} />
 					</div>
 				</div>
 			</div>

@@ -432,7 +432,7 @@ export default function ActiveSession({
 						<>
 							{isPlannedSession ? (
 								<div className="space-y-2">
-									<div className="text-4xl font-medium text-base-content font-mono">
+									<div className="text-4xl text-base-content font-mono">
 										{remainingTime ? formatTime(remainingTime) : "00:00"}
 									</div>
 									<p className="text-sm text-base-content/60">
@@ -452,6 +452,16 @@ export default function ActiveSession({
 						</>
 					) : (
 						<div className="space-y-2">
+							<p className="text-sm text-base-content/60">
+								{isPaused ? "Paused" : " "}
+							</p>
+							{/* Show simple message for non-planned sessions when time is hidden */}
+							{!isPlannedSession && (
+								<div className="w-full text-center">
+									<p className="badge badge-sm badge-soft rounded-box">
+										Session is running
+									</p>
+								</div=======
 							{/* Show "Session is running..." only for flow-based sessions when time is hidden */}
 							{!isPlannedSession && (
 								<p className="text-sm text-base-content/60">
