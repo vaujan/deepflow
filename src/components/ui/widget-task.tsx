@@ -71,12 +71,11 @@ export default function WidgetTask() {
 		<div className="card bg-base-300 w-full h-full gap-3 border border-base-100 p-4">
 			<div className="flex items-center justify-between">
 				<h3 className="text-md font-bold">Tasks</h3>
-				<button className="btn btn-sm btn-secondary" onClick={addTask}>
-					<Plus className="size-4 text-secondary-content" />
+				<button className="btn btn-sm btn-circle" onClick={addTask}>
+					<Plus className="size-4" />
 				</button>
 			</div>
 
-			{/* Add new task */}
 			<div className="flex gap-2">
 				<input
 					type="text"

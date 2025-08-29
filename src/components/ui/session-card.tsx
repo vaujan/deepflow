@@ -329,12 +329,12 @@ export default function SessionCard() {
 					<Clock className="size-4 me-2" />
 					Planned Session
 				</label>
-				<div className="tab-content rounded-box bg-base-200 p-6">
+				<div className="tab-content rounded-box border-base-100 border bg-base-200 p-6">
 					{/* Planned Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-box badge-outline bg-secondary/20">
+							<span className="badge rounded-sm badge-soft bg-secondary/20">
 								Time-boxed
 							</span>
 						</div>
@@ -348,6 +348,13 @@ export default function SessionCard() {
 								onChange={handleDurationChange}
 								className="range range-sm range-primary w-full"
 							/>
+
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>|</span>
+								<span>|</span>
+								<span>|</span>
+							</div>
+
 							<div className="flex justify-between text-xs text-base-content/60">
 								<span>5 min</span>
 								<span>120 min</span>
@@ -371,12 +378,12 @@ export default function SessionCard() {
 					<Timer className="size-4 me-2" />
 					Open Session
 				</label>
-				<div className="tab-content rounded-box bg-base-200 p-6">
+				<div className="tab-content rounded-box bg-base-200 border-base-100 border p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
-							<span className="badge rounded-box badge-outline bg-secondary/20">
+							<span className="badge rounded-sm badge-soft bg-secondary/20">
 								No time limit
 							</span>
 						</div>
@@ -396,12 +403,12 @@ export default function SessionCard() {
 			<div className="collapse border border-base-100 bg-base-200">
 				<input type="checkbox" className="peer" />
 				<div className="collapse-title text-sm font-medium">
-					Additional Options (Optional)
+					Tags (Optional)
 				</div>
 				<div className="collapse-content">
 					<div className="space-y-4 pt-2">
 						{/* Focus Level */}
-						<div className="form-control">
+						{/* <div className="form-control">
 							<label className="label w-full justify-between">
 								<span className="label-text text-sm font-medium">
 									Focus Level: {focusLevel}
@@ -425,7 +432,12 @@ export default function SessionCard() {
 									className="range range-xs w-full"
 								/>
 
-								<div className="flex justify-between text-xs text-base-content/60">
+								<div className="flex justify-between text-[0.5rem] text-base-content/60">
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
 									<span>|</span>
 									<span>|</span>
 									<span>|</span>
@@ -438,12 +450,11 @@ export default function SessionCard() {
 									<span>Deep focus</span>
 								</div>
 							</div>
-						</div>
+						</div> */}
 
 						{/* Tags */}
 						<div className="form-control">
 							<label className="label">
-								<span className="label-text text-sm font-medium">Tags</span>
 								<span className="label-text-alt text-xs text-base-content/60">
 									Separate with spaces
 								</span>

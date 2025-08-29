@@ -7,6 +7,7 @@ import {
 	Notebook,
 	PanelLeft,
 	SquareArrowOutUpRightIcon,
+	Timer,
 } from "lucide-react";
 import React from "react";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -21,7 +22,7 @@ export default function Header() {
 			<div className="flex w-full h-full flex-col">
 				<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-3">
 					<nav className="flex gap-2 items-center">
-						<ul>
+						<ul className="mr-2 pr-2 border-r border-base-100">
 							{/* List goes here */}
 							<li>
 								<button
@@ -35,13 +36,14 @@ export default function Header() {
 						</ul>
 
 						{/* Widgets toggle */}
+						<button className="btn btn-sm btn-square">
+							<Timer className="size-4" />
+						</button>
 						<ul className="flex gap-1 p-2 rounded-box bg-base-100">
 							<li>
 								<button
 									className={`btn relative btn-sm btn-square ${
-										activeWidgets.includes("kanban")
-											? "btn-primary"
-											: "btn-ghost"
+										activeWidgets.includes("kanban") ? "" : "btn-ghost"
 									}`}
 									onClick={() => toggleWidget("kanban")}
 									title="Toggle Kanban widget"
@@ -49,7 +51,7 @@ export default function Header() {
 									<Kanban className="size-4" />
 									{/* Active indicator */}
 									{activeWidgets.includes("kanban") && (
-										<div className="w-4 absolute bg-primary h-0.5 rounded-full -bottom-2" />
+										<div className="w-4 absolute bg-base-content h-0.75 rounded-full -bottom-2" />
 									)}
 								</button>
 							</li>
@@ -57,7 +59,7 @@ export default function Header() {
 							<li>
 								<button
 									className={`btn relative btn-sm btn-square ${
-										activeWidgets.includes("note") ? "btn-primary" : "btn-ghost"
+										activeWidgets.includes("note") ? "" : "btn-ghost"
 									}`}
 									onClick={() => toggleWidget("note")}
 									title="Toggle Notes widget"
@@ -65,7 +67,7 @@ export default function Header() {
 									<Notebook className="size-4" />
 									{/* Active indicator */}
 									{activeWidgets.includes("note") && (
-										<div className="w-4 absolute bg-primary h-0.5 rounded-full -bottom-2" />
+										<div className="w-4 absolute bg-base-content h-0.75 rounded-full -bottom-2" />
 									)}
 								</button>
 							</li>
@@ -73,9 +75,7 @@ export default function Header() {
 							<li>
 								<button
 									className={`btn relative btn-sm btn-square ${
-										activeWidgets.includes("tasks")
-											? "btn-primary"
-											: "btn-ghost"
+										activeWidgets.includes("tasks") ? "" : "btn-ghost"
 									}`}
 									onClick={() => toggleWidget("tasks")}
 									title="Toggle Tasks widget"
@@ -83,7 +83,7 @@ export default function Header() {
 									<Brush className="size-4" />
 									{/* Active indicator */}
 									{activeWidgets.includes("tasks") && (
-										<div className="w-4 absolute bg-primary h-0.5 rounded-full -bottom-2" />
+										<div className="w-4 absolute bg-base-content h-0.75 rounded-full -bottom-2" />
 									)}
 								</button>
 							</li>
