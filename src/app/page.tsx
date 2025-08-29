@@ -5,13 +5,13 @@ import Sidebar from "../components/ui/sidebar";
 import React from "react";
 
 import Header from "../components/ui/header";
-import useWidgets from "../hooks/useWidgets";
+import { useWidgets } from "../contexts/WidgetContext";
 import WidgetKanban from "../components/ui/widget-kanban";
 import WidgetNotes from "../components/ui/widget-notes";
 import WidgetTask from "../components/ui/widget-task";
 
 export default function Page() {
-	const [activeWidgets] = useWidgets();
+	const { activeWidgets } = useWidgets();
 
 	return (
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
@@ -30,7 +30,7 @@ export default function Page() {
 							activeWidgets.includes("tasks")) && (
 							<div className="flex gap-4 h-fit">
 								{activeWidgets.includes("note") && (
-									<div className="w-3xl h-96">
+									<div className="w-3xl h-fit max-h-[800px]">
 										<WidgetNotes />
 									</div>
 								)}

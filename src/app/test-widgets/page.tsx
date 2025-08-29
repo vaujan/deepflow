@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import useWidgets from "../../hooks/useWidgets";
+import { useWidgets } from "../../contexts/WidgetContext";
 import WidgetKanban from "../../components/ui/widget-kanban";
 import WidgetNotes from "../../components/ui/widget-notes";
 import WidgetTask from "../../components/ui/widget-task";
 
 export default function TestWidgetsPage() {
-	const [activeWidgets, toggleWidget] = useWidgets();
+	const { activeWidgets, toggleWidget } = useWidgets();
 
 	return (
 		<div className="min-h-screen bg-base-300 p-8">

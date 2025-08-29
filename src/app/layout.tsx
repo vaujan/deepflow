@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { SidebarProvider } from "../contexts/SidebarContext";
+import { WidgetProvider } from "../contexts/WidgetContext";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -23,7 +24,9 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={`${inter.variable} font-sans antialiased`}>
 				<ThemeProvider>
-					<SidebarProvider>{children}</SidebarProvider>
+					<SidebarProvider>
+						<WidgetProvider>{children}</WidgetProvider>
+					</SidebarProvider>
 				</ThemeProvider>
 			</body>
 		</html>

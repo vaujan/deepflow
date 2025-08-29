@@ -10,11 +10,11 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useSidebar } from "../../contexts/SidebarContext";
-import useWidgets from "../../hooks/useWidgets";
+import { useWidgets } from "../../contexts/WidgetContext";
 
 export default function Header() {
 	const { isCollapsed, toggleSidebar } = useSidebar();
-	const [activeWidgets, toggleWidget] = useWidgets();
+	const { activeWidgets, toggleWidget } = useWidgets();
 
 	return (
 		<header className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
