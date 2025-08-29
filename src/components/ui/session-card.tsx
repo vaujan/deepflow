@@ -244,7 +244,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card bg-base-100 w-full  border-base-300 border p-6 gap-8">
+		<div className="card max-w-3xl w-full p-6 gap-8">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">

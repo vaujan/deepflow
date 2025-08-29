@@ -1,11 +1,18 @@
-import Dock from "@/src/components/ui/dock";
+"use client";
+
 import SessionCard from "@/src/components/ui/session-card";
 import Sidebar from "../components/ui/sidebar";
 import React from "react";
-import { DataTable } from "../components/ui/data-table";
+
 import Header from "../components/ui/header";
+import useWidgets from "../hooks/useWidgets";
+import WidgetKanban from "../components/ui/widget-kanban";
+import WidgetNotes from "../components/ui/widget-notes";
+import WidgetTask from "../components/ui/widget-task";
 
 export default function Page() {
+	const [activeWidgets] = useWidgets();
+
 	return (
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
 			<Sidebar />
@@ -16,25 +23,42 @@ export default function Page() {
 					<div className="max-w-8xl items-start justify-center h-full flex gap-6 w-full px-8">
 						<SessionCard />
 						{/* <SessionTable /> */}
-						<DataTable />
+						{/* <DataTable /> */}
 						{/* <SessionGraph /> */}
+
+						{(activeWidgets.includes("note") ||
+							activeWidgets.includes("tasks")) && (
+							<div className="flex gap-4 h-fit">
+								{activeWidgets.includes("note") && (
+									<div className="w-3xl h-96">
+										<WidgetNotes />
+									</div>
+								)}
+								{activeWidgets.includes("tasks") && (
+									<div className="w-full h-96">
+										<WidgetTask />
+									</div>
+								)}
+							</div>
+						)}
 					</div>
 				</div>
 
 				{/* Widgets layout */}
-				<div className="min-h-screen w-full justify-center items-center flex flex-col gap-4 ">
-					{/* Kanban widget */}
-					{/* <div className="flex flex-col w-full h-fit px-4">
-					
-						<div className="w-full h-128 rounded-box bg-base-100 border border-base-100"></div>
-					</div> */}
+				{activeWidgets.length > 0 && (
+					<div className="min-h-screen w-full justify-center items-center flex flex-col gap-4 px-4">
+						{/* Kanban widget */}
+						{activeWidgets.includes("kanban") && (
+							<div className="flex flex-col w-full h-fit">
+								<div className="w-full h-96">
+									<WidgetKanban />
+								</div>
+							</div>
+						)}
 
-					{/* Notes and tasks widget */}
-					{/* <div className="flex w-full gap-4 h-fit px-4">
-						<div className="w-full h-128 rounded-box bg-base-100 border border-base-100"></div>
-						<div className="w-full h-128 rounded-box bg-base-100 border border-base-100"></div>
-					</div> */}
-				</div>
+						{/* Notes and tasks widgets */}
+					</div>
+				)}
 			</main>
 		</div>
 	);

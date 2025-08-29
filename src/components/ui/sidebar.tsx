@@ -4,7 +4,6 @@ import React from "react";
 import {
 	Home,
 	Mail,
-	Search,
 	Lightbulb,
 	ChevronLeft,
 	ChevronRight,
@@ -12,17 +11,16 @@ import {
 	TestTube2,
 	Sun,
 	Moon,
-	Table,
-	Edit3,
 	Folder,
 	GraduationCap,
 	Code,
 	Plus,
+	Activity,
+	ChartAreaIcon,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useRouter } from "next/navigation";
 import { useSidebar } from "../../contexts/SidebarContext";
 
 interface SidebarItem {
@@ -39,19 +37,22 @@ interface WorkspaceItem {
 
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
-	{ label: "Test Page", href: "/test", icon: TestTube2 },
-	{ label: "Data Table", href: "/data-table-demo", icon: Table },
-	{ label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
+	{ label: "Stats", href: "/test", icon: ChartAreaIcon },
+	// { label: "Data Table", href: "/data-table-demo", icon: Table },
+	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 ];
 
 const workspaceItems: WorkspaceItem[] = [
-	{ id: "master-degree", name: "Master Degree Prep", icon: GraduationCap },
-	{ id: "deepflow-dev", name: "Deepflow Dev", icon: Code },
-	{ id: "ai-python", name: "AI Python Study", icon: Folder },
+	{
+		id: "master-degree",
+		name: "master degree prep 2026 yessir fjaslkfjsdlkafjldksa",
+		icon: GraduationCap,
+	},
+	{ id: "deepflow-dev", name: "deepflow dev", icon: Code },
+	{ id: "ai-python", name: "python ai study", icon: Folder },
 ];
 
 export default function Sidebar() {
-	const route = useRouter();
 	const { isCollapsed } = useSidebar();
 	const {
 		currentTipIndex,
@@ -129,7 +130,9 @@ export default function Sidebar() {
 										title={isCollapsed ? item.name : undefined}
 									>
 										<item.icon className="size-4 text-base-content/50" />
-										{!isCollapsed && <span>{item.name}</span>}
+										{!isCollapsed && (
+											<span className="line-clamp-1 ">{item.name}</span>
+										)}
 									</a>
 								</li>
 							))}

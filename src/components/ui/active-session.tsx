@@ -432,7 +432,7 @@ export default function ActiveSession({
 						<>
 							{isPlannedSession ? (
 								<div className="space-y-2">
-									<div className="text-4xl font-medium text-base-content font-mono">
+									<div className="text-4xl text-base-content font-mono">
 										{remainingTime ? formatTime(remainingTime) : "00:00"}
 									</div>
 									<p className="text-sm text-base-content/60">
