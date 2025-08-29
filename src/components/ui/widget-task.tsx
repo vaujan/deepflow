@@ -139,6 +139,7 @@ export default function WidgetTask() {
 						</button>
 					</div>
 				))}
+				ear{" "}
 			</div>
 		</div>
 	);

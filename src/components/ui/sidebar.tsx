@@ -11,7 +11,6 @@ import {
 	TestTube2,
 	Sun,
 	Moon,
-
 	Folder,
 	GraduationCap,
 	Code,
@@ -23,7 +22,6 @@ import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSidebar } from "../../contexts/SidebarContext";
-
 
 interface SidebarItem {
 	label: string;
@@ -84,9 +82,7 @@ export default function Sidebar() {
 
 				<div
 					className={`text-base-content min-h-full transition-all duration-300 ease-in-out ${
-						isCollapsed
-							? "w-16 border-r-1 border-base-100"
-							: "bg-base-200/50 w-74"
+						isCollapsed ? "w-16" : "bg-base-200/50 w-74"
 					} flex flex-col`}
 				>
 					{/* Navigation Menu */}
@@ -214,7 +210,7 @@ export default function Sidebar() {
 
 						{/* Footer navigation */}
 						<ul className="menu w-full space-y-2">
-							{!showTipsCard && (
+							{!showTipsCard && !isCollapsed && (
 								<li>
 									<button
 										className={`gap-3 ${

@@ -22,7 +22,7 @@ export default function Header() {
 			<div className="flex w-full h-full flex-col">
 				<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-3">
 					<nav className="flex gap-2 items-center">
-						<ul className="mr-2 pr-2 border-r border-base-100">
+						<ul className="mr-2 pr-2 border-r border-base-200">
 							{/* List goes here */}
 							<li>
 								<button
