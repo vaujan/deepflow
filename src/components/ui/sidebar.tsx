@@ -11,6 +11,7 @@ import {
 	TestTube2,
 	Sun,
 	Moon,
+
 	Folder,
 	GraduationCap,
 	Code,
@@ -22,6 +23,7 @@ import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSidebar } from "../../contexts/SidebarContext";
+
 
 interface SidebarItem {
 	label: string;

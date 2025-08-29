@@ -461,7 +461,12 @@ export default function ActiveSession({
 									<p className="badge badge-sm badge-soft rounded-box">
 										Session is running
 									</p>
-								</div>
+								</div=======
+							{/* Show "Session is running..." only for flow-based sessions when time is hidden */}
+							{!isPlannedSession && (
+								<p className="text-sm text-base-content/60">
+									{isPaused ? "Paused" : "Session is running..."}
+								</p>
 							)}
 						</div>
 					)}
