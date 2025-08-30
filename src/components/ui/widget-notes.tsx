@@ -73,7 +73,7 @@ export default function WidgetNotes() {
 			setNewNoteContent("<p></p>");
 			setIsAddingNew(false);
 			setActiveNote(newNote.id);
-			setEditingNote(newNote.id);
+			// setEditingNote(newNote.id);
 		}
 	};
 
@@ -119,7 +119,7 @@ export default function WidgetNotes() {
 		setIsAddingNew(true);
 		setActiveNote(null);
 		setEditingNote(null);
-		setNewNoteTitle("");
+		setNewNoteTitle("Untitled");
 		setNewNoteContent("<p></p>");
 	};
 
@@ -152,14 +152,20 @@ export default function WidgetNotes() {
 			{/* New note form */}
 			{isAddingNew && (
 				<div className="w-full card text-base-content/90 overflow-hidden bg-base-100 shadow-xl transition-all ease-out mb-4">
-					<div className="flex justify-between text-base-content/50 p-2">
+					<div className="flex justify-between text-base-content/50 p-4">
 						<div className="flex items-center gap-2">
 							<input
 								type="text"
 								placeholder="Note title..."
-								className="badge badge-lg badge-ghost rounded-sm outline-base-content/10 focus:outline-1 w-32"
+								className="border-b-1 border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
 								value={newNoteTitle}
 								onChange={(e) => setNewNoteTitle(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && e.shiftKey) {
+										e.preventDefault();
+										addNote();
+									}
+								}}
 							/>
 						</div>
 						<div className="flex gap-2">
@@ -170,8 +176,9 @@ export default function WidgetNotes() {
 									!newNoteTitle.trim() || newNoteContent.trim() === "<p></p>"
 								}
 							>
-								<Save className="size-4" />
 								Add
+								<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
+								<kbd className="kbd kbd-xs">enter</kbd>
 							</button>
 							<button
 								className="btn btn-ghost btn-sm btn-square"
@@ -187,6 +194,12 @@ export default function WidgetNotes() {
 						onChange={setNewNoteContent}
 						placeholder="Start typing here... Use the toolbar above for formatting."
 						className="min-h-[300px]"
+						onKeyDown={(e) => {
+							if (e.key === "Enter" && e.shiftKey) {
+								e.preventDefault();
+								addNote();
+							}
+						}}
 					/>
 				</div>
 			)}
@@ -266,7 +279,7 @@ export default function WidgetNotes() {
 								className="min-h-[300px]"
 							/>
 						) : (
-							<div className="min-h-[200px]">{renderContent(note.content)}</div>
+							<div className="h-fit">{renderContent(note.content)}</div>
 						)}
 					</div>
 				))}

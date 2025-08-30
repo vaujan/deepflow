@@ -41,6 +41,7 @@ interface RichTextEditorProps {
 	placeholder?: string;
 	editable?: boolean;
 	className?: string;
+	onKeyDown?: (event: React.KeyboardEvent) => void;
 }
 
 const MenuBar = ({ editor }: { editor: any }) => {
@@ -317,10 +318,13 @@ export default function RichTextEditor({
 	placeholder = "Start writing...",
 	editable = true,
 	className = "",
+	onKeyDown,
 }: RichTextEditorProps) {
 	const editor = useEditor({
 		extensions: [
-			StarterKit,
+			StarterKit.configure({
+				codeBlock: false,
+			}),
 			Placeholder.configure({
 				placeholder,
 			}),
@@ -382,7 +386,7 @@ export default function RichTextEditor({
 
 	return (
 		<div className={`flex flex-col justify-between ${className}`}>
-			<EditorContent editor={editor} />
+			<EditorContent editor={editor} onKeyDown={onKeyDown} />
 			{editable && <MenuBar editor={editor} />}
 		</div>
 	);
