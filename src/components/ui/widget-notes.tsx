@@ -1,6 +1,14 @@
 "use client";
 
-import { Plus, Trash2, Edit3, Save, X } from "lucide-react";
+import {
+	Plus,
+	Trash2,
+	Edit3,
+	Save,
+	X,
+	EllipsisVertical,
+	Notebook,
+} from "lucide-react";
 import React, { useState, useCallback } from "react";
 import RichTextEditor from "./rich-text-editor";
 
@@ -12,29 +20,7 @@ interface Note {
 }
 
 export default function WidgetNotes() {
-	const [notes, setNotes] = useState<Note[]>([
-		{
-			id: 1,
-			title: "Untitled",
-			content: "<p>User is writing mode here</p>",
-			timestamp: "Created at 10.02",
-		},
-		{
-			id: 2,
-			title: "The newer note",
-			content:
-				"<p>When we click add note, it will directly add a new note like this one and we put the user straight into writing.</p><p>The writing now uses a rich text editor with a modern toolbar and comprehensive formatting options.</p><p>Clicking another card should enter an edit mode into that card. The edit mode and read mode should be seamless, just like modern note-taking apps.</p>",
-			timestamp: "Created at 10.01",
-		},
-		{
-			id: 3,
-			title: "The older note",
-			content:
-				"<h1>Hello world, this is a heading</h1><p><strong>Better Call Saul</strong> is an American neo-noir legal crime drama television series created by Vince Gilligan and Peter Gould for AMC. Part of the Breaking Bad franchise, it is a spin-off of Gilligan's previous series, Breaking Bad (2008–2013), to which it serves primarily as a prequel, with some scenes taking place during and after the events of Breaking Bad.</p><p>Set primarily in the early to mid-2000s in Albuquerque, New Mexico, several years before the events of Breaking Bad, Better Call Saul examines the ethical decline of Jimmy McGill (Bob Odenkirk), an aspiring lawyer and former con artist who becomes the egocentric criminal-defense attorney Saul Goodman alongside his romantic interest and colleague Kim Wexler (Rhea Seehorn).</p>",
-			timestamp: "Created at 10.00",
-		},
-	]);
-	const [activeNote, setActiveNote] = useState<number | null>(null);
+	const [notes, setNotes] = useState<Note[]>([]);
 	const [editingNote, setEditingNote] = useState<number | null>(null);
 	const [isAddingNew, setIsAddingNew] = useState(false);
 	const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -72,16 +58,11 @@ export default function WidgetNotes() {
 			setNewNoteTitle("");
 			setNewNoteContent("<p></p>");
 			setIsAddingNew(false);
-			setActiveNote(newNote.id);
-			// setEditingNote(newNote.id);
 		}
 	};
 
 	const deleteNote = (id: number) => {
 		setNotes(notes.filter((note) => note.id !== id));
-		if (activeNote === id) {
-			setActiveNote(null);
-		}
 		if (editingNote === id) {
 			setEditingNote(null);
 		}
@@ -98,13 +79,6 @@ export default function WidgetNotes() {
 		debouncedUpdate(id, updates);
 	};
 
-	const getActiveNote = () => notes.find((note) => note.id === activeNote);
-
-	const handleNoteClick = (id: number) => {
-		setActiveNote(id);
-		setEditingNote(null);
-	};
-
 	const startEditing = (id: number) => {
 		setEditingNote(id);
 	};
@@ -117,7 +91,6 @@ export default function WidgetNotes() {
 
 	const startAddingNew = () => {
 		setIsAddingNew(true);
-		setActiveNote(null);
 		setEditingNote(null);
 		setNewNoteTitle("Untitled");
 		setNewNoteContent("<p></p>");
@@ -132,32 +105,32 @@ export default function WidgetNotes() {
 	const renderContent = (content: string) => {
 		return (
 			<div
-				className="prose prose-sm max-w-none"
+				className="ProseMirror max-w-none"
 				dangerouslySetInnerHTML={{ __html: content }}
 			/>
 		);
 	};
 
 	return (
-		<div className="w-full max-w-xl flex flex-col gap-2 min-w-[550px]">
-			<div className="flex justify-end text-base-content/80">
+		<div className="w-full max-w-xl group flex flex-col gap-2 min-w-[550px]">
+			<div className="flex justify-between items-center text-base-content/80">
+				<span className="font-medium text-lg">Notes</span>
 				<button
-					className="btn btn-ghost btn-circle btn-sm"
+					className="btn btn-circle btn-sm btn-ghost"
 					onClick={startAddingNew}
 				>
 					<Plus className="size-4" />
 				</button>
 			</div>
-
 			{/* New note form */}
 			{isAddingNew && (
 				<div className="w-full card text-base-content/90 overflow-hidden bg-base-100 shadow-xl transition-all ease-out mb-4">
-					<div className="flex justify-between text-base-content/50 p-4">
+					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
 								type="text"
 								placeholder="Note title..."
-								className="border-b-1 border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
+								className="border-b-1 border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
 								value={newNoteTitle}
 								onChange={(e) => setNewNoteTitle(e.target.value)}
 								onKeyDown={(e) => {
@@ -181,7 +154,7 @@ export default function WidgetNotes() {
 								<kbd className="kbd kbd-xs">enter</kbd>
 							</button>
 							<button
-								className="btn btn-ghost btn-sm btn-square"
+								className="btn btn-ghost btn-sm btn-circle"
 								onClick={cancelAddingNew}
 							>
 								<X className="size-3" />
@@ -192,8 +165,8 @@ export default function WidgetNotes() {
 					<RichTextEditor
 						content={newNoteContent}
 						onChange={setNewNoteContent}
-						placeholder="Start typing here... Use the toolbar above for formatting."
-						className="min-h-[300px]"
+						className="h-fit "
+						autoFocus={true}
 						onKeyDown={(e) => {
 							if (e.key === "Enter" && e.shiftKey) {
 								e.preventDefault();
@@ -202,87 +175,145 @@ export default function WidgetNotes() {
 						}}
 					/>
 				</div>
-			)}
-
+			)}{" "}
 			{/* Note list */}
 			<div className="flex flex-col gap-4 rounded-box max-h-[900px] overflow-y-auto">
-				{notes.map((note) => (
-					<div
-						key={note.id}
-						className={`w-full card text-base-content/90 bg-base-100 p-4 shadow-xl transition-all ease-out cursor-pointer ${
-							activeNote === note.id ? "shadow-xs" : ""
-						}`}
-						onClick={() => handleNoteClick(note.id)}
-					>
-						{/* Note header with title, time, and actions */}
-						<div className="flex justify-between text-base-content/50 mb-3">
-							<span className="badge badge-sm badge-ghost">
-								{editingNote === note.id ? (
-									<input
-										type="text"
-										className="input input-xs input-bordered w-24"
-										value={note.title}
-										onChange={(e) =>
-											updateNote(note.id, { title: e.target.value })
-										}
-										onClick={(e) => e.stopPropagation()}
-									/>
-								) : (
-									note.title
-								)}
-							</span>
-							<div className="flex items-center gap-2">
-								<p className="text-xs">{note.timestamp}</p>
-								{activeNote === note.id && editingNote !== note.id && (
-									<button
-										className="btn btn-xs btn-ghost btn-circle"
-										onClick={(e) => {
-											e.stopPropagation();
-											startEditing(note.id);
-										}}
-										title="Edit note"
-									>
-										<Edit3 className="size-3" />
-									</button>
-								)}
-								{editingNote === note.id && (
-									<button
-										className="btn btn-xs btn-primary btn-circle"
-										onClick={(e) => {
-											e.stopPropagation();
-											stopEditing();
-										}}
-										title="Save and stop editing"
-									>
-										<Save className="size-3" />
-									</button>
-								)}
-								<button
-									className="btn btn-xs btn-ghost btn-circle text-error hover:bg-error/20"
-									onClick={(e) => {
-										e.stopPropagation();
-										deleteNote(note.id);
-									}}
-									title="Delete note"
-								>
-									<Trash2 className="size-3" />
-								</button>
-							</div>
+				{notes.length === 0 && !isAddingNew ? (
+					// Empty state
+					<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+						<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
+							<Notebook className="size-6 text-base-content/35" />
 						</div>
-
-						{/* Note content */}
-						{editingNote === note.id ? (
-							<RichTextEditor
-								content={note.content}
-								onChange={(content) => updateNote(note.id, { content })}
-								placeholder="Edit your note here..."
-								className="min-h-[300px]"
-							/>
-						) : (
-							<div className="h-fit">{renderContent(note.content)}</div>
-						)}
+						<h3 className="text-lg font-semibold text-base-content/80 mb-2">
+							No notes yet
+						</h3>
+						<p className="text-base-content/60 mb-6 max-w-sm">
+							Start capturing your thoughts, ideas, and important information.
+							Create your first note to get started.
+						</p>
+						<button onClick={startAddingNew} className="btn btn-sm gap-2">
+							<Plus className="size-4" />
+							Create your first note
+						</button>
 					</div>
-				))}
+				) : (
+					notes.map((note) => (
+						<div
+							key={note.id}
+							className={`w-full card text-base-content/90 bg-base-100 p-4 shadow-xl transition-all ease-out group ${
+								editingNote === note.id ? "shadow-xs" : "cursor-pointer"
+							}`}
+							onClick={() => {
+								// Only handle clicks when not in editing mode
+								if (editingNote !== note.id) {
+									// Handle note selection or other actions here if needed
+								}
+							}}
+						>
+							{editingNote === note.id ? (
+								// Editing mode - same interface as adding new note
+								<>
+									<div className="flex justify-between p-4 -m-4 mb-4">
+										<div className="flex items-center gap-2">
+											<input
+												type="text"
+												placeholder="Note title..."
+												className="border-b-1 border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
+												value={note.title}
+												onChange={(e) =>
+													updateNote(note.id, { title: e.target.value })
+												}
+												onKeyDown={(e) => {
+													if (e.key === "Enter" && e.shiftKey) {
+														e.preventDefault();
+														stopEditing();
+													}
+												}}
+											/>
+										</div>
+										<div className="flex gap-2">
+											<button
+												className="btn btn-sm btn-ghost"
+												onClick={stopEditing}
+												disabled={
+													!note.title.trim() ||
+													note.content.trim() === "<p></p>"
+												}
+											>
+												Save
+												<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
+												<kbd className="kbd kbd-xs">enter</kbd>
+											</button>
+											<button
+												className="btn btn-ghost btn-sm btn-circle"
+												onClick={() => {
+													setEditingNote(null);
+												}}
+											>
+												<X className="size-3" />
+											</button>
+										</div>
+									</div>
+
+									<RichTextEditor
+										content={note.content}
+										onChange={(content) => updateNote(note.id, { content })}
+										className="h-fit -m-4"
+										autoFocus={true}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" && e.shiftKey) {
+												e.preventDefault();
+												stopEditing();
+											}
+										}}
+									/>
+								</>
+							) : (
+								// Read mode
+								<>
+									{/* Note header with title, time, and actions */}
+									<div
+										className={`flex ${
+											note.title ? "justify-between" : "justify-end"
+										} text-base-content/50 items-center mb-3`}
+									>
+										{note.title && (
+											<span className="badge badge-sm badge-ghost">
+												{note.title}
+											</span>
+										)}
+										<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+											<p className="text-xs">{note.timestamp}</p>
+											<button
+												className="btn btn-sm btn-ghost btn-circle"
+												onClick={(e) => {
+													e.stopPropagation();
+													startEditing(note.id);
+												}}
+												title="Edit note"
+											>
+												<Edit3 className="size-3" />
+											</button>
+											<button
+												className="btn btn-sm btn-ghost btn-circle text-error hover:bg-error/20"
+												onClick={(e) => {
+													e.stopPropagation();
+													deleteNote(note.id);
+												}}
+												title="Delete note"
+											>
+												<Trash2 className="size-3" />
+											</button>
+										</div>
+									</div>
+
+									{/* Note content */}
+									<div className="h-fit">{renderContent(note.content)}</div>
+								</>
+							)}
+						</div>
+					))
+				)}
 			</div>
 		</div>
 	);

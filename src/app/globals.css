@@ -23,7 +23,7 @@ body {
 /* TipTap Editor Styles */
 .ProseMirror {
 	outline: none;
-	min-height: 200px;
+	min-height: 0;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -187,13 +187,45 @@ body {
 .ProseMirror hr {
 	margin: 1rem 0;
 	border: none;
-	border-top: 1px solid hsl(var(--b3));
-	border-style: dashed;
+	border-top: 2px solid hsl(var(--b3));
+	height: 2px;
+	background: hsl(var(--b3));
 }
 
 .ProseMirror mark {
 	background: hsl(var(--a));
 	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Highlight styling */
+.ProseMirror mark {
+	background: hsl(var(--a));
+	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+.ProseMirror mark.highlight {
+	background: hsl(var(--a));
+	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Alternative highlight styling for TipTap */
+.ProseMirror .highlight {
+	background: #fef3c7 !important;
+	color: #92400e !important;
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Force highlight styling */
+.ProseMirror mark[data-type="highlight"] {
+	background: #fef3c7 !important;
+	color: #92400e !important;
 	padding: 0.125rem 0.25rem;
 	border-radius: 0.25rem;
 }
