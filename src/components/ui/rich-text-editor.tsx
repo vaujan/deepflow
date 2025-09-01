@@ -1,15 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
-import CodeBlock from "@tiptap/extension-code-block";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -18,21 +16,15 @@ import {
 	Bold,
 	Italic,
 	Strikethrough,
-	Code,
 	Quote,
 	List,
 	ListOrdered,
-	AlignLeft,
-	AlignCenter,
-	AlignRight,
-	AlignJustify,
 	Link as LinkIcon,
 	Image as ImageIcon,
-	Table as TableIcon,
-	Undo,
-	Redo,
-	Highlighter,
 	Underline as UnderlineIcon,
+	ChevronDown,
+	X,
+	Check,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -41,33 +33,80 @@ interface RichTextEditorProps {
 	placeholder?: string;
 	editable?: boolean;
 	className?: string;
+	onKeyDown?: (event: React.KeyboardEvent) => void;
+	autoFocus?: boolean;
 }
 
 const MenuBar = ({ editor }: { editor: any }) => {
+	const [showLinkForm, setShowLinkForm] = useState(false);
+	const [showImageForm, setShowImageForm] = useState(false);
+	const [linkUrl, setLinkUrl] = useState("");
+	const [linkText, setLinkText] = useState("");
+	const [imageUrl, setImageUrl] = useState("");
+	const [imageAlt, setImageAlt] = useState("");
+
 	if (!editor) {
 		return null;
 	}
 
 	const addLink = () => {
-		const url = window.prompt("Enter URL");
-		if (url) {
-			editor.chain().focus().setLink({ href: url }).run();
+		if (linkUrl.trim() && linkText.trim()) {
+			editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
+			// If there's selected text, replace it with the link
+			if (editor.isActive("link")) {
+				editor.chain().focus().unsetLink().run();
+			}
+			editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
+			setLinkUrl("");
+			setLinkText("");
+			setShowLinkForm(false);
 		}
 	};
 
 	const addImage = () => {
-		const url = window.prompt("Enter image URL");
-		if (url) {
-			editor.chain().focus().setImage({ src: url }).run();
+		if (imageUrl.trim()) {
+			editor
+				.chain()
+				.focus()
+				.setImage({
+					src: imageUrl.trim(),
+					alt: imageAlt.trim() || "Image",
+				})
+				.run();
+			setImageUrl("");
+			setImageAlt("");
+			setShowImageForm(false);
 		}
 	};
 
-	const addTable = () => {
-		editor
-			.chain()
-			.focus()
-			.insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-			.run();
+	const cancelLink = () => {
+		setShowLinkForm(false);
+		setLinkUrl("");
+		setLinkText("");
+	};
+
+	const cancelImage = () => {
+		setShowImageForm(false);
+		setImageUrl("");
+		setImageAlt("");
+	};
+
+	const handleLinkKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			addLink();
+		} else if (e.key === "Escape") {
+			cancelLink();
+		}
+	};
+
+	const handleImageKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			addImage();
+		} else if (e.key === "Escape") {
+			cancelImage();
+		}
 	};
 
 	return (
@@ -114,71 +153,75 @@ const MenuBar = ({ editor }: { editor: any }) => {
 				>
 					<UnderlineIcon className="size-3" />
 				</button>
-				<button
-					onClick={() => editor.chain().focus().toggleHighlight().run()}
-					disabled={!editor.can().chain().focus().toggleHighlight().run()}
-					className={`btn btn-xs ${
-						editor.isActive("highlight") ? "btn-primary" : "btn-ghost"
-					}`}
-					title="Highlight"
-				>
-					<Highlighter className="size-3" />
-				</button>
-				<button
-					onClick={() => editor.chain().focus().toggleCode().run()}
-					disabled={!editor.can().chain().focus().toggleCode().run()}
-					className={`btn btn-xs ${
-						editor.isActive("code") ? "btn-primary" : "btn-ghost"
-					}`}
-					title="Inline Code"
-				>
-					<Code className="size-3" />
-				</button>
 			</div>
 
 			{/* Block formatting */}
 			<div className="flex items-center gap-1 border-r border-base-300 pr-2">
-				<button
-					onClick={() =>
-						editor.chain().focus().toggleHeading({ level: 1 }).run()
-					}
-					className={`btn btn-xs ${
-						editor.isActive("heading", { level: 1 })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Heading 1"
-				>
-					H1
-				</button>
-				<button
-					onClick={() =>
-						editor.chain().focus().toggleHeading({ level: 2 }).run()
-					}
-					className={`btn btn-xs ${
-						editor.isActive("heading", { level: 2 })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Heading 2"
-				>
-					H2
-				</button>
-				<button
-					onClick={() =>
-						editor.chain().focus().toggleHeading({ level: 3 }).run()
-					}
-					className={`btn btn-xs ${
-						editor.isActive("heading", { level: 3 })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Heading 3"
-				>
-					H3
-				</button>
+				<div className="dropdown dropdown-top">
+					<button
+						tabIndex={0}
+						className="btn btn-xs btn-ghost"
+						title="Text style"
+					>
+						{editor.isActive("heading", { level: 1 }) && "H1"}
+						{editor.isActive("heading", { level: 2 }) && "H2"}
+						{editor.isActive("heading", { level: 3 }) && "H3"}
+						{!editor.isActive("heading") && "Normal text"}
+						<ChevronDown className="size-3 ml-1" />
+					</button>
+					<ul
+						tabIndex={0}
+						className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-32"
+					>
+						<li>
+							<button
+								onClick={() => editor.chain().focus().setParagraph().run()}
+								className={editor.isActive("paragraph") ? "active" : ""}
+							>
+								Normal text
+							</button>
+						</li>
+						<li>
+							<button
+								onClick={() =>
+									editor.chain().focus().toggleHeading({ level: 1 }).run()
+								}
+								className={
+									editor.isActive("heading", { level: 1 }) ? "active" : ""
+								}
+							>
+								Heading 1
+							</button>
+						</li>
+						<li>
+							<button
+								onClick={() =>
+									editor.chain().focus().toggleHeading({ level: 2 }).run()
+								}
+								className={
+									editor.isActive("heading", { level: 2 }) ? "active" : ""
+								}
+							>
+								Heading 2
+							</button>
+						</li>
+						<li>
+							<button
+								onClick={() =>
+									editor.chain().focus().toggleHeading({ level: 3 }).run()
+								}
+								className={
+									editor.isActive("heading", { level: 3 }) ? "active" : ""
+								}
+							>
+								Heading 3
+							</button>
+						</li>
+					</ul>
+				</div>
 				<button
 					onClick={() => editor.chain().focus().toggleBulletList().run()}
+					disabled={!editor.can().chain().focus().toggleBulletList().run()}
 					className={`btn btn-xs ${
 						editor.isActive("bulletList") ? "btn-primary" : "btn-ghost"
 					}`}
@@ -188,6 +231,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
 				</button>
 				<button
 					onClick={() => editor.chain().focus().toggleOrderedList().run()}
+					disabled={!editor.can().chain().focus().toggleOrderedList().run()}
 					className={`btn btn-xs ${
 						editor.isActive("orderedList") ? "btn-primary" : "btn-ghost"
 					}`}
@@ -197,6 +241,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
 				</button>
 				<button
 					onClick={() => editor.chain().focus().toggleBlockquote().run()}
+					disabled={!editor.can().chain().focus().toggleBlockquote().run()}
 					className={`btn btn-xs ${
 						editor.isActive("blockquote") ? "btn-primary" : "btn-ghost"
 					}`}
@@ -204,108 +249,101 @@ const MenuBar = ({ editor }: { editor: any }) => {
 				>
 					<Quote className="size-3" />
 				</button>
-				<button
-					onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-					className={`btn btn-xs ${
-						editor.isActive("codeBlock") ? "btn-primary" : "btn-ghost"
-					}`}
-					title="Code Block"
-				>
-					<Code className="size-3" />
-				</button>
-			</div>
-
-			{/* Alignment */}
-			<div className="flex items-center gap-1 border-r border-base-300 pr-2">
-				<button
-					onClick={() => editor.chain().focus().setTextAlign("left").run()}
-					className={`btn btn-xs ${
-						editor.isActive("textAlign", { textAlign: "left" })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Align Left"
-				>
-					<AlignLeft className="size-3" />
-				</button>
-				<button
-					onClick={() => editor.chain().focus().setTextAlign("center").run()}
-					className={`btn btn-xs ${
-						editor.isActive("textAlign", { textAlign: "center" })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Align Center"
-				>
-					<AlignCenter className="size-3" />
-				</button>
-				<button
-					onClick={() => editor.chain().focus().setTextAlign("right").run()}
-					className={`btn btn-xs ${
-						editor.isActive("textAlign", { textAlign: "right" })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Align Right"
-				>
-					<AlignRight className="size-3" />
-				</button>
-				<button
-					onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-					className={`btn btn-xs ${
-						editor.isActive("textAlign", { textAlign: "justify" })
-							? "btn-primary"
-							: "btn-ghost"
-					}`}
-					title="Justify"
-				>
-					<AlignJustify className="size-3" />
-				</button>
 			</div>
 
 			{/* Insert elements */}
-			<div className="flex items-center gap-1 border-r border-base-300 pr-2">
-				<button
-					onClick={addLink}
-					className="btn btn-xs btn-ghost"
-					title="Add Link"
-				>
-					<LinkIcon className="size-3" />
-				</button>
-				<button
-					onClick={addImage}
-					className="btn btn-xs btn-ghost"
-					title="Add Image"
-				>
-					<ImageIcon className="size-3" />
-				</button>
-				<button
-					onClick={addTable}
-					className="btn btn-xs btn-ghost"
-					title="Add Table"
-				>
-					<TableIcon className="size-3" />
-				</button>
-			</div>
-
-			{/* History */}
 			<div className="flex items-center gap-1">
-				<button
-					onClick={() => editor.chain().focus().undo().run()}
-					disabled={!editor.can().chain().focus().undo().run()}
-					className="btn btn-xs btn-ghost"
-					title="Undo"
-				>
-					<Undo className="size-3" />
-				</button>
-				<button
-					onClick={() => editor.chain().focus().redo().run()}
-					disabled={!editor.can().chain().focus().redo().run()}
-					className="btn btn-xs btn-ghost"
-					title="Redo"
-				>
-					<Redo className="size-3" />
-				</button>
+				{/* Link button and form */}
+				{!showLinkForm ? (
+					<button
+						onClick={() => setShowLinkForm(true)}
+						className="btn btn-xs btn-ghost"
+						title="Add Link"
+					>
+						<LinkIcon className="size-3" />
+					</button>
+				) : (
+					<div className="flex items-center gap-1 bg-base-200 rounded-lg p-1 border border-base-300">
+						<input
+							type="text"
+							placeholder="Link text..."
+							value={linkText}
+							onChange={(e) => setLinkText(e.target.value)}
+							onKeyDown={handleLinkKeyDown}
+							className="input input-xs w-20 bg-transparent border-0 focus:outline-none focus:ring-0"
+							autoFocus
+						/>
+						<input
+							type="url"
+							placeholder="URL..."
+							value={linkUrl}
+							onChange={(e) => setLinkUrl(e.target.value)}
+							onKeyDown={handleLinkKeyDown}
+							className="input input-xs w-32 bg-transparent border-0 focus:outline-none focus:ring-0"
+						/>
+						<button
+							onClick={addLink}
+							disabled={!linkUrl.trim() || !linkText.trim()}
+							className="btn btn-xs btn-primary btn-circle"
+							title="Add Link"
+						>
+							<Check className="size-3" />
+						</button>
+						<button
+							onClick={cancelLink}
+							className="btn btn-xs btn-ghost btn-circle"
+							title="Cancel"
+						>
+							<X className="size-3" />
+						</button>
+					</div>
+				)}
+
+				{/* Image button and form */}
+				{!showImageForm ? (
+					<button
+						onClick={() => setShowImageForm(true)}
+						className="btn btn-xs btn-ghost"
+						title="Add Image"
+					>
+						<ImageIcon className="size-3" />
+					</button>
+				) : (
+					<div className="flex items-center gap-1 bg-base-200 rounded-lg p-1 border border-base-300">
+						<input
+							type="url"
+							placeholder="Image URL..."
+							value={imageUrl}
+							onChange={(e) => setImageUrl(e.target.value)}
+							onKeyDown={handleImageKeyDown}
+							className="input input-xs w-32 bg-transparent border-0 focus:outline-none focus:ring-0"
+							autoFocus
+						/>
+						<input
+							type="text"
+							placeholder="Alt text..."
+							value={imageAlt}
+							onChange={(e) => setImageAlt(e.target.value)}
+							onKeyDown={handleImageKeyDown}
+							className="input input-xs w-20 bg-transparent border-0 focus:outline-none focus:ring-0"
+						/>
+						<button
+							onClick={addImage}
+							disabled={!imageUrl.trim()}
+							className="btn btn-xs btn-primary btn-circle"
+							title="Add Image"
+						>
+							<Check className="size-3" />
+						</button>
+						<button
+							onClick={cancelImage}
+							className="btn btn-xs btn-ghost btn-circle"
+							title="Cancel"
+						>
+							<X className="size-3" />
+						</button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -317,14 +355,24 @@ export default function RichTextEditor({
 	placeholder = "Start writing...",
 	editable = true,
 	className = "",
+	onKeyDown,
+	autoFocus,
 }: RichTextEditorProps) {
 	const editor = useEditor({
+		onCreate: ({ editor }) => {
+			console.log(
+				"Editor created with extensions:",
+				editor.extensionManager.extensions.map((ext) => ext.name)
+			);
+		},
 		extensions: [
-			StarterKit,
+			StarterKit.configure({
+				codeBlock: false,
+				code: false,
+			}),
 			Placeholder.configure({
 				placeholder,
 			}),
-			Highlight,
 			Underline,
 			TextAlign.configure({
 				types: ["heading", "paragraph"],
@@ -339,12 +387,6 @@ export default function RichTextEditor({
 			Image.configure({
 				HTMLAttributes: {
 					class: "max-w-full h-auto rounded-lg my-2 border border-base-300",
-				},
-			}),
-			CodeBlock.configure({
-				HTMLAttributes: {
-					class:
-						"bg-base-200 p-4 rounded-lg overflow-x-auto mb-2 border border-base-300",
 				},
 			}),
 			Table.configure({
@@ -375,10 +417,27 @@ export default function RichTextEditor({
 		},
 		editorProps: {
 			attributes: {
-				class: "prose prose-sm max-w-none focus:outline-none min-h-[200px] p-4",
+				class: "prose max-w-none focus:outline-none h-fit p-4",
+			},
+			handleKeyDown: (view, event) => {
+				// Handle shift+enter for external key handlers
+				if (event.key === "Enter" && event.shiftKey && onKeyDown) {
+					event.preventDefault();
+					event.stopPropagation();
+					onKeyDown(event as any);
+					return true; // Indicate that we handled this key
+				}
+				return false; // Let TipTap handle other keys normally
 			},
 		},
 	});
+
+	// Auto-focus if autoFocus prop is true
+	React.useEffect(() => {
+		if (autoFocus && editor) {
+			editor.commands.focus();
+		}
+	}, [autoFocus, editor]);
 
 	return (
 		<div className={`flex flex-col justify-between ${className}`}>

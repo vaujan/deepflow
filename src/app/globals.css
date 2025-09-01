@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@plugin "@tailwindcss/typography";
 
 /* Custom font configuration */
 :root {
@@ -22,7 +23,7 @@ body {
 /* TipTap Editor Styles */
 .ProseMirror {
 	outline: none;
-	min-height: 200px;
+	min-height: 0;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -67,6 +68,23 @@ body {
 	padding-left: 1.5rem;
 }
 
+/* Ensure list markers are visible (Tailwind reset can remove them) */
+.ProseMirror ul {
+	list-style-type: disc;
+}
+
+.ProseMirror ol {
+	list-style-type: decimal;
+}
+
+.ProseMirror ul ul {
+	list-style-type: circle;
+}
+
+.ProseMirror ul ul ul {
+	list-style-type: square;
+}
+
 .ProseMirror li {
 	margin: 0.25rem 0;
 }
@@ -86,7 +104,8 @@ body {
 	padding: 0.25rem 0.5rem;
 	border-radius: 0.375rem;
 	font-size: 0.875rem;
-	font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+		"Liberation Mono", Menlo, monospace;
 	color: hsl(var(--p) / 0.8);
 	border: 1px solid hsl(var(--b3));
 }
@@ -168,13 +187,45 @@ body {
 .ProseMirror hr {
 	margin: 1rem 0;
 	border: none;
-	border-top: 1px solid hsl(var(--b3));
-	border-style: dashed;
+	border-top: 2px solid hsl(var(--b3));
+	height: 2px;
+	background: hsl(var(--b3));
 }
 
 .ProseMirror mark {
 	background: hsl(var(--a));
 	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Highlight styling */
+.ProseMirror mark {
+	background: hsl(var(--a));
+	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+.ProseMirror mark.highlight {
+	background: hsl(var(--a));
+	color: hsl(var(--ac));
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Alternative highlight styling for TipTap */
+.ProseMirror .highlight {
+	background: #fef3c7 !important;
+	color: #92400e !important;
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+}
+
+/* Force highlight styling */
+.ProseMirror mark[data-type="highlight"] {
+	background: #fef3c7 !important;
+	color: #92400e !important;
 	padding: 0.125rem 0.25rem;
 	border-radius: 0.25rem;
 }
@@ -189,12 +240,18 @@ body {
 }
 
 /* Selection styles */
-.ProseMirror ::selection {
-	background: hsl(var(--p) / 0.2);
+.ProseMirror::selection,
+.ProseMirror ::selection,
+.ProseMirror *::selection {
+	background: hsl(var(--p) / 0.4);
+	color: hsl(var(--pc));
 }
 
-.ProseMirror ::-moz-selection {
-	background: hsl(var(--p) / 0.2);
+.ProseMirror::-moz-selection,
+.ProseMirror ::-moz-selection,
+.ProseMirror *::-moz-selection {
+	background: hsl(var(--p) / 0.4);
+	color: hsl(var(--pc));
 }
 
 @plugin "daisyui/theme" {
@@ -265,4 +322,32 @@ body {
 	--border: 1px;
 	--depth: 1;
 	--noise: 0;
+}
+
+/* Stronger selection styles (appended last to win cascade) */
+.ProseMirror::selection,
+.ProseMirror ::selection,
+.ProseMirror *::selection {
+	background: rgba(59, 130, 246, 0.45) !important; /* blue-500 @ 45% */
+	color: #ffffff !important;
+}
+
+.ProseMirror::-moz-selection,
+.ProseMirror ::-moz-selection,
+.ProseMirror *::-moz-selection {
+	background: rgba(59, 130, 246, 0.45) !important;
+	color: #ffffff !important;
+}
+
+/* Global selection styles for the whole UI */
+::selection,
+*::selection {
+	background: rgba(59, 130, 246, 0.45) !important;
+	color: #ffffff !important;
+}
+
+::-moz-selection,
+*::-moz-selection {
+	background: rgba(59, 130, 246, 0.45) !important;
+	color: #ffffff !important;
 }

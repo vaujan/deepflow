@@ -8,15 +8,14 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	X,
-	TestTube2,
 	Sun,
 	Moon,
 	Folder,
 	GraduationCap,
 	Code,
 	Plus,
-	Activity,
 	ChartAreaIcon,
+	SquareAsterisk,
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
@@ -38,7 +37,7 @@ interface WorkspaceItem {
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
 	{ label: "Stats", href: "/test", icon: ChartAreaIcon },
-	// { label: "Data Table", href: "/data-table-demo", icon: Table },
+	{ label: "Widgets", href: "/test-widgets", icon: SquareAsterisk },
 	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 ];
 

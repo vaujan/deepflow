@@ -28,7 +28,7 @@ export default function ActiveSession({
 		session.duration ? session.duration * 60 : null
 	);
 	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
-	const [isTimeVisible, setIsTimeVisible] = useState(false); // Changed from true to false to hide time by default
+	const [isTimeVisible, setIsTimeVisible] = useState(true); // Time is shown by default
 	const [toast, setToast] = useState<{
 		message: string;
 		type: "success" | "info" | "warning" | "error";
@@ -456,13 +456,6 @@ export default function ActiveSession({
 								{isPaused ? "Paused" : " "}
 							</p>
 							{/* Show simple message for non-planned sessions when time is hidden */}
-							{!isPlannedSession && (
-								<div className="w-full text-center">
-									<p className="badge badge-sm badge-soft rounded-box">
-										Session is running
-									</p>
-								</div>
-							)}
 							{/* Show "Session is running..." only for flow-based sessions when time is hidden */}
 							{!isPlannedSession && (
 								<p className="text-sm text-base-content/60">

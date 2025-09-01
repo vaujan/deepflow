@@ -7,7 +7,6 @@ interface Task {
 	id: number;
 	text: string;
 	completed: boolean;
-	priority: "low" | "medium" | "high";
 }
 
 export default function WidgetTask() {
@@ -16,18 +15,15 @@ export default function WidgetTask() {
 			id: 1,
 			text: "Complete project documentation",
 			completed: false,
-			priority: "high",
 		},
-		{ id: 2, text: "Review code changes", completed: true, priority: "medium" },
+		{ id: 2, text: "Review code changes", completed: true },
 		{
 			id: 3,
 			text: "Setup development environment",
 			completed: false,
-			priority: "low",
 		},
 	]);
 	const [newTask, setNewTask] = useState("");
-	const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
 	const addTask = () => {
 		if (newTask.trim()) {
@@ -35,7 +31,6 @@ export default function WidgetTask() {
 				id: Date.now(),
 				text: newTask,
 				completed: false,
-				priority,
 			};
 			setTasks([...tasks, task]);
 			setNewTask("");
@@ -52,19 +47,6 @@ export default function WidgetTask() {
 
 	const deleteTask = (id: number) => {
 		setTasks(tasks.filter((task) => task.id !== id));
-	};
-
-	const getPriorityColor = (priority: string) => {
-		switch (priority) {
-			case "high":
-				return "text-error";
-			case "medium":
-				return "text-warning";
-			case "low":
-				return "text-success";
-			default:
-				return "text-base-content";
-		}
 	};
 
 	return (
@@ -85,17 +67,6 @@ export default function WidgetTask() {
 					onChange={(e) => setNewTask(e.target.value)}
 					onKeyPress={(e) => e.key === "Enter" && addTask()}
 				/>
-				<select
-					className="select select-sm select-bordered"
-					value={priority}
-					onChange={(e) =>
-						setPriority(e.target.value as "low" | "medium" | "high")
-					}
-				>
-					<option value="low">Low</option>
-					<option value="medium">Medium</option>
-					<option value="high">High</option>
-				</select>
 			</div>
 
 			{/* Tasks list */}
@@ -123,13 +94,6 @@ export default function WidgetTask() {
 							}`}
 						>
 							{task.text}
-						</span>
-						<span
-							className={`text-xs font-medium ${getPriorityColor(
-								task.priority
-							)}`}
-						>
-							{task.priority}
 						</span>
 						<button
 							onClick={() => deleteTask(task.id)}
