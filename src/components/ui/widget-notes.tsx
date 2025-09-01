@@ -200,7 +200,7 @@ export default function WidgetNotes() {
 					notes.map((note) => (
 						<div
 							key={note.id}
-							className={`w-full card text-base-content/90 bg-base-100 p-4 shadow-xl transition-all ease-out group ${
+							className={`w-full card text-base-content/90 bg-base-100 p-4 transition-all ease-out group ${
 								editingNote === note.id ? "shadow-xs" : "cursor-pointer"
 							}`}
 							onClick={() => {
