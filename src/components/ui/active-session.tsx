@@ -459,7 +459,7 @@ export default function ActiveSession({
 							{/* Show "Session is running..." only for flow-based sessions when time is hidden */}
 							{!isPlannedSession && (
 								<p className="text-sm text-base-content/60">
-									{isPaused ? "Paused" : "Session is running..."}
+									{isPaused ? null : "Session is running..."}
 								</p>
 							)}
 						</div>
