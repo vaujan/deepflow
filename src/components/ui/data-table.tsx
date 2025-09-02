@@ -155,45 +155,6 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 	const [tagsSearchTerm, setTagsSearchTerm] = useState("");
 
-	// Helper function to safely get filter value as string array
-	const getFilterValueAsStringArray = (column: any): string[] => {
-		const value = column.getFilterValue();
-		return Array.isArray(value) ? value : [];
-	};
-
-	// Helper component for selected tags display
-	const SelectedTagsDisplay = ({ column }: { column: any }) => {
-		const filterValue = getFilterValueAsStringArray(column);
-		if (filterValue.length === 0) return null;
-
-		return (
-			<div className="mb-2">
-				<div className="text-xs text-base-content/70 mb-1">Selected:</div>
-				<div className="flex flex-wrap gap-1">
-					{filterValue.map((tag, index) => (
-						<span
-							key={index}
-							className="badge rounded-sm badge-sm badge-primary"
-						>
-							#{tag}
-							<button
-								onClick={() => {
-									const newTags = filterValue.filter((_, i) => i !== index);
-									column.setFilterValue(
-										newTags.length > 0 ? newTags : undefined
-									);
-								}}
-								className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
-							>
-								×
-							</button>
-						</span>
-					))}
-				</div>
-			</div>
-		);
-	};
-
 	// Helper component for available tags list
 	const AvailableTagsList = ({
 		column,
@@ -204,6 +165,10 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		data: DataItem[];
 		searchTerm: string;
 	}) => {
+		const getFilterValueAsStringArray = (column: any): string[] => {
+			const value = column.getFilterValue();
+			return Array.isArray(value) ? value : [];
+		};
 		// Count occurrences of each tag, filtering out invalid tags
 		const tagCounts = data.reduce((acc, item) => {
 			(item.tags || []).forEach((tag) => {
@@ -488,7 +453,52 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							</div>
 
 							{/* Selected Tags Display */}
-							<SelectedTagsDisplay column={column} />
+							{
+								(() => {
+									const getFilterValueAsStringArray = (
+										column: any
+									): string[] => {
+										const value = column.getFilterValue();
+										return Array.isArray(value) ? value : [];
+									};
+
+									const filterValue = getFilterValueAsStringArray(column);
+									if (filterValue.length === 0) return null;
+
+									const selectedTagsDisplay = (
+										<div className="mb-2">
+											<div className="text-xs text-base-content/70 mb-1">
+												Selected:
+											</div>
+											<div className="flex flex-wrap gap-1">
+												{filterValue.map((tag, index) => (
+													<span
+														key={index}
+														className="badge rounded-sm badge-sm badge-primary"
+													>
+														#{tag}
+														<button
+															onClick={() => {
+																const newTags = filterValue.filter(
+																	(_, i) => i !== index
+																);
+																column.setFilterValue(
+																	newTags.length > 0 ? newTags : undefined
+																);
+															}}
+															className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
+														>
+															×
+														</button>
+													</span>
+												))}
+											</div>
+										</div>
+									);
+
+									return selectedTagsDisplay;
+								})() as React.ReactNode
+							}
 
 							{/* Available Tags List */}
 							<AvailableTagsList
