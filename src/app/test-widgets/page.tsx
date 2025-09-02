@@ -12,8 +12,8 @@ export default function TestWidgetsPage() {
 	return (
 		<div className="min-h-screen bg-base-300 p-8">
 			<div className="max-w-6xl mx-auto">
+				{" "}
 				<h1 className="text-3xl font-bold mb-8">Widget Toggle Test</h1>
-
 				{/* Widget Controls */}
 				<div className="bg-base-100 p-6 rounded-lg mb-8">
 					<h2 className="text-xl font-semibold mb-4">Widget Controls</h2>
@@ -49,7 +49,6 @@ export default function TestWidgetsPage() {
 						{activeWidgets.length > 0 ? activeWidgets.join(", ") : "None"}
 					</div>
 				</div>
-
 				{/* Widget Display */}
 				{activeWidgets.length > 0 && (
 					<div className="space-y-6">
