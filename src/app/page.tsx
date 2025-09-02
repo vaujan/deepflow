@@ -21,37 +21,29 @@ export default function Page() {
 				<Header />
 				<div className="flex w-full h-full flex-col">
 					<div className="w-full h-full overflow-x-auto horizontal-scroll-container">
-						<div className="flex flex-col lg:flex-row gap-8 min-w-fit items-start justify-start h-full w-full px-4 lg:px-8 py-4">
+						<div
+							className={`flex flex-col lg:flex-row gap-8 items-start ${
+								activeWidgets.length > 1
+									? "justify-start min-w-fit"
+									: "justify-center w-full"
+							} h-full px-4 lg:px-8 py-4`}
+						>
 							{/* Session Card - Always visible */}
 							<SessionCard />
 
 							{/* Widgets Container */}
 							{(activeWidgets.includes("note") ||
-								activeWidgets.includes("tasks")) && (
+								activeWidgets.includes("tasks") ||
+								activeWidgets.includes("kanban")) && (
 								<div className="flex flex-col lg:flex-row gap-8 w-full h-fit min-w-fit">
 									{activeWidgets.includes("note") && <WidgetNotes />}
 									{activeWidgets.includes("tasks") && <WidgetTask />}
+									{/* {activeWidgets.includes("kanban") && <WidgetKanban />} */}
 								</div>
 							)}
 						</div>
 					</div>
 				</div>
-
-				{/* Widgets layout */}
-				{activeWidgets.length > 0 && (
-					<div className="min-h-screen w-full justify-center items-center flex flex-col gap-4 px-4">
-						{/* Kanban widget */}
-						{activeWidgets.includes("kanban") && (
-							<div className="flex flex-col w-full h-fit">
-								<div className="w-full h-96">
-									<WidgetKanban />
-								</div>
-							</div>
-						)}
-
-						{/* Notes and tasks widgets */}
-					</div>
-				)}
 			</main>
 		</div>
 	);
