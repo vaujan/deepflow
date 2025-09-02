@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { SidebarProvider } from "../contexts/SidebarContext";
 import { WidgetProvider } from "../contexts/WidgetContext";
+import { FontProvider } from "../contexts/FontContext";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -24,9 +25,11 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={`${inter.variable} font-sans antialiased`}>
 				<ThemeProvider>
-					<SidebarProvider>
-						<WidgetProvider>{children}</WidgetProvider>
-					</SidebarProvider>
+					<FontProvider>
+						<SidebarProvider>
+							<WidgetProvider>{children}</WidgetProvider>
+						</SidebarProvider>
+					</FontProvider>
 				</ThemeProvider>
 			</body>
 		</html>

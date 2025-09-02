@@ -400,7 +400,7 @@ function example() {
 	};
 
 	return (
-		<div className="w-full h-full group flex flex-col gap-2 overflow-hidden">
+		<div className="w-full max-w-xl h-full group flex flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80">
 				<span className="font-medium text-lg">Notes</span>
 				<button
@@ -525,7 +525,7 @@ function example() {
 							{editingNote === note.id ? (
 								// Editing mode - same interface as adding new note
 								<>
-									<div className="flex justify-between p-4 -m-4">
+									<div className="flex justify-between p-4 -m-4 mb-3">
 										<div className="flex items-center gap-2">
 											<input
 												type="text"

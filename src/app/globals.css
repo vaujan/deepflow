@@ -6,12 +6,13 @@
 :root {
 	--font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
+	--font-family-sans: var(--font-inter);
 }
 
 /* Configure Tailwind font families */
 @theme {
-	--font-family-sans: var(--font-inter);
-	--font-family-serif: var(--font-inter);
+	--font-family-sans: var(--font-family-sans);
+	--font-family-serif: var(--font-family-sans);
 	--font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
 		"Liberation Mono", Menlo, monospace;
 
@@ -20,8 +21,11 @@
 }
 
 body {
-	font-family: var(--font-inter);
+	font-family: var(--font-family-sans);
 }
+
+/* Google Fonts import for dynamic fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Roboto:wght@100;300;400;500;700;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@100;300;400;700;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Nunito:wght@200;300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Lora:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Text:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&family=Source+Code+Pro:wght@200;300;400;500;600;700;800;900&family=Inconsolata:wght@200;300;400;500;600;700;800;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=Bebas+Neue&family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=Manrope:wght@200;300;400;500;600;700;800&family=Rubik:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Noto+Sans:wght@100;200;300;400;500;600;700;800;900&family=Source+Sans+3:wght@200;300;400;500;600;700;800;900&family=Crimson+Pro:wght@200;300;400;500;600;700;800;900&family=Libre+Caslon+Text:wght@400;700&family=Spectral:wght@200;300;400;500;600;700;800&family=Vollkorn:wght@400;500;600;700;800;900&family=PT+Serif:wght@400;700&family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@100;200;300;400;500;600;700&family=Overpass+Mono:wght@300;400;500;600;700&family=Anton&family=Barlow:wght@100;200;300;400;500;600;700;800;900&family=Comfortaa:wght@300;400;500;600;700&family=Exo+2:wght@100;200;300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Righteous&family=Teko:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Permanent+Marker&family=Fredoka+One&family=Lobster&family=Bungee:wght@400&family=Creepster&family=Press+Start+2P&display=swap");
 
 @plugin "daisyui/theme" {
 	name: "dark";

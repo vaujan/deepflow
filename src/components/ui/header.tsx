@@ -13,6 +13,7 @@ import {
 import React from "react";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { useWidgets } from "../../contexts/WidgetContext";
+import FontSelector from "./font-selector";
 
 export default function Header() {
 	const { isCollapsed, toggleSidebar } = useSidebar();
@@ -22,7 +23,7 @@ export default function Header() {
 		<header className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
 			<div className="flex w-full h-full flex-col">
 				<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-3">
-					<nav className="flex gap-2 items-center">
+					<nav className="flex gap-2 items-center flex-1">
 						<ul className="mr-2 pr-2 border-r border-base-200">
 							{/* List goes here */}
 							<li>
@@ -90,6 +91,11 @@ export default function Header() {
 							</li>
 						</ul>
 					</nav>
+
+					{/* Font selector in top right */}
+					<div className="flex items-center">
+						<FontSelector />
+					</div>
 				</div>
 			</div>
 		</header>
