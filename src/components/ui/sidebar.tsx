@@ -36,7 +36,7 @@ interface WorkspaceItem {
 
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
-	{ label: "Stats", href: "/test", icon: ChartAreaIcon },
+	{ label: "Stats", href: "/stats", icon: ChartAreaIcon },
 	{ label: "Widgets", href: "/test-widgets", icon: SquareAsterisk },
 	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 ];
