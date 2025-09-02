@@ -400,7 +400,7 @@ export default function ActiveSession({
 				/>
 			)}
 
-			<div className="card max-w-xl w-full bg-transparent p-6 gap-6">
+			<div className="card bg-transparent min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
 				{/* Session Header */}
 				<div className="flex flex-col text-center">
 					<h1
