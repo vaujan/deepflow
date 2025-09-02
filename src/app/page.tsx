@@ -17,30 +17,23 @@ export default function Page() {
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
 			<Sidebar />
 			{/* Container */}
-			<main className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
+			<main className="w-full relative flex flex-col gap-4 flex-1 items-start justify-start">
 				<Header />
 				<div className="flex w-full h-full flex-col">
-					<div className="max-w-8xl items-start justify-center h-full flex gap-6 w-full px-8">
-						<SessionCard />
-						{/* <SessionTable /> */}
-						{/* <DataTable /> */}
-						{/* <SessionGraph /> */}
+					<div className="w-full h-full overflow-x-auto horizontal-scroll-container">
+						<div className="flex flex-col lg:flex-row gap-8 min-w-fit items-start justify-start h-full w-full px-4 lg:px-8 py-4">
+							{/* Session Card - Always visible */}
+							<SessionCard />
 
-						{(activeWidgets.includes("note") ||
-							activeWidgets.includes("tasks")) && (
-							<div className="flex gap-4 h-fit">
-								{activeWidgets.includes("note") && (
-									<div className="w-3xl h-fit max-h-[800px]">
-										<WidgetNotes />
-									</div>
-								)}
-								{activeWidgets.includes("tasks") && (
-									<div className="w-full h-96">
-										<WidgetTask />
-									</div>
-								)}
-							</div>
-						)}
+							{/* Widgets Container */}
+							{(activeWidgets.includes("note") ||
+								activeWidgets.includes("tasks")) && (
+								<div className="flex flex-col lg:flex-row gap-8 w-full h-fit min-w-fit">
+									{activeWidgets.includes("note") && <WidgetNotes />}
+									{activeWidgets.includes("tasks") && <WidgetTask />}
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 

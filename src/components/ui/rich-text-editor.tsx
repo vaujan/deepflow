@@ -25,6 +25,8 @@ import {
 	ChevronDown,
 	X,
 	Check,
+	Code,
+	Terminal,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -249,6 +251,26 @@ const MenuBar = ({ editor }: { editor: any }) => {
 				>
 					<Quote className="size-3" />
 				</button>
+				<button
+					onClick={() => editor.chain().focus().toggleCode().run()}
+					disabled={!editor.can().chain().focus().toggleCode().run()}
+					className={`btn btn-xs ${
+						editor.isActive("code") ? "btn-primary" : "btn-ghost"
+					}`}
+					title="Inline Code"
+				>
+					<Code className="size-3" />
+				</button>
+				<button
+					onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+					disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
+					className={`btn btn-xs ${
+						editor.isActive("codeBlock") ? "btn-primary" : "btn-ghost"
+					}`}
+					title="Code Block"
+				>
+					<Terminal className="size-3" />
+				</button>
 			</div>
 
 			{/* Insert elements */}
@@ -367,8 +389,8 @@ export default function RichTextEditor({
 		},
 		extensions: [
 			StarterKit.configure({
-				codeBlock: false,
-				code: false,
+				codeBlock: true,
+				code: true,
 			}),
 			Placeholder.configure({
 				placeholder,
@@ -417,15 +439,20 @@ export default function RichTextEditor({
 		},
 		editorProps: {
 			attributes: {
-				class: "prose max-w-none focus:outline-none h-fit p-4",
+				class: "max-w-none focus:outline-none h-fit p-4",
 			},
 			handleKeyDown: (view, event) => {
-				// Handle shift+enter for external key handlers
-				if (event.key === "Enter" && event.shiftKey && onKeyDown) {
-					event.preventDefault();
-					event.stopPropagation();
-					onKeyDown(event as any);
-					return true; // Indicate that we handled this key
+				// Handle shift+enter and escape for external key handlers
+				if (
+					(event.key === "Enter" && event.shiftKey) ||
+					event.key === "Escape"
+				) {
+					if (onKeyDown) {
+						event.preventDefault();
+						event.stopPropagation();
+						onKeyDown(event as any);
+						return true; // Indicate that we handled this key
+					}
 				}
 				return false; // Let TipTap handle other keys normally
 			},
@@ -440,7 +467,7 @@ export default function RichTextEditor({
 	}, [autoFocus, editor]);
 
 	return (
-		<div className={`flex flex-col justify-between ${className}`}>
+		<div className={`flex flex-col justify-between  ${className}`}>
 			<EditorContent editor={editor} />
 			{editable && <MenuBar editor={editor} />}
 		</div>

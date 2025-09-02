@@ -4,6 +4,7 @@ import {
 	Brush,
 	Home,
 	Kanban,
+	ListTodo,
 	Notebook,
 	PanelLeft,
 	SquareArrowOutUpRightIcon,
@@ -80,7 +81,7 @@ export default function Header() {
 									onClick={() => toggleWidget("tasks")}
 									title="Toggle Tasks widget"
 								>
-									<Brush className="size-4" />
+									<ListTodo className="size-4" />
 									{/* Active indicator */}
 									{activeWidgets.includes("tasks") && (
 										<div className="w-4 absolute bg-base-content h-0.75 rounded-full -bottom-2" />

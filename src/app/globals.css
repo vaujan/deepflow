@@ -14,244 +14,13 @@
 	--font-family-serif: var(--font-inter);
 	--font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
 		"Liberation Mono", Menlo, monospace;
+
+	/* Test color for debugging - bright magenta */
+	--color-test: #ff00ff;
 }
 
 body {
 	font-family: var(--font-inter);
-}
-
-/* TipTap Editor Styles */
-.ProseMirror {
-	outline: none;
-	min-height: 0;
-}
-
-.ProseMirror p.is-editor-empty:first-child::before {
-	color: #adb5bd;
-	content: attr(data-placeholder);
-	float: left;
-	height: 0;
-	pointer-events: none;
-}
-
-.ProseMirror h1 {
-	font-size: 1.5rem;
-	font-weight: 600;
-	margin: 1rem 0 0.5rem 0;
-	border-bottom: 1px solid hsl(var(--bc) / 0.5);
-	padding-bottom: 0.5rem;
-}
-
-.ProseMirror h2 {
-	font-size: 1.25rem;
-	font-weight: 600;
-	margin: 0.75rem 0 0.5rem 0;
-	border-bottom: 1px solid hsl(var(--bc) / 0.5);
-	padding-bottom: 0.25rem;
-}
-
-.ProseMirror h3 {
-	font-size: 1.125rem;
-	font-weight: 600;
-	margin: 0.5rem 0 0.25rem 0;
-	border-bottom: 1px solid hsl(var(--bc) / 0.5);
-	padding-bottom: 0.25rem;
-}
-
-.ProseMirror p {
-	margin: 0.5rem 0;
-}
-
-.ProseMirror ul,
-.ProseMirror ol {
-	margin: 0.5rem 0;
-	padding-left: 1.5rem;
-}
-
-/* Ensure list markers are visible (Tailwind reset can remove them) */
-.ProseMirror ul {
-	list-style-type: disc;
-}
-
-.ProseMirror ol {
-	list-style-type: decimal;
-}
-
-.ProseMirror ul ul {
-	list-style-type: circle;
-}
-
-.ProseMirror ul ul ul {
-	list-style-type: square;
-}
-
-.ProseMirror li {
-	margin: 0.25rem 0;
-}
-
-.ProseMirror blockquote {
-	border-left: 4px solid hsl(var(--bc) / 0.2);
-	padding-left: 1rem;
-	font-style: italic;
-	background: hsl(var(--bc) / 0.05);
-	padding: 0.5rem 1rem;
-	margin: 0.5rem 0;
-	border-radius: 0 0.5rem 0.5rem 0;
-}
-
-.ProseMirror code {
-	background: hsl(var(--b2));
-	padding: 0.25rem 0.5rem;
-	border-radius: 0.375rem;
-	font-size: 0.875rem;
-	font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
-		"Liberation Mono", Menlo, monospace;
-	color: hsl(var(--p) / 0.8);
-	border: 1px solid hsl(var(--b3));
-}
-
-.ProseMirror pre {
-	background: hsl(var(--b2));
-	padding: 1rem;
-	border-radius: 0.5rem;
-	overflow-x: auto;
-	margin: 0.5rem 0;
-	border: 1px solid hsl(var(--b3));
-}
-
-.ProseMirror pre code {
-	background: transparent;
-	padding: 0;
-	border: none;
-	color: hsl(var(--bc) / 0.9);
-}
-
-.ProseMirror strong {
-	font-weight: 600;
-	color: hsl(var(--bc));
-}
-
-.ProseMirror em {
-	font-style: italic;
-	color: hsl(var(--bc) / 0.9);
-}
-
-.ProseMirror del {
-	text-decoration: line-through;
-	color: hsl(var(--bc) / 0.6);
-}
-
-.ProseMirror a {
-	color: hsl(var(--p));
-	text-decoration: none;
-}
-
-.ProseMirror a:hover {
-	color: hsl(var(--pf));
-	text-decoration: underline;
-	transition: color 0.2s;
-}
-
-.ProseMirror img {
-	max-width: 100%;
-	height: auto;
-	border-radius: 0.5rem;
-	margin: 0.5rem 0;
-	border: 1px solid hsl(var(--b3));
-}
-
-.ProseMirror table {
-	min-width: 100%;
-	border-collapse: collapse;
-	border: 1px solid hsl(var(--b3));
-	border-radius: 0.5rem;
-	overflow: hidden;
-	margin: 0.5rem 0;
-}
-
-.ProseMirror th {
-	border: 1px solid hsl(var(--b3));
-	padding: 0.75rem 1rem;
-	background: hsl(var(--b2));
-	font-weight: 600;
-	text-align: left;
-	color: hsl(var(--bc));
-}
-
-.ProseMirror td {
-	border: 1px solid hsl(var(--b3));
-	padding: 0.75rem 1rem;
-	color: hsl(var(--bc) / 0.9);
-}
-
-.ProseMirror hr {
-	margin: 1rem 0;
-	border: none;
-	border-top: 2px solid hsl(var(--b3));
-	height: 2px;
-	background: hsl(var(--b3));
-}
-
-.ProseMirror mark {
-	background: hsl(var(--a));
-	color: hsl(var(--ac));
-	padding: 0.125rem 0.25rem;
-	border-radius: 0.25rem;
-}
-
-/* Highlight styling */
-.ProseMirror mark {
-	background: hsl(var(--a));
-	color: hsl(var(--ac));
-	padding: 0.125rem 0.25rem;
-	border-radius: 0.25rem;
-}
-
-.ProseMirror mark.highlight {
-	background: hsl(var(--a));
-	color: hsl(var(--ac));
-	padding: 0.125rem 0.25rem;
-	border-radius: 0.25rem;
-}
-
-/* Alternative highlight styling for TipTap */
-.ProseMirror .highlight {
-	background: #fef3c7 !important;
-	color: #92400e !important;
-	padding: 0.125rem 0.25rem;
-	border-radius: 0.25rem;
-}
-
-/* Force highlight styling */
-.ProseMirror mark[data-type="highlight"] {
-	background: #fef3c7 !important;
-	color: #92400e !important;
-	padding: 0.125rem 0.25rem;
-	border-radius: 0.25rem;
-}
-
-.ProseMirror u {
-	text-decoration: underline;
-}
-
-/* Focus styles */
-.ProseMirror:focus {
-	outline: none;
-}
-
-/* Selection styles */
-.ProseMirror::selection,
-.ProseMirror ::selection,
-.ProseMirror *::selection {
-	background: hsl(var(--p) / 0.4);
-	color: hsl(var(--pc));
-}
-
-.ProseMirror::-moz-selection,
-.ProseMirror ::-moz-selection,
-.ProseMirror *::-moz-selection {
-	background: hsl(var(--p) / 0.4);
-	color: hsl(var(--pc));
 }
 
 @plugin "daisyui/theme" {
@@ -285,7 +54,7 @@ body {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 1;
+	--depth: 0;
 	--noise: 0;
 }
 
@@ -350,4 +119,76 @@ body {
 *::-moz-selection {
 	background: rgba(59, 130, 246, 0.45) !important;
 	color: #ffffff !important;
+}
+
+/* Horizontal scrolling improvements */
+.overflow-x-auto {
+	scrollbar-width: thin;
+	scrollbar-color: hsl(var(--bc) / 0.3) transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+	height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+	background: hsl(var(--bc) / 0.3);
+	border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+	background: hsl(var(--bc) / 0.5);
+}
+
+/* Smooth horizontal scrolling */
+.overflow-x-auto {
+	scroll-behavior: smooth;
+}
+
+/* Horizontal scroll indicators */
+.horizontal-scroll-container {
+	position: relative;
+}
+
+.horizontal-scroll-container::before,
+.horizontal-scroll-container::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 20px;
+	pointer-events: none;
+	z-index: 10;
+	transition: opacity 0.3s ease;
+}
+
+.horizontal-scroll-container::before {
+	left: 0;
+	background: linear-gradient(to right, hsl(var(--b3)), transparent);
+	opacity: 0;
+}
+
+.horizontal-scroll-container::after {
+	right: 0;
+	background: linear-gradient(to left, hsl(var(--b3)), transparent);
+	opacity: 0;
+}
+
+.horizontal-scroll-container.scroll-left::before {
+	opacity: 1;
+}
+
+.horizontal-scroll-container.scroll-right::after {
+	opacity: 1;
+}
+
+/* Better text wrapping for long content */
+.break-words {
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
 }

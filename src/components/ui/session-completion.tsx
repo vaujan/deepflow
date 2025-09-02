@@ -155,7 +155,7 @@ export default function SessionCompletion({
 	};
 
 	return (
-		<div className="card max-w-xl w-full border-base-300 border gap-6">
+		<div className="card bg-transparent min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
 			{/* Completion Header */}
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">Session Complete</h1>
