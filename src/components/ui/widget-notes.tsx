@@ -402,18 +402,7 @@ function example() {
 	return (
 		<div className="w-full h-full group flex flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80">
-				<div className="flex items-center gap-2">
-					<span className="font-medium text-lg">Notes</span>
-					{/* Writing mode indicator */}
-					{(isAddingNew || editingNote !== null) && (
-						<div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
-							<div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-							<span className="font-medium">
-								{isAddingNew ? "Creating new note" : "Editing note"}
-							</span>
-						</div>
-					)}
-				</div>
+				<span className="font-medium text-lg">Notes</span>
 				<button
 					className={`btn btn-circle btn-sm ${
 						isAddingNew || editingNote !== null
@@ -433,7 +422,7 @@ function example() {
 			</div>
 			{/* New note form */}
 			{isAddingNew && (
-				<div className="w-full card text-base-content/90 overflow-hidden bg-primary/5 border-2 border-primary/20 shadow-lg ring-1 ring-primary/10 transition-all ease-out mb-4">
+				<div className="w-full card text-base-content/90 overflow-hidden bg-base-100">
 					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
@@ -521,9 +510,9 @@ function example() {
 							key={note.id}
 							className={`w-full card text-base-content/90 p-4 transition-all ease-out group ${
 								editingNote === note.id
-									? "bg-primary/5 border-2 border-primary/20 shadow-lg ring-1 ring-primary/10"
+									? "bg-base-100"
 									: editingNote !== null || isAddingNew
-									? "bg-base-100 opacity-60"
+									? "bg-base-100 opacity-40"
 									: "bg-base-100"
 							}`}
 							onClick={() => {
@@ -536,7 +525,7 @@ function example() {
 							{editingNote === note.id ? (
 								// Editing mode - same interface as adding new note
 								<>
-									<div className="flex justify-between p-4 -m-4 mb-4">
+									<div className="flex justify-between p-4 -m-4">
 										<div className="flex items-center gap-2">
 											<input
 												type="text"
