@@ -12,6 +12,7 @@
 		"tauri:build": "tauri build"
 	},
 	"dependencies": {
+		"@radix-ui/react-context-menu": "^2.2.16",
 		"@tailwindcss/postcss": "^4.1.12",
 		"@tanstack/react-table": "^8.21.3",
 		"@tauri-apps/api": "^2.8.0",
