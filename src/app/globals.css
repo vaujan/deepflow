@@ -196,3 +196,71 @@ body {
 	overflow-wrap: break-word;
 	hyphens: auto;
 }
+
+/* Use Tailwind Typography prose styling for TipTap editor */
+.ProseMirror {
+	@apply prose max-w-none prose-h1:text-2xl prose-h2:text-xl prose-headings:text-lg;
+}
+
+/* Custom prose styling for dark theme */
+.prose {
+	--tw-prose-body: hsl(var(--bc));
+	--tw-prose-headings: hsl(var(--bc));
+	--tw-prose-lead: hsl(var(--bc) / 0.8);
+	--tw-prose-links: hsl(var(--p));
+	--tw-prose-bold: hsl(var(--bc));
+	--tw-prose-counters: hsl(var(--bc) / 0.6);
+	--tw-prose-bullets: hsl(var(--bc) / 0.6);
+	--tw-prose-hr: hsl(var(--bc) / 0.2);
+	--tw-prose-quotes: hsl(var(--bc) / 0.8);
+	--tw-prose-quote-borders: hsl(var(--bc) / 0.2);
+	--tw-prose-captions: hsl(var(--bc) / 0.6);
+	--tw-prose-code: hsl(var(--bc));
+	--tw-prose-pre-code: hsl(var(--bc));
+	--tw-prose-pre-bg: hsl(var(--b2));
+	--tw-prose-th-borders: hsl(var(--bc) / 0.2);
+	--tw-prose-td-borders: hsl(var(--bc) / 0.1);
+}
+
+/* Consistent line height for all paragraph types */
+.ProseMirror p {
+	line-height: 1.5 !important;
+	margin-top: 0 !important;
+	margin-bottom: 0.75em !important;
+}
+
+/* Line breaks (Shift+Enter) should have same line height as paragraphs */
+.ProseMirror br {
+	line-height: 1.5 !important;
+}
+
+.ProseMirror br + * {
+	line-height: 1.5 !important;
+}
+
+/* Ensure hard breaks have consistent spacing */
+.ProseMirror .hard-break {
+	line-height: 1.5 !important;
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+
+/* Ensure consistent spacing for lists */
+.ProseMirror ul,
+.ProseMirror ol {
+	line-height: 1.5 !important;
+	margin: 0.75em 0 !important;
+	padding-left: 1.5em !important;
+}
+
+.ProseMirror li {
+	line-height: 1.5 !important;
+	margin-bottom: 0.25em !important;
+	display: list-item !important;
+}
+
+.ProseMirror li p {
+	margin: 0 !important;
+	line-height: 1.5 !important;
+}
