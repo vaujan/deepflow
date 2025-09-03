@@ -373,7 +373,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				cell: ({ row }) => {
 					const date = row.getValue("sessionDate") as string;
 					return (
-						<div className="text-xs min-w-[100px]">
+						<div className="text-sm min-w-[100px]">
 							{new Date(date).toLocaleDateString()}
 						</div>
 					);
@@ -587,7 +587,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	// No longer needed since we removed the filters
 
 	return (
-		<div className="w-full max-w-7xl  space-y-4">
+		<div className="w-full  space-y-4">
 			{/* Search and Filters */}
 			<div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
 				{/* Global Search */}
@@ -675,8 +675,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			</div>
 
 			{/* Table */}
-			<div className="rounded-box border-base-200 border">
-				<table className="table table-sm w-full min-w-full">
+			<div className="rounded-box overflow-hidden border-base-200 border">
+				<table className="table table-md bg-base-100 w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
