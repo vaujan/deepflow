@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
 import React, { useState, useCallback, useEffect } from "react";
-import RichTextEditor from "./rich-text-editor";
+import ContextMenuEditor from "./context-menu-editor";
 import { mockNotes, type Note } from "../../data/mockNotes";
 
 // Prose styling configuration
@@ -209,7 +209,7 @@ export default function WidgetNotes() {
 						</div>
 					</div>
 
-					<RichTextEditor
+					<ContextMenuEditor
 						content={newNoteContent}
 						onChange={setNewNoteContent}
 						className={`h-fit ${PROSE_CLASSES}`}
@@ -314,7 +314,7 @@ export default function WidgetNotes() {
 										</div>
 									</div>
 
-									<RichTextEditor
+									<ContextMenuEditor
 										content={note.content}
 										onChange={(content) => updateNote(note.id, { content })}
 										className={`h-fit ${PROSE_CLASSES} -m-4`}
