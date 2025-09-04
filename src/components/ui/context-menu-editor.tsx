@@ -24,6 +24,7 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import HardBreak from "@tiptap/extension-hard-break";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -452,11 +453,24 @@ export default function ContextMenuEditor({
 			StarterKit.configure({
 				codeBlock: {},
 				code: {},
+				bulletList: {
+					keepMarks: true,
+					keepAttributes: false,
+				},
+				orderedList: {
+					keepMarks: true,
+					keepAttributes: false,
+				},
 			}),
 			Placeholder.configure({
 				placeholder,
 			}),
 			Underline,
+			HardBreak.configure({
+				HTMLAttributes: {
+					style: "line-height: 1.5;",
+				},
+			}),
 			TextAlign.configure({
 				types: ["heading", "paragraph"],
 			}),
@@ -537,7 +551,28 @@ export default function ContextMenuEditor({
 					}
 				}
 
-				// Handle shift+enter and escape for external key handlers
+				// Handle Enter key in lists to continue list items
+				if (event.key === "Enter" && !event.shiftKey) {
+					const { state, dispatch } = view;
+					const { selection } = state;
+					const { $from } = selection;
+
+					// Check if we're in a list item
+					const listItem = $from.node($from.depth - 1);
+					const list = $from.node($from.depth - 2);
+
+					if (
+						listItem &&
+						listItem.type.name === "listItem" &&
+						(list.type.name === "bulletList" ||
+							list.type.name === "orderedList")
+					) {
+						// Let TipTap handle list continuation naturally
+						return false;
+					}
+				}
+
+				// Handle shift+enter and escape for external key handlers (save/cancel)
 				if (
 					(event.key === "Enter" && event.shiftKey) ||
 					event.key === "Escape"
@@ -561,6 +596,15 @@ export default function ContextMenuEditor({
 		}
 	}, [autoFocus, editor]);
 
+	// If not editable, render without context menu
+	if (!editable) {
+		return (
+			<div className={`flex flex-col justify-between ${className}`}>
+				<EditorContent editor={editor} />
+			</div>
+		);
+	}
+
 	return (
 		<ContextMenu.Root>
 			<ContextMenu.Trigger asChild>
@@ -568,13 +612,9 @@ export default function ContextMenuEditor({
 					<EditorContent editor={editor} />
 					{/* Helper text that appears when focused */}
 					{isFocused && editable && (
-						<div className="text-xs text-base-content/50 mt-1 px-1 flex items-center gap-1 animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
+						<div className="text-xs badge badge-ghost rounded-box mb-2 ml-2 text-base-content/50 mt-1 px-1 flex items-center gap-1 animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
 							<span>💡</span>
 							<span>Right-click for formatting options</span>
-							<span className="text-base-content/40">•</span>
-							<span className="text-base-content/40">
-								Ctrl+B, Ctrl+I, Ctrl+U
-							</span>
 						</div>
 					)}
 				</div>
