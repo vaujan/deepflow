@@ -32,26 +32,35 @@ body {
 	default: true;
 	prefersdark: true;
 	color-scheme: "dark";
-	--color-base-100: oklch(24.353% 0 0);
-	--color-base-200: oklch(22.648% 0 0);
-	--color-base-300: oklch(20.944% 0 0);
-	--color-base-content: oklch(84.87% 0 0);
-	--color-primary: oklch(41.703% 0.099 251.473);
-	--color-primary-content: oklch(88.34% 0.019 251.473);
-	--color-secondary: oklch(64.092% 0.027 229.389);
-	--color-secondary-content: oklch(12.818% 0.005 229.389);
-	--color-accent: oklch(67.271% 0.167 35.791);
-	--color-accent-content: oklch(13.454% 0.033 35.791);
-	--color-neutral: oklch(27.441% 0.013 253.041);
-	--color-neutral-content: oklch(85.488% 0.002 253.041);
-	--color-info: oklch(62.616% 0.143 240.033);
-	--color-info-content: oklch(12.523% 0.028 240.033);
-	--color-success: oklch(70.226% 0.094 156.596);
-	--color-success-content: oklch(14.045% 0.018 156.596);
-	--color-warning: oklch(77.482% 0.115 81.519);
-	--color-warning-content: oklch(15.496% 0.023 81.519);
-	--color-error: oklch(51.61% 0.146 29.674);
-	--color-error-content: oklch(90.322% 0.029 29.674);
+	/* Radix Color Integration - Dark Theme */
+	--color-base-100: #1a1a1a;        /* gray2 */
+	--color-base-200: #262626;        /* gray3 */
+	--color-base-300: #404040;        /* gray4 */
+	--color-base-content: #fafafa;    /* gray12 */
+	--color-primary: #3b82f6;         /* blue9 */
+	--color-primary-content: #1e40af; /* blue12 */
+	--color-primary-focus: #2563eb;   /* blue10 */
+	--color-primary-hover: #1d4ed8;   /* blue8 */
+	--color-secondary: #475569;       /* slate9 */
+	--color-secondary-content: #f1f5f9; /* slate12 */
+	--color-secondary-focus: #334155; /* slate10 */
+	--color-secondary-hover: #64748b; /* slate8 */
+	--color-accent: #ea580c;          /* orange9 */
+	--color-accent-content: #9a3412;  /* orange12 */
+	--color-accent-focus: #c2410c;    /* orange10 */
+	--color-accent-hover: #dc2626;    /* orange8 */
+	--color-neutral: #525252;         /* gray9 */
+	--color-neutral-content: #fafafa; /* gray12 */
+	--color-neutral-focus: #404040;   /* gray10 */
+	--color-neutral-hover: #737373;   /* gray8 */
+	--color-info: #0891b2;            /* cyan9 */
+	--color-info-content: #164e63;    /* cyan12 */
+	--color-success: #16a34a;         /* green9 */
+	--color-success-content: #14532d; /* green12 */
+	--color-warning: #eab308;         /* yellow9 */
+	--color-warning-content: #a16207; /* yellow12 */
+	--color-error: #dc2626;           /* red9 */
+	--color-error-content: #991b1b;   /* red12 */
 	--radius-selector: 0rem;
 	--radius-field: 0.25rem;
 	--radius-box: 0.5rem;
@@ -67,26 +76,35 @@ body {
 	default: false;
 	prefersdark: false;
 	color-scheme: "light";
-	--color-base-100: oklch(100% 0 0);
-	--color-base-200: oklch(96% 0 0);
-	--color-base-300: oklch(92% 0 0);
-	--color-base-content: oklch(20% 0 0);
-	--color-primary: oklch(41.703% 0.099 251.473);
-	--color-primary-content: oklch(100% 0 0);
-	--color-secondary: oklch(97% 0 0);
-	--color-secondary-content: oklch(12.818% 0.005 229.389);
-	--color-accent: oklch(67.271% 0.167 35.791);
-	--color-accent-content: oklch(13.454% 0.033 35.791);
-	--color-neutral: oklch(27.441% 0.013 253.041);
-	--color-neutral-content: oklch(85.488% 0.002 253.041);
-	--color-info: oklch(62.616% 0.143 240.033);
-	--color-info-content: oklch(12.523% 0.028 240.033);
-	--color-success: oklch(70.226% 0.094 156.596);
-	--color-success-content: oklch(14.045% 0.018 156.596);
-	--color-warning: oklch(77.482% 0.115 81.519);
-	--color-warning-content: oklch(15.496% 0.023 81.519);
-	--color-error: oklch(51.61% 0.146 29.674);
-	--color-error-content: oklch(90.322% 0.029 29.674);
+	/* Radix Color Integration - Light Theme */
+	--color-base-100: #ffffff;        /* whiteA12 */
+	--color-base-200: #f4f4f5;        /* gray2 */
+	--color-base-300: #e4e4e7;        /* gray3 */
+	--color-base-content: #18181b;    /* gray12 */
+	--color-primary: #3b82f6;         /* blue9 */
+	--color-primary-content: #ffffff; /* white */
+	--color-primary-focus: #2563eb;   /* blue10 */
+	--color-primary-hover: #1d4ed8;   /* blue8 */
+	--color-secondary: #f1f5f9;       /* slate2 */
+	--color-secondary-content: #334155; /* slate12 */
+	--color-secondary-focus: #e2e8f0; /* slate3 */
+	--color-secondary-hover: #cbd5e1; /* slate4 */
+	--color-accent: #ea580c;          /* orange9 */
+	--color-accent-content: #ffffff;  /* white */
+	--color-accent-focus: #c2410c;    /* orange10 */
+	--color-accent-hover: #dc2626;    /* orange8 */
+	--color-neutral: #525252;         /* gray9 */
+	--color-neutral-content: #fafafa; /* gray12 */
+	--color-neutral-focus: #404040;   /* gray10 */
+	--color-neutral-hover: #737373;   /* gray8 */
+	--color-info: #0891b2;            /* cyan9 */
+	--color-info-content: #ffffff;    /* white */
+	--color-success: #16a34a;         /* green9 */
+	--color-success-content: #ffffff; /* white */
+	--color-warning: #eab308;         /* yellow9 */
+	--color-warning-content: #ffffff; /* white */
+	--color-error: #dc2626;           /* red9 */
+	--color-error-content: #ffffff;   /* white */
 	--radius-selector: 0rem;
 	--radius-field: 0.25rem;
 	--radius-box: 0.5rem;
