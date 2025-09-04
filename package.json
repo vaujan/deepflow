@@ -12,10 +12,12 @@
 		"tauri:build": "tauri build"
 	},
 	"dependencies": {
+		"@radix-ui/react-context-menu": "^2.2.16",
 		"@tailwindcss/postcss": "^4.1.12",
 		"@tanstack/react-table": "^8.21.3",
 		"@tauri-apps/api": "^2.8.0",
 		"@tiptap/extension-code-block": "^3.3.0",
+		"@tiptap/extension-hard-break": "^3.3.1",
 		"@tiptap/extension-highlight": "^3.3.0",
 		"@tiptap/extension-horizontal-rule": "^3.3.0",
 		"@tiptap/extension-image": "^3.3.0",

@@ -222,7 +222,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											column.setFilterValue(newTags);
 										}
 									}}
-									className={`w-full text-left p-2 rounded hover:bg-base-200 transition-colors flex justify-between items-center ${
+									className={`w-full text-left p-2 hover:bg-base-200 transition-colors flex justify-between items-center ${
 										isSelected ? "bg-primary/20 text-primary" : ""
 									}`}
 								>
@@ -373,7 +373,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				cell: ({ row }) => {
 					const date = row.getValue("sessionDate") as string;
 					return (
-						<div className="text-xs min-w-[100px]">
+						<div className="text-sm min-w-[100px]">
 							{new Date(date).toLocaleDateString()}
 						</div>
 					);
@@ -497,7 +497,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 									);
 
 									return selectedTagsDisplay;
-								})() as React.ReactNode
+								})() as any // May god help me with typescript
 							}
 
 							{/* Available Tags List */}
@@ -587,9 +587,10 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	// No longer needed since we removed the filters
 
 	return (
-		<div className="w-full max-w-7xl  space-y-4">
+		<div className="w-full bg-base-200 rounded-box overflow-hidden ">
 			{/* Search and Filters */}
-			<div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+			{/* Header */}
+			<div className="flex p-4 border-b-1 border-base-100 flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
 				{/* Global Search */}
 				<div className="form-control w-full lg:w-96">
 					<label className="input bg-base-100 hover:bg-base-200 border-1">
@@ -675,8 +676,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			</div>
 
 			{/* Table */}
-			<div className="rounded-box border-base-200 border">
-				<table className="table table-sm w-full min-w-full">
+			<div className="border-base-200 border">
+				<table className="table table-md bg-base-100 w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
@@ -801,7 +802,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			</div>
 
 			{/* Pagination */}
-			<div className="flex items-center justify-between">
+			<div className="flex items-center p-4 bg-base-200 justify-between">
 				<div className="flex items-center gap-2">
 					<button
 						className="btn btn-sm"

@@ -2,12 +2,11 @@
 
 import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
 import React, { useState, useCallback, useEffect } from "react";
-import RichTextEditor from "./rich-text-editor";
+import ContextMenuEditor from "./context-menu-editor";
 import { mockNotes, type Note } from "../../data/mockNotes";
 
-// Prose styling configuration
-const PROSE_CLASSES =
-	"prose prose-blockquote:text-md prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-headings:text-lg prose-p:text-base prose-li:text-base prose-pre:bg-base-200 prose-code:bg-base-200 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm max-w-none";
+// Prose styling configuration - using Tailwind Typography
+const PROSE_CLASSES = "prose prose-sm max-w-none";
 
 export default function WidgetNotes() {
 	const [notes, setNotes] = useState<Note[]>(mockNotes);
@@ -133,9 +132,11 @@ export default function WidgetNotes() {
 
 	const renderContent = (content: string) => {
 		return (
-			<div
-				className={PROSE_CLASSES}
-				dangerouslySetInnerHTML={{ __html: content }}
+			<ContextMenuEditor
+				content={content}
+				onChange={() => {}} // No-op for read mode
+				editable={false}
+				className="h-fit -m-4"
 			/>
 		);
 	};
@@ -209,10 +210,10 @@ export default function WidgetNotes() {
 						</div>
 					</div>
 
-					<RichTextEditor
+					<ContextMenuEditor
 						content={newNoteContent}
 						onChange={setNewNoteContent}
-						className={`h-fit ${PROSE_CLASSES}`}
+						className="h-fit"
 						autoFocus={true}
 						onKeyDown={(e) => {
 							if (e.key === "Enter" && e.shiftKey) {
@@ -314,10 +315,10 @@ export default function WidgetNotes() {
 										</div>
 									</div>
 
-									<RichTextEditor
+									<ContextMenuEditor
 										content={note.content}
 										onChange={(content) => updateNote(note.id, { content })}
-										className={`h-fit ${PROSE_CLASSES} -m-4`}
+										className="h-fit -m-4"
 										autoFocus={true}
 										onKeyDown={(e) => {
 											if (e.key === "Enter" && e.shiftKey) {
@@ -370,7 +371,7 @@ export default function WidgetNotes() {
 									</div>
 
 									{/* Note content */}
-									<div className="h-fit overflow-hidden break-words">
+									<div className="h-fit break-words">
 										{renderContent(note.content)}
 									</div>
 								</>
