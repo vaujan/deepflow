@@ -371,7 +371,7 @@ export default function WidgetNotes() {
 									</div>
 
 									{/* Note content */}
-									<div className="h-fit overflow-hidden break-words">
+									<div className="h-fit break-words">
 										{renderContent(note.content)}
 									</div>
 								</>
