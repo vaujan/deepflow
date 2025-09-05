@@ -20,6 +20,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 		if (storedTheme) {
 			setTheme(storedTheme);
 			document.documentElement.setAttribute("data-theme", storedTheme);
+			if (storedTheme === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
 		} else {
 			// Check system preference
 			const prefersDark = window.matchMedia(
@@ -28,13 +33,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			const defaultTheme: Theme = prefersDark ? "dark" : "light";
 			setTheme(defaultTheme);
 			document.documentElement.setAttribute("data-theme", defaultTheme);
+			if (defaultTheme === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
 		}
 	}, []);
+
+	// Theme variables are provided by CSS (DaisyUI themes in globals.css)
 
 	const toggleTheme = () => {
 		const newTheme: Theme = theme === "dark" ? "light" : "dark";
 		setTheme(newTheme);
 		document.documentElement.setAttribute("data-theme", newTheme);
+		if (newTheme === "dark") {
+			document.documentElement.classList.add("dark");
+		} else {
+			document.documentElement.classList.remove("dark");
+		}
 		localStorage.setItem("theme", newTheme);
 	};
 

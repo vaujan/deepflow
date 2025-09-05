@@ -173,7 +173,7 @@ export default function SessionCompletion({
 			)}
 
 			{/* Session Summary */}
-			<div className="flex flex-col gap-4 text-sm bg-base-200 card rounded-box p-6">
+			<div className="flex flex-col gap-4 text-sm bg-card border border-border card rounded-box p-6">
 				{/* Goal */}
 				<div className="flex flex-1 items-start gap-2">
 					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
@@ -263,7 +263,7 @@ export default function SessionCompletion({
 			</div>
 
 			{/* Deep Work Quality Rating */}
-			<div className="card bg-base-200 p-6 gap-6">
+			<div className="card bg-card border border-border p-6 gap-6">
 				<div className="flex flex-col gap-1 text-center">
 					<h3 className="font-medium text-base-content w-full text-center">
 						Rate Your Deep Work Quality
@@ -333,7 +333,7 @@ export default function SessionCompletion({
 			</div>
 
 			{/* Additional Notes */}
-			<div className="collapse border border-base-100 bg-base-200">
+			<div className="collapse border border-base-100 bg-card">
 				<input type="checkbox" className="peer" />
 				<div className="collapse-title text-sm font-medium">
 					Notes (Optional)

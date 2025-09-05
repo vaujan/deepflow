@@ -24,7 +24,7 @@ const StatCard: React.FC<StatCardProps> = ({
 	trend,
 }) => {
 	return (
-		<div className="card transition-all ease-out w-full bg-base-100/50 p-6">
+		<div className="card transition-all ease-out w-full bg-card border-border border p-6">
 			<div className="h-full flex justify-between">
 				<div className="flex flex-col gap-8 justify-between">
 					{/* Icon */}

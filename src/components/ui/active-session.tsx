@@ -422,8 +422,8 @@ export default function ActiveSession({
 
 				{/* Timer Display */}
 				<div
-					className={`text-center border border-base-100 bg-base-100 z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer hover:bg-base-200 transition-all duration-300 ease-out transform ${
-						isTimerExpanded ? "bg-base-200" : "bg-base-100 scale-100"
+					className={`text-center border border-border bg-card z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer transition-all duration-300 ease-out transform ${
+						isTimerExpanded ? "bg-base-200" : "bg-card scale-100"
 					}`}
 					onClick={handleTimerClick}
 					title="Click to show/hide session details"

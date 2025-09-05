@@ -80,8 +80,8 @@ export default function Sidebar() {
 				></label>
 
 				<div
-					className={`text-base-content min-h-full transition-all duration-300 ease-in-out ${
-						isCollapsed ? "w-16" : "bg-base-200/50 w-74"
+					className={`text-base-content min-h-full bg- transition-all duration-300 ease-in-out ${
+						isCollapsed ? "w-16" : "bg-sidebar border-border border w-74"
 					} flex flex-col`}
 				>
 					{/* Navigation Menu */}

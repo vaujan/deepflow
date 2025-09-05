@@ -169,7 +169,7 @@ export default function WidgetNotes() {
 			</div>
 			{/* New note form */}
 			{isAddingNew && (
-				<div className="w-full card text-base-content/90 overflow-hidden bg-base-100">
+				<div className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs">
 					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
@@ -255,12 +255,12 @@ export default function WidgetNotes() {
 					notes.map((note) => (
 						<div
 							key={note.id}
-							className={`w-full card text-base-content/90 p-4 transition-all ease-out group ${
+							className={`w-full border-border border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
 								editingNote === note.id
-									? "bg-base-100"
+									? "bg-card"
 									: editingNote !== null || isAddingNew
-									? "bg-base-100 opacity-40"
-									: "bg-base-100"
+									? "bg-card opacity-40"
+									: "bg-card"
 							}`}
 							onClick={() => {
 								// Only handle clicks when not in editing mode

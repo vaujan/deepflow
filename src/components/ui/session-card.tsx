@@ -244,7 +244,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card bg-base-100 min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
+		<div className="card border border-border bg-card shadow-xs min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
@@ -329,7 +329,7 @@ export default function SessionCard() {
 					<Clock className="size-4 me-2" />
 					Planned Session
 				</label>
-				<div className="tab-content rounded-box border-base-100 border bg-base-200 p-6">
+				<div className="tab-content rounded-box dark:bg-gray-4 border-border border bg-base-200 p-6">
 					{/* Planned Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
@@ -378,7 +378,7 @@ export default function SessionCard() {
 					<Timer className="size-4 me-2" />
 					Open Session
 				</label>
-				<div className="tab-content rounded-box bg-base-200 border-base-100 border p-6">
+				<div className="tab-content rounded-box bg-base-200 border-border dark:bg-gray-4 border p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">

@@ -2,6 +2,24 @@
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
+/* Radix Colors: import light and dark palettes for used hues */
+@import "@radix-ui/colors/gray.css";
+@import "@radix-ui/colors/gray-dark.css";
+@import "@radix-ui/colors/slate.css";
+@import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/blue.css";
+@import "@radix-ui/colors/blue-dark.css";
+@import "@radix-ui/colors/orange.css";
+@import "@radix-ui/colors/orange-dark.css";
+@import "@radix-ui/colors/cyan.css";
+@import "@radix-ui/colors/cyan-dark.css";
+@import "@radix-ui/colors/green.css";
+@import "@radix-ui/colors/green-dark.css";
+@import "@radix-ui/colors/yellow.css";
+@import "@radix-ui/colors/yellow-dark.css";
+@import "@radix-ui/colors/red.css";
+@import "@radix-ui/colors/red-dark.css";
+
 /* Custom font configuration */
 :root {
 	--font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -18,6 +36,124 @@
 
 	/* Test color for debugging - bright magenta */
 	--color-test: #ff00ff;
+
+	/* Tailwind tokens for Radix blue scale (1–12) */
+	--color-blue-1: var(--blue-1);
+	--color-blue-2: var(--blue-2);
+	--color-blue-3: var(--blue-3);
+	--color-blue-4: var(--blue-4);
+	--color-blue-5: var(--blue-5);
+	--color-blue-6: var(--blue-6);
+	--color-blue-7: var(--blue-7);
+	--color-blue-8: var(--blue-8);
+	--color-blue-9: var(--blue-9);
+	--color-blue-10: var(--blue-10);
+	--color-blue-11: var(--blue-11);
+	--color-blue-12: var(--blue-12);
+
+	/* Tailwind tokens for Radix slate scale (1–12) */
+	--color-slate-1: var(--slate-1);
+	--color-slate-2: var(--slate-2);
+	--color-slate-3: var(--slate-3);
+	--color-slate-4: var(--slate-4);
+	--color-slate-5: var(--slate-5);
+	--color-slate-6: var(--slate-6);
+	--color-slate-7: var(--slate-7);
+	--color-slate-8: var(--slate-8);
+	--color-slate-9: var(--slate-9);
+	--color-slate-10: var(--slate-10);
+	--color-slate-11: var(--slate-11);
+	--color-slate-12: var(--slate-12);
+
+	/* Tailwind tokens for Radix gray scale (1–12) */
+	--color-gray-1: var(--gray-1);
+	--color-gray-2: var(--gray-2);
+	--color-gray-3: var(--gray-3);
+	--color-gray-4: var(--gray-4);
+	--color-gray-5: var(--gray-5);
+	--color-gray-6: var(--gray-6);
+	--color-gray-7: var(--gray-7);
+	--color-gray-8: var(--gray-8);
+	--color-gray-9: var(--gray-9);
+	--color-gray-10: var(--gray-10);
+	--color-gray-11: var(--gray-11);
+	--color-gray-12: var(--gray-12);
+
+	/* Tailwind tokens for Radix orange scale (1–12) */
+	--color-orange-1: var(--orange-1);
+	--color-orange-2: var(--orange-2);
+	--color-orange-3: var(--orange-3);
+	--color-orange-4: var(--orange-4);
+	--color-orange-5: var(--orange-5);
+	--color-orange-6: var(--orange-6);
+	--color-orange-7: var(--orange-7);
+	--color-orange-8: var(--orange-8);
+	--color-orange-9: var(--orange-9);
+	--color-orange-10: var(--orange-10);
+	--color-orange-11: var(--orange-11);
+	--color-orange-12: var(--orange-12);
+
+	/* Tailwind tokens for Radix cyan scale (1–12) */
+	--color-cyan-1: var(--cyan-1);
+	--color-cyan-2: var(--cyan-2);
+	--color-cyan-3: var(--cyan-3);
+	--color-cyan-4: var(--cyan-4);
+	--color-cyan-5: var(--cyan-5);
+	--color-cyan-6: var(--cyan-6);
+	--color-cyan-7: var(--cyan-7);
+	--color-cyan-8: var(--cyan-8);
+	--color-cyan-9: var(--cyan-9);
+	--color-cyan-10: var(--cyan-10);
+	--color-cyan-11: var(--cyan-11);
+	--color-cyan-12: var(--cyan-12);
+
+	/* Tailwind tokens for Radix green scale (1–12) */
+	--color-green-1: var(--green-1);
+	--color-green-2: var(--green-2);
+	--color-green-3: var(--green-3);
+	--color-green-4: var(--green-4);
+	--color-green-5: var(--green-5);
+	--color-green-6: var(--green-6);
+	--color-green-7: var(--green-7);
+	--color-green-8: var(--green-8);
+	--color-green-9: var(--green-9);
+	--color-green-10: var(--green-10);
+	--color-green-11: var(--green-11);
+	--color-green-12: var(--green-12);
+
+	/* Tailwind tokens for Radix yellow scale (1–12) */
+	--color-yellow-1: var(--yellow-1);
+	--color-yellow-2: var(--yellow-2);
+	--color-yellow-3: var(--yellow-3);
+	--color-yellow-4: var(--yellow-4);
+	--color-yellow-5: var(--yellow-5);
+	--color-yellow-6: var(--yellow-6);
+	--color-yellow-7: var(--yellow-7);
+	--color-yellow-8: var(--yellow-8);
+	--color-yellow-9: var(--yellow-9);
+	--color-yellow-10: var(--yellow-10);
+	--color-yellow-11: var(--yellow-11);
+	--color-yellow-12: var(--yellow-12);
+
+	/* Tailwind tokens for Radix red scale (1–12) */
+	--color-red-1: var(--red-1);
+	--color-red-2: var(--red-2);
+	--color-red-3: var(--red-3);
+	--color-red-4: var(--red-4);
+	--color-red-5: var(--red-5);
+	--color-red-6: var(--red-6);
+	--color-red-7: var(--red-7);
+	--color-red-8: var(--red-8);
+	--color-red-9: var(--red-9);
+	--color-red-10: var(--red-10);
+	--color-red-11: var(--red-11);
+	--color-red-12: var(--red-12);
+
+	/* Custom semantic tokens for components */
+	--color-border: var(--gray-4);
+	--color-card: var(--gray-3);
+	--color-sidebar: var(--gray-3);
+	--color-sidebar-border: var(--gray-4);
 }
 
 body {
@@ -29,65 +165,36 @@ body {
 
 @plugin "daisyui/theme" {
 	name: "dark";
-	default: true;
-	prefersdark: true;
-	color-scheme: "dark";
-	--color-base-100: oklch(24.353% 0 0);
-	--color-base-200: oklch(22.648% 0 0);
-	--color-base-300: oklch(20.944% 0 0);
-	--color-base-content: oklch(84.87% 0 0);
-	--color-primary: oklch(41.703% 0.099 251.473);
-	--color-primary-content: oklch(88.34% 0.019 251.473);
-	--color-secondary: oklch(64.092% 0.027 229.389);
-	--color-secondary-content: oklch(12.818% 0.005 229.389);
-	--color-accent: oklch(67.271% 0.167 35.791);
-	--color-accent-content: oklch(13.454% 0.033 35.791);
-	--color-neutral: oklch(27.441% 0.013 253.041);
-	--color-neutral-content: oklch(85.488% 0.002 253.041);
-	--color-info: oklch(62.616% 0.143 240.033);
-	--color-info-content: oklch(12.523% 0.028 240.033);
-	--color-success: oklch(70.226% 0.094 156.596);
-	--color-success-content: oklch(14.045% 0.018 156.596);
-	--color-warning: oklch(77.482% 0.115 81.519);
-	--color-warning-content: oklch(15.496% 0.023 81.519);
-	--color-error: oklch(51.61% 0.146 29.674);
-	--color-error-content: oklch(90.322% 0.029 29.674);
-	--radius-selector: 0rem;
-	--radius-field: 0.25rem;
-	--radius-box: 0.5rem;
-	--size-selector: 0.25rem;
-	--size-field: 0.25rem;
-	--border: 1px;
-	--depth: 0;
-	--noise: 0;
-}
-
-@plugin "daisyui/theme" {
-	name: "light";
 	default: false;
 	prefersdark: false;
-	color-scheme: "light";
-	--color-base-100: oklch(100% 0 0);
-	--color-base-200: oklch(96% 0 0);
-	--color-base-300: oklch(92% 0 0);
-	--color-base-content: oklch(20% 0 0);
-	--color-primary: oklch(41.703% 0.099 251.473);
-	--color-primary-content: oklch(100% 0 0);
-	--color-secondary: oklch(97% 0 0);
-	--color-secondary-content: oklch(12.818% 0.005 229.389);
-	--color-accent: oklch(67.271% 0.167 35.791);
-	--color-accent-content: oklch(13.454% 0.033 35.791);
-	--color-neutral: oklch(27.441% 0.013 253.041);
-	--color-neutral-content: oklch(85.488% 0.002 253.041);
-	--color-info: oklch(62.616% 0.143 240.033);
-	--color-info-content: oklch(12.523% 0.028 240.033);
-	--color-success: oklch(70.226% 0.094 156.596);
-	--color-success-content: oklch(14.045% 0.018 156.596);
-	--color-warning: oklch(77.482% 0.115 81.519);
-	--color-warning-content: oklch(15.496% 0.023 81.519);
-	--color-error: oklch(51.61% 0.146 29.674);
-	--color-error-content: oklch(90.322% 0.029 29.674);
-	--radius-selector: 0rem;
+	color-scheme: "dark";
+	/* Radix Colors (dark) */
+	--color-base-100: var(--gray-4);
+	--color-base-200: var(--gray-3);
+	--color-base-300: var(--gray-2);
+	--color-base-content: var(--gray-12);
+	/* Primary uses blue scale */
+	--color-primary: var(--blue-9);
+	--color-primary-content: #ffffff;
+	/* Secondary uses slate scale */
+	--color-secondary: var(--slate-9);
+	--color-secondary-content: #ffffff;
+	/* Accent uses orange scale */
+	--color-accent: var(--orange-9);
+	--color-accent-content: #ffffff;
+	/* Neutral */
+	--color-neutral: var(--gray-9);
+	--color-neutral-content: var(--gray-12);
+	/* Status */
+	--color-info: var(--cyan-9);
+	--color-info-content: #ffffff;
+	--color-success: var(--green-9);
+	--color-success-content: #ffffff;
+	--color-warning: var(--yellow-9);
+	--color-warning-content: #000000;
+	--color-error: var(--red-9);
+	--color-error-content: #ffffff;
+	--radius-selector: 0.5rem;
 	--radius-field: 0.25rem;
 	--radius-box: 0.5rem;
 	--size-selector: 0.25rem;
@@ -95,6 +202,59 @@ body {
 	--border: 1px;
 	--depth: 1;
 	--noise: 0;
+
+	/* Custom semantic tokens for components */
+	--color-border: var(--gray-4);
+	--color-card: var(--gray-3);
+	--color-sidebar: var(--gray-3);
+	--color-sidebar-border: var(--gray-4);
+}
+
+@plugin "daisyui/theme" {
+	name: "light";
+	default: true;
+	prefersdark: false;
+	color-scheme: "light";
+	/* Radix Colors (light) */
+	--color-base-100: var(--gray-4);
+	--color-base-200: var(--gray-3);
+	--color-base-300: var(--gray-2);
+	--color-base-content: var(--gray-12);
+	/* Primary uses blue scale */
+	--color-primary: var(--blue-9);
+	--color-primary-content: #ffffff;
+	/* Secondary uses slate scale */
+	--color-secondary: var(--slate-9);
+	--color-secondary-content: #ffffff;
+	/* Accent uses orange scale */
+	--color-accent: var(--orange-9);
+	--color-accent-content: #ffffff;
+	/* Neutral */
+	--color-neutral: var(--gray-9);
+	--color-neutral-content: #ffffff;
+	/* Status */
+	--color-info: var(--cyan-9);
+	--color-info-content: #ffffff;
+	--color-success: var(--green-9);
+	--color-success-content: #ffffff;
+	--color-warning: var(--yellow-9);
+	--color-warning-content: #000000;
+	--color-error: var(--red-9);
+	--color-error-content: #ffffff;
+	--radius-selector: 0.5rem;
+	--radius-field: 0.25rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+
+	/* Custom semantic tokens for components */
+	--color-border: var(--gray-4);
+	--color-card: var(--gray-1);
+	--color-sidebar: var(--gray-3);
+	--color-sidebar-border: var(--gray-4);
 }
 
 /* Stronger selection styles (appended last to win cascade) */

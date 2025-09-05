@@ -155,7 +155,7 @@ export default function WidgetTask() {
 
 			{/* New task form - Todoist style */}
 			{isAddingNew && (
-				<div className="w-full bg-base-200 rounded-lg shadow-sm border border-base-300 mb-4">
+				<div className="w-full bg-card rounded-lg shadow-sm border border-border mb-4">
 					{/* Top section - Task inputs */}
 					<div className="p-4">
 						<div className="flex flex-col gap-3">
@@ -226,8 +226,8 @@ export default function WidgetTask() {
 								disabled={!newTask.title.trim()}
 							>
 								Add task
-								<kbd className="kbd kbd-xs">shift</kbd>+
-								<kbd className="kbd kbd-xs">enter</kbd>
+								<kbd className="kbd kbd-xs text-base-content">shift</kbd>+
+								<kbd className="kbd kbd-xs text-base-content">enter</kbd>
 							</button>
 						</div>
 					</div>
@@ -259,7 +259,7 @@ export default function WidgetTask() {
 						<div key={task.id}>
 							{editingTaskId === task.id ? (
 								// Edit task form
-								<div className="w-full mt-2 bg-base-200 rounded-lg shadow-sm border border-base-300 mb-4">
+								<div className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4">
 									{/* Top section - Task inputs */}
 									<div className="p-4">
 										<div className="flex flex-col gap-3">
@@ -333,8 +333,13 @@ export default function WidgetTask() {
 												disabled={!editTask.title.trim()}
 											>
 												Save changes
-												<kbd className="kbd kbd-xs">shift</kbd>+
-												<kbd className="kbd kbd-xs">enter</kbd>
+												<kbd className="kbd kbd-xs text-base-content">
+													shift
+												</kbd>
+												+
+												<kbd className="kbd kbd-xs text-base-content">
+													enter
+												</kbd>
 											</button>
 										</div>
 									</div>
