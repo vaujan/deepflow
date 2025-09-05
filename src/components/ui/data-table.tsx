@@ -587,7 +587,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	// No longer needed since we removed the filters
 
 	return (
-		<div className="w-full bg-base-200 rounded-box overflow-hidden ">
+		<div className="w-full bg-card border-border border rounded-box overflow-hidden">
 			{/* Search and Filters */}
 			{/* Header */}
 			<div className="flex p-4 border-b-1 border-base-100 flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
@@ -676,7 +676,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			</div>
 
 			{/* Table */}
-			<div className="border-base-200 border">
+			<div className="overflow-x-auto">
 				<table className="table table-md bg-base-100 w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
