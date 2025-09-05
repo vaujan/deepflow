@@ -308,8 +308,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					return (
 						<div className="flex items-center gap-2 min-w-[120px]">
 							<span
-								className={`badge badge-sm badge-secondary ${
-									isPlanned ? "badge-soft" : ""
+								className={`badge badge-sm badge-soft  ${
+									isPlanned ? "badge-accent" : "badge-info"
 								} rounded-sm`}
 							>
 								{isPlanned ? (
