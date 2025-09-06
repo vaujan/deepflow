@@ -35,7 +35,7 @@ export default function Page() {
 							{(activeWidgets.includes("note") ||
 								activeWidgets.includes("tasks") ||
 								activeWidgets.includes("kanban")) && (
-								<div className="flex flex-col lg:flex-row gap-8 w-full h-fit min-w-fit">
+								<div className="flex flex-row overflow-x-auto lg:overflow-hidden gap-8 w-full h-fit min-w-fit">
 									{activeWidgets.includes("note") && <WidgetNotes />}
 									{activeWidgets.includes("tasks") && <WidgetTask />}
 									{/* {activeWidgets.includes("kanban") && <WidgetKanban />} */}

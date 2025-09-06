@@ -137,7 +137,7 @@ export default function WidgetTask() {
 	};
 
 	return (
-		<div className="w-full h-full max-w-xl  group flex flex-col overflow-hidden">
+		<div className="w-full h-full min-w-lg max-w-xl  group flex flex-col overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
 				<span className="font-medium text-lg">
 					Tasks{" "}
