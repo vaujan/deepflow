@@ -184,7 +184,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 							<div
 								key={index}
 								className={`
-                min-w-2 min-h-12 w-full h-auto rounded-sm transition-all duration-200 hover:ring-2 ring-primary ease-out cursor-pointer
+                min-w-2 min-h-12 w-full h-full rounded-sm transition-all duration-200 hover:ring-2 ring-primary ease-out cursor-pointer
                 ${getColorClass(day.value)}
                 ${day.value === 0 ? "opacity-30" : ""}
                 relative group flex items-center justify-center
@@ -225,7 +225,9 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			</div>
 
 			{/* Yearly GitHub-style Heat Map */}
-			<YearlyHeatMap currentMonth={currentMonth} />
+			<div className="overflow-x-auto border-1 p-2 border-border rounded-box lg:p-0 lg:border-0 lg:overflow-hidden">
+				<YearlyHeatMap currentMonth={currentMonth} />
+			</div>
 
 			{/* Legend */}
 			<div className="flex items-center justify-center gap-3 text-xs">

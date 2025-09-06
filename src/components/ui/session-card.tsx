@@ -334,7 +334,7 @@ export default function SessionCard() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-sm badge-soft bg-secondary/20">
+							<span className="badge rounded-sm badge-accent badge-soft">
 								Time-boxed
 							</span>
 						</div>
@@ -383,7 +383,7 @@ export default function SessionCard() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
-							<span className="badge rounded-sm badge-soft bg-secondary/20">
+							<span className="badge rounded-sm badge-soft badge-secondary">
 								No time limit
 							</span>
 						</div>
@@ -400,58 +400,13 @@ export default function SessionCard() {
 			</div>
 
 			{/* Optional Inputs Group */}
-			<div className="collapse border border-base-100 bg-base-200">
+			<div className="collapse bg-base-100">
 				<input type="checkbox" className="peer" />
 				<div className="collapse-title text-sm font-medium">
 					Tags (Optional)
 				</div>
 				<div className="collapse-content">
 					<div className="space-y-4 pt-2">
-						{/* Focus Level */}
-						{/* <div className="form-control">
-							<label className="label w-full justify-between">
-								<span className="label-text text-sm font-medium">
-									Focus Level: {focusLevel}
-								</span>
-								<span className="label-text-alt text-xs text-base-content/60">
-									{parseInt(focusLevel) <= 3
-										? "Light focus - Easy tasks"
-										: parseInt(focusLevel) <= 7
-										? "Moderate focus - Regular work"
-										: "Deep focus - Complex tasks"}
-								</span>
-							</label>
-							<div className="space-y-2">
-								<input
-									type="range"
-									min="1"
-									max="10"
-									step="1"
-									value={focusLevel}
-									onChange={handleFocusLevelChange}
-									className="range range-xs w-full"
-								/>
-
-								<div className="flex justify-between text-[0.5rem] text-base-content/60">
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-								</div>
-
-								<div className="flex justify-between text-xs text-base-content/60">
-									<span>Light focus</span>
-									<span>Deep focus</span>
-								</div>
-							</div>
-						</div> */}
-
 						{/* Tags */}
 						<div className="form-control">
 							<label className="label">
@@ -468,25 +423,6 @@ export default function SessionCard() {
 							/>
 							{renderTags(tags)}
 						</div>
-
-						{/* Additional Notes */}
-						{/* <div className="form-control">
-							<label className="label">
-								<span className="label-text text-sm font-medium">
-									Additional Notes
-								</span>
-								<span className="label-text-alt text-xs text-base-content/60">
-									Optional context
-								</span>
-							</label>
-							<textarea
-								placeholder="Any additional context or reminders..."
-								value={additionalNotes}
-								onChange={handleAdditionalNotesChange}
-								className="textarea textarea-sm w-full bg-base-200 resize-none"
-								rows={2}
-							/>
-						</div> */}
 					</div>
 				</div>
 			</div>

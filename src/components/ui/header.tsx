@@ -14,6 +14,7 @@ import React from "react";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { useWidgets } from "../../contexts/WidgetContext";
 import FontSelector from "./font-selector";
+import ThemeCustomizer from "./theme-customizer";
 
 export default function Header() {
 	const { isCollapsed, toggleSidebar } = useSidebar();
@@ -41,7 +42,7 @@ export default function Header() {
 						<button className="btn btn-sm btn-square">
 							<Timer className="size-4" />
 						</button>
-						<ul className="flex gap-1 p-2 rounded-box bg-base-100">
+						<ul className="flex gap-1 p-2 rounded-box bg-card">
 							<li>
 								<button
 									className={`btn relative btn-sm btn-square ${
@@ -92,8 +93,9 @@ export default function Header() {
 						</ul>
 					</nav>
 
-					{/* Font selector in top right */}
-					<div className="flex items-center">
+					{/* Theme + Font controls */}
+					<div className="flex items-center gap-1">
+						<ThemeCustomizer />
 						<FontSelector />
 					</div>
 				</div>

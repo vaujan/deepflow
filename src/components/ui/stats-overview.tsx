@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Clock, Target, TrendingUp, Award } from "lucide-react";
 import { mockSessions } from "../../data/mockSessions";
 import { markCurrentScopeAsDynamic } from "next/dist/server/app-render/dynamic-rendering";
+import SparklineRecharts from "./sparkline-recharts";
+import { radixColorScales } from "../../utils/radixColorMapping";
 
 interface StatCardProps {
 	title: string;
@@ -14,6 +16,7 @@ interface StatCardProps {
 		value: string;
 		isPositive: boolean;
 	};
+	chart?: React.ReactNode;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -22,20 +25,18 @@ const StatCard: React.FC<StatCardProps> = ({
 	subtitle,
 	icon: Icon,
 	trend,
+	chart,
 }) => {
 	return (
-		<div className="card transition-all ease-out w-full bg-card border-border border p-6">
+		<div className="card w-full transition-all ease-out hover:bg-card p-2">
 			<div className="h-full flex justify-between">
-				<div className="flex flex-col gap-8 justify-between">
-					{/* Icon */}
-					<div className="p-2 rounded-box w-fit h-fit bg-primary/10">
-						<Icon className="size-5 text-primary" />
-					</div>
-
+				<div className="flex flex-col w-full gap-4 justify-between">
 					{/* Data & informations */}
-					<div className="flex flex-col gap-2">
-						<p className="text-sm text-base-content/60">{title}</p>
-						<p className="text-2xl font-bold text-base-content">{value}</p>
+					<div className="flex flex-col gap-2 p-2 h-full">
+						<p className="text-sm `text-base-content/60">{title}</p>
+						<p className="text-2xl font-medium text-base-content font-mono">
+							{value}
+						</p>
 						<p className="text-xs text-base-content/50">{subtitle}</p>
 						{trend && (
 							<div
@@ -48,6 +49,14 @@ const StatCard: React.FC<StatCardProps> = ({
 								/>
 								<span>{trend.value}</span>
 							</div>
+						)}
+					</div>
+
+					<div className="w-full bg-gray-2 border-border border pt-6 rounded-box h-32">
+						{chart ? (
+							chart
+						) : (
+							<span className="text-gray-8 font-medium">chart</span>
 						)}
 					</div>
 				</div>
@@ -94,36 +103,65 @@ const calculateStats = () => {
 export default function StatsOverview() {
 	const stats = calculateStats();
 
+	const sparkData = useMemo(() => {
+		// Build last 14 days total focus minutes
+		const days = 14;
+		const today = new Date();
+		const arr: number[] = [];
+		for (let i = days - 1; i >= 0; i--) {
+			const day = new Date(today);
+			day.setDate(day.getDate() - i);
+			const start = new Date(day);
+			start.setHours(0, 0, 0, 0);
+			const end = new Date(day);
+			end.setHours(23, 59, 59, 999);
+			const total =
+				mockSessions
+					.filter((s) => s.startTime >= start && s.startTime <= end)
+					.reduce((acc, s) => acc + (s.elapsedTime || 0), 0) / 60; // minutes
+			arr.push(Math.round(total));
+		}
+		return arr;
+	}, []);
+
+	const primary = radixColorScales.blue.blue9;
+
 	return (
-		<div className="grid grid-cols-2 w-full gap-4">
-			<StatCard
-				title="Total Sessions"
-				value={stats.totalSessions.toString()}
-				subtitle="Last 30 days"
-				icon={Target}
-				trend={{ value: "+12%", isPositive: true }}
-			/>
-			<StatCard
-				title="Total Focus Time"
-				value={stats.totalTime}
-				subtitle="Deep work hours"
-				icon={Clock}
-				trend={{ value: "+8%", isPositive: true }}
-			/>
-			<StatCard
-				title="Avg Quality"
-				value={`${stats.avgQuality}/10`}
-				subtitle="Focus rating"
-				icon={Award}
-				trend={{ value: "+0.3", isPositive: true }}
-			/>
-			<StatCard
-				title="Completion Rate"
-				value={`${stats.completionRate}%`}
-				subtitle="Sessions finished"
-				icon={TrendingUp}
-				trend={{ value: "+5%", isPositive: true }}
-			/>
+		<div className="w-full">
+			<div className="grid grid-cols-2 w-full gap-4">
+				<StatCard
+					title="Total Sessions"
+					value={stats.totalSessions.toString()}
+					subtitle="Last 30 days"
+					icon={Target}
+					trend={{ value: "+12%", isPositive: true }}
+					chart={<SparklineRecharts data={sparkData} color={primary} />}
+				/>
+				<StatCard
+					title="Total Focus Time"
+					value={stats.totalTime}
+					subtitle="Deep work hours"
+					icon={Clock}
+					trend={{ value: "+8%", isPositive: true }}
+					chart={<SparklineRecharts data={sparkData} color={primary} />}
+				/>
+				<StatCard
+					title="Avg Quality"
+					value={`${stats.avgQuality}/10`}
+					subtitle="Focus rating"
+					icon={Award}
+					trend={{ value: "+0.3", isPositive: true }}
+					chart={<SparklineRecharts data={sparkData} color={primary} />}
+				/>
+				<StatCard
+					title="Completion Rate"
+					value={`${stats.completionRate}%`}
+					subtitle="Sessions finished"
+					icon={TrendingUp}
+					trend={{ value: "+5%", isPositive: true }}
+					chart={<SparklineRecharts data={sparkData} color={primary} />}
+				/>
+			</div>
 		</div>
 	);
 }
