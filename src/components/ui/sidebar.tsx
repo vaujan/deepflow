@@ -108,7 +108,7 @@ export default function Sidebar() {
 					<nav className="flex-1 p-2">
 						{!isCollapsed && (
 							<div className="flex justify-between items-center p-2 rounded-b-none -mb-2 rounded-lg bg-base-100">
-								<span className="bg-base-300 inline-flex w-fit py-1 px-2 text-xs rounded-sm text-base-content/50 font-medium">
+								<span className="bg-base-300 uppercase font-mono inline-flex w-fit py-1 px-2 text-xs rounded-sm text-base-content/50 font-medium">
 									Workspaces
 								</span>
 								<button className="btn-square btn-ghost btn btn-xs">

@@ -338,7 +338,7 @@ export default function WidgetNotes() {
 										} text-base-content/50 items-center mb-3`}
 									>
 										{note.title && (
-											<span className="badge badge-sm badge-ghost">
+											<span className="badge badge-sm rounded-sm">
 												{note.title}
 											</span>
 										)}
