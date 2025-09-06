@@ -225,7 +225,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			</div>
 
 			{/* Yearly GitHub-style Heat Map */}
-			<div className="overflow-x-auto border-1 p-2 border-border rounded-box lg:p-0 lg:border-0 lg:overflow-hidden">
+			<div className="overflow-x-auto lg:flex lg:justify-center border-1 p-2 border-border rounded-box lg:p-0 lg:border-0 lg:overflow-hidden">
 				<YearlyHeatMap currentMonth={currentMonth} />
 			</div>
 

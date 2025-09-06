@@ -53,44 +53,102 @@ export function computeStreaks(sessions: Session[]) {
 	const days = new Set<string>();
 	sessions.forEach((s) => days.add(dayKey(s.startTime)));
 
-	// Current streak
-	let currentStreak = 0;
+	// ISO week helpers (Monday first day)
+	const startOfIsoWeek = (date: Date) => {
+		const d = new Date(date);
+		d.setHours(0, 0, 0, 0);
+		const day = (d.getDay() + 6) % 7; // Mon=0..Sun=6
+		d.setDate(d.getDate() - day);
+		return d;
+	};
+	const weekKey = (date: Date) =>
+		startOfIsoWeek(date).toISOString().split("T")[0];
+
+	// Set of active weeks (by ISO week start date)
+	const weeks = new Set<string>();
+	sessions.forEach((s) => weeks.add(weekKey(s.startTime)));
+
+	// Current day streak
+	let currentStreakDays = 0;
 	const today = new Date();
-	const cursor = new Date(today);
-	cursor.setHours(0, 0, 0, 0);
+	const cursorDay = new Date(today);
+	cursorDay.setHours(0, 0, 0, 0);
 	while (true) {
-		const key = dayKey(cursor);
+		const key = dayKey(cursorDay);
 		if (days.has(key)) {
-			currentStreak += 1;
-			cursor.setDate(cursor.getDate() - 1);
+			currentStreakDays += 1;
+			cursorDay.setDate(cursorDay.getDate() - 1);
 			continue;
 		}
 		break;
 	}
 
-	// Longest streak
+	// Longest day streak
 	const sortedDayKeys = Array.from(days).sort();
-	let longest = 0;
-	let run = 0;
-	let prev: Date | null = null;
+	let longestDay = 0;
+	let runDay = 0;
+	let prevDay: Date | null = null;
 	for (const key of sortedDayKeys) {
 		const d = new Date(key + "T00:00:00");
-		if (prev) {
-			const diff = (d.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+		if (prevDay) {
+			const diff = (d.getTime() - prevDay.getTime()) / (1000 * 60 * 60 * 24);
 			if (diff === 1) {
-				run += 1;
+				runDay += 1;
 			} else {
-				longest = Math.max(longest, run);
-				run = 1;
+				longestDay = Math.max(longestDay, runDay);
+				runDay = 1;
 			}
 		} else {
-			run = 1;
+			runDay = 1;
 		}
-		prev = d;
+		prevDay = d;
 	}
-	longest = Math.max(longest, run);
+	longestDay = Math.max(longestDay, runDay);
 
-	return { currentStreakDays: currentStreak, longestStreakDays: longest };
+	// Current weekly streak (consecutive ISO weeks with any activity)
+	let currentStreakWeeks = 0;
+	const currentWeekStart = startOfIsoWeek(today);
+	const cursorWeek = new Date(currentWeekStart);
+	while (true) {
+		const key = cursorWeek.toISOString().split("T")[0];
+		if (weeks.has(key)) {
+			currentStreakWeeks += 1;
+			cursorWeek.setDate(cursorWeek.getDate() - 7);
+			continue;
+		}
+		break;
+	}
+
+	// Longest weekly streak
+	const sortedWeekKeys = Array.from(weeks)
+		.map((k) => new Date(k + "T00:00:00"))
+		.sort((a, b) => a.getTime() - b.getTime());
+	let longestWeek = 0;
+	let runWeek = 0;
+	let prevWeek: Date | null = null;
+	for (const d of sortedWeekKeys) {
+		if (prevWeek) {
+			const diffWeeks =
+				(d.getTime() - prevWeek.getTime()) / (1000 * 60 * 60 * 24 * 7);
+			if (diffWeeks === 1) {
+				runWeek += 1;
+			} else {
+				longestWeek = Math.max(longestWeek, runWeek);
+				runWeek = 1;
+			}
+		} else {
+			runWeek = 1;
+		}
+		prevWeek = d;
+	}
+	longestWeek = Math.max(longestWeek, runWeek);
+
+	return {
+		currentStreakDays: currentStreakDays,
+		longestStreakDays: longestDay,
+		currentStreakWeeks: currentStreakWeeks,
+		longestStreakWeeks: longestWeek,
+	};
 }
 
 export function computeTagFocus(sessions: Session[]) {

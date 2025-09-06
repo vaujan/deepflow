@@ -227,7 +227,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 									}`}
 								>
 									<span>#{tag}</span>
-									<span className="badge rounded-sm aspect-square badge-xs badge-neutral ml-2">
+									<span className="badge  rounded-sm aspect-square badge-xs badge-neutral ml-2">
 										{count}
 									</span>
 								</button>
@@ -394,7 +394,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							? "badge-warning"
 							: "badge-error";
 					return (
-						<span className={`badge badge-sm rounded-sm ${color}`}>
+						<span className={`badge badge-sm badge-soft rounded-sm ${color}`}>
 							{focus}
 						</span>
 					);
@@ -412,7 +412,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							? "badge-warning"
 							: "badge-success";
 					return (
-						<span className={`badge badge-sm rounded-sm ${color}`}>
+						<span className={`badge badge-sm badge-soft rounded-sm ${color}`}>
 							{quality}
 						</span>
 					);
@@ -677,7 +677,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 
 			{/* Table */}
 			<div className="overflow-x-auto">
-				<table className="table table-md bg-base-100 w-full min-w-full">
+				<table className="table rounded-none bg-card dark:bg-base-100 table-md w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
@@ -828,7 +828,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 
 				<div className="flex items-center gap-2">
 					<select
-						className="select select-bordered select-sm"
+						className="select select-sm"
 						value={table.getState().pagination.pageSize}
 						onChange={(e) => {
 							table.setPageSize(Number(e.target.value));

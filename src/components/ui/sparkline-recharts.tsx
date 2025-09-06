@@ -18,7 +18,7 @@ const SparklineRecharts: React.FC<SparklineRechartsProps> = ({
 }) => {
 	const chartData = data.map((v, i) => ({ x: i, y: v }));
 	return (
-		<div className={`w-full ${className}`} style={{ height }}>
+		<div className={`w-full h-full ${className}`} style={{ height }}>
 			<ResponsiveContainer width="100%" height="100%">
 				<AreaChart
 					data={chartData}
