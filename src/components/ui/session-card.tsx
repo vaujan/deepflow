@@ -400,7 +400,7 @@ export default function SessionCard() {
 			</div>
 
 			{/* Optional Inputs Group */}
-			<div className="collapse border border-base-100 bg-base-200">
+			<div className="collapse bg-base-100">
 				<input type="checkbox" className="peer" />
 				<div className="collapse-title text-sm font-medium">
 					Tags (Optional)
