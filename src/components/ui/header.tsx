@@ -41,7 +41,7 @@ export default function Header() {
 						<button className="btn btn-sm btn-square">
 							<Timer className="size-4" />
 						</button>
-						<ul className="flex gap-1 p-2 rounded-box bg-base-100">
+						<ul className="flex gap-1 p-2 rounded-box bg-card">
 							<li>
 								<button
 									className={`btn relative btn-sm btn-square ${
