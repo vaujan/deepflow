@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Flame, Check, Circle } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { mockSessions } from "../../data/mockSessions";
 import { computeStreaks } from "../../lib/analytics";
 import { radixColorScales } from "../../utils/radixColorMapping";
@@ -50,11 +50,11 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 					<div className="h-full flex justify-between">
 						<div className="flex flex-col w-full gap-4">
 							{/* Data & informations */}
-							<div className="flex flex-col gap-2 p-2 h-fit">
-								<div className="flex items-center gap-2">
+							<div className="flex gap-4">
+								<div className="flex border-r-1 border-border w-full flex-col gap-2 p-4 h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
-											Current Streak
+											Daily Streak
 										</p>
 										<p className="text-2xl font-medium text-base-content font-mono">
 											{streaks.currentStreakDays}{" "}
@@ -66,34 +66,80 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 										</p>
 									</div>
 								</div>
+
+								<div className="flex w-full flex-col gap-2 p-4 h-fit">
+									<div className="flex flex-col gap-1">
+										<p className="text-sm text-medium text-base-content/60">
+											Weekly Streak
+										</p>
+										<p className="text-2xl font-medium text-base-content font-mono">
+											{streaks.currentStreakWeeks}{" "}
+											{streaks.currentStreakWeeks === 1 ? "week" : "weeks"}
+										</p>
+										<p className="text-xs text-base-content/50">
+											Longest: {streaks.longestStreakWeeks}{" "}
+											{streaks.longestStreakWeeks === 1 ? "week" : "weeks"}
+										</p>
+									</div>
+								</div>
 							</div>
 
 							{/* Weekly Activity Grid */}
-							<div className="dark:bg-gray-4/50 rounded-box flex p-4 items-center gap-3 overflow-x-auto">
-								{weekActivity.map((isActive, idx) => (
-									<div
-										key={idx}
-										className="flex flex-col items-center gap-1 min-w-10"
-									>
+							<div className="dark:bg-gray-4/50 relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
+								<span className="text-xs absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
+									Week{" "}
+									{Math.ceil(
+										(new Date().getTime() -
+											new Date(new Date().getFullYear(), 0, 1).getTime()) /
+											(7 * 24 * 60 * 60 * 1000)
+									)}
+								</span>
+								{weekActivity.map((isActive, idx) => {
+									const today = new Date();
+									const currentDayOfWeek = (today.getDay() + 6) % 7; // Convert to Mon=0..Sun=6
+									const isToday = idx === currentDayOfWeek;
+									const isFuture = idx > currentDayOfWeek;
+
+									return (
 										<div
-											className={`size-7 rounded-full grid place-items-center border ${
-												isActive ? "border-transparent" : "border-border"
-											}`}
-											style={{
-												backgroundColor: isActive ? accent : "transparent",
-											}}
+											key={idx}
+											className="flex flex-col items-center gap-1 min-w-10"
 										>
-											{isActive ? (
-												<Check className="size-4 text-white" />
-											) : (
-												<Circle className="size-4 text-base-content/30" />
-											)}
+											<div
+												className={`size-7 rounded-full grid place-items-center border relative ${
+													isActive ? "border-transparent" : "border-border"
+												} ${
+													isToday ? "ring-2 ring-orange-500 ring-offset-1" : ""
+												} ${isFuture ? "opacity-50" : ""}`}
+												style={{
+													backgroundColor: isActive ? accent : "transparent",
+												}}
+											>
+												{isActive ? (
+													<Check className="size-4 text-white" />
+												) : isFuture ? (
+													<Circle className="size-4 text-base-content/20" />
+												) : (
+													<Circle className="size-4 text-base-content/30" />
+												)}
+												{isToday && (
+													<div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+												)}
+											</div>
+											<span
+												className={`text-xs ${
+													isToday
+														? "text-orange-500 font-semibold"
+														: isFuture
+														? "text-base-content/40"
+														: "text-base-content/60"
+												}`}
+											>
+												{dayLabels[idx]}
+											</span>
 										</div>
-										<span className="text-xs text-base-content/60">
-											{dayLabels[idx]}
-										</span>
-									</div>
-								))}
+									);
+								})}
 							</div>
 						</div>
 					</div>
