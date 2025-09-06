@@ -28,12 +28,12 @@ const StatCard: React.FC<StatCardProps> = ({
 	chart,
 }) => {
 	return (
-		<div className="card w-full transition-all ease-out hover:bg-card p-2">
+		<div className="card border border-border w-full transition-all ease-out bg-card p-2">
 			<div className="h-full flex justify-between">
-				<div className="flex flex-col w-full gap-4 justify-between">
+				<div className="flex flex-col w-full gap-4">
 					{/* Data & informations */}
-					<div className="flex flex-col gap-2 p-2 h-full">
-						<p className="text-sm `text-base-content/60">{title}</p>
+					<div className="flex flex-col gap-2 p-2 h-fit">
+						<p className="text-sm text-medium text-base-content/60">{title}</p>
 						<p className="text-2xl font-medium text-base-content font-mono">
 							{value}
 						</p>
@@ -52,7 +52,7 @@ const StatCard: React.FC<StatCardProps> = ({
 						)}
 					</div>
 
-					<div className="w-full bg-gray-2 border-border border pt-6 rounded-box h-32">
+					<div className="w-full h-full bg-gray-4/50 pt-6 rounded-box">
 						{chart ? (
 							chart
 						) : (
@@ -127,8 +127,8 @@ export default function StatsOverview() {
 	const primary = radixColorScales.blue.blue9;
 
 	return (
-		<div className="w-full">
-			<div className="grid grid-cols-2 w-full gap-4">
+		<div className="w-full h-full">
+			<div className="flex h-full w-full gap-4">
 				<StatCard
 					title="Total Sessions"
 					value={stats.totalSessions.toString()}
@@ -145,7 +145,7 @@ export default function StatsOverview() {
 					trend={{ value: "+8%", isPositive: true }}
 					chart={<SparklineRecharts data={sparkData} color={primary} />}
 				/>
-				<StatCard
+				{/* <StatCard
 					title="Avg Quality"
 					value={`${stats.avgQuality}/10`}
 					subtitle="Focus rating"
@@ -160,7 +160,7 @@ export default function StatsOverview() {
 					icon={TrendingUp}
 					trend={{ value: "+5%", isPositive: true }}
 					chart={<SparklineRecharts data={sparkData} color={primary} />}
-				/>
+				/> */}
 			</div>
 		</div>
 	);

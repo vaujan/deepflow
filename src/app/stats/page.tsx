@@ -8,7 +8,7 @@ import SessionHistory from "../../components/ui/session-history";
 import ProductivityChart from "../../components/ui/productivity-chart";
 import FocusInsights from "../../components/ui/focus-insights";
 import HeatMap from "../../components/ui/heat-map";
-import StreakCards from "../../components/ui/streak-cards";
+import FocusStreak from "../../components/ui/focus-streak";
 import TagFocusChart from "../../components/ui/tag-focus-chart";
 import PeakFocusWindowChart from "../../components/ui/peak-focus-window-chart";
 
@@ -23,21 +23,24 @@ export default function StatsPage() {
 					<div className="w-full h-full overflow-x-auto horizontal-scroll-container">
 						<div className="flex flex-col gap-12 w-full h-full px-4 lg:px-8 py-4">
 							{/* Stats Overview Cards */}
-							<div className="card lg:flex-row gap-4">
+							<div className="card lg:flex-row gap-8">
 								<HeatMap />
-								<StatsOverview />
+								<div className="flex h-full flex-col w-full gap-4">
+									<FocusStreak />
+									<StatsOverview />
+								</div>
 							</div>
 
 							{/* Streaks */}
-							<div className="grid grid-cols-1 gap-4">
+							{/* 							<div className="grid grid-cols-1 gap-4">
 								<StreakCards />
 							</div>
-
+ */}
 							{/* Charts and Insights Grid */}
-							<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+							{/* <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 								<TagFocusChart />
 								<PeakFocusWindowChart />
-							</div>
+							</div> */}
 
 							{/* Session History */}
 							<div className="">
