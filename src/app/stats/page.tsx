@@ -25,7 +25,7 @@ export default function StatsPage() {
 							{/* Stats Overview Cards */}
 							<div className="card lg:flex-row gap-8">
 								<HeatMap />
-								<div className="flex lg:max-w-3xl w-full h-full flex-col w-full gap-4">
+								<div className="flex lg:max-w-3xl h-full flex-col w-full gap-4">
 									<FocusStreak />
 									<StatsOverview />
 								</div>

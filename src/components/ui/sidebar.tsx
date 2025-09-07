@@ -37,7 +37,7 @@ interface WorkspaceItem {
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
 	{ label: "Stats", href: "/stats", icon: ChartAreaIcon },
-	{ label: "Widgets", href: "/test-widgets", icon: SquareAsterisk },
+	// { label: "Widgets", href: "/test-widgets", icon: SquareAsterisk },
 	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 ];
 
@@ -233,7 +233,15 @@ export default function Sidebar() {
 									title={isCollapsed ? "Feedback" : undefined}
 								>
 									<Mail className="w-4 h-4 text-base-content/50" />
-									{!isCollapsed && <span>Feedback</span>}
+									{!isCollapsed && (
+										<>
+											<span>Feedback</span>
+
+											<span className="badge badge-sm badge-soft rounded-sm badge-accent">
+												We're in Beta!
+											</span>
+										</>
+									)}
 								</a>
 							</li>
 
