@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Check, Circle } from "lucide-react";
+import { Check, Circle, Flame } from "lucide-react";
 import { mockSessions } from "../../data/mockSessions";
 import { computeStreaks } from "../../lib/analytics";
 import { radixColorScales } from "../../utils/radixColorMapping";
@@ -51,7 +51,7 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 						<div className="flex flex-col w-full gap-4">
 							{/* Data & informations */}
 							<div className="flex gap-4">
-								<div className="flex border-r-1 border-border w-full flex-col gap-2 p-4 h-fit">
+								<div className="flex gap-4 items-center border-r-1 border-border w-full p-4 h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
 											Daily Streak
@@ -65,9 +65,14 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 											{streaks.longestStreakDays === 1 ? "day" : "days"}
 										</p>
 									</div>
+
+									{/* Icon */}
+									<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
+										<Flame className="size-4 text-orange-10 animate-pulse" />
+									</div>
 								</div>
 
-								<div className="flex w-full flex-col gap-2 p-4 h-fit">
+								<div className="flex gap-4 items-center border-r-1 border-border w-full p-4 h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
 											Weekly Streak
@@ -81,12 +86,19 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 											{streaks.longestStreakWeeks === 1 ? "week" : "weeks"}
 										</p>
 									</div>
+
+									{/* Icon - only show if there are weekly streaks */}
+									{streaks.currentStreakWeeks > 0 && (
+										<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
+											<Flame className="size-4 text-orange-10 animate-pulse" />
+										</div>
+									)}
 								</div>
 							</div>
 
 							{/* Weekly Activity Grid */}
 							<div className="dark:bg-gray-4/50 relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
-								<span className="text-xs absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
+								<span className="text-xs invisible md:visible absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
 									Week{" "}
 									{Math.ceil(
 										(new Date().getTime() -

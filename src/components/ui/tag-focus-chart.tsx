@@ -8,13 +8,12 @@ import {
 	Period,
 } from "../../lib/analytics";
 import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
+	PieChart,
+	Pie,
+	Cell,
 	Tooltip,
 	ResponsiveContainer,
+	Legend,
 } from "recharts";
 import { radixColorScales } from "../../utils/radixColorMapping";
 
@@ -25,10 +24,19 @@ interface TagFocusChartProps {
 }
 
 const colors = {
-	primary: radixColorScales.blue.blue9,
-	grid: radixColorScales.slate.slate5,
 	text: radixColorScales.slate.slate12,
 };
+
+const slicePalette = [
+	radixColorScales.blue.blue9,
+	radixColorScales.cyan.cyan9,
+	radixColorScales.green.green9,
+	radixColorScales.orange.orange9,
+	radixColorScales.yellow.yellow9,
+	radixColorScales.red.red9,
+	radixColorScales.slate.slate9,
+	radixColorScales.gray.gray9,
+];
 
 const TagFocusChart: React.FC<TagFocusChartProps> = ({
 	className = "",
@@ -38,7 +46,11 @@ const TagFocusChart: React.FC<TagFocusChartProps> = ({
 	const data = useMemo(() => {
 		const range = getDateRangeSessions(mockSessions, period);
 		const tags = computeTagFocus(range).slice(0, maxTags);
-		return tags;
+		const total = tags.reduce((acc, t) => acc + t.totalMinutes, 0) || 1;
+		return tags.map((t) => ({
+			...t,
+			percentage: parseFloat(((t.totalMinutes / total) * 100).toFixed(1)),
+		}));
 	}, [period, maxTags]);
 
 	return (
@@ -53,34 +65,31 @@ const TagFocusChart: React.FC<TagFocusChartProps> = ({
 			</div>
 			<div className="w-full h-56">
 				<ResponsiveContainer width="100%" height="100%">
-					<BarChart
-						data={data}
-						margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-					>
-						<CartesianGrid stroke={colors.grid} vertical={false} />
-						<XAxis
-							dataKey="tag"
-							stroke={colors.text}
-							tickLine={false}
-							axisLine={false}
-						/>
-						<YAxis
-							stroke={colors.text}
-							tickLine={false}
-							axisLine={false}
-							width={36}
-						/>
-						<Tooltip
-							formatter={(value: any, name) =>
-								name === "totalMinutes" ? [`${value} min`, "Focus Time"] : value
-							}
-						/>
-						<Bar
+					<PieChart>
+						<Pie
+							data={data}
 							dataKey="totalMinutes"
-							fill={colors.primary}
-							radius={[4, 4, 0, 0]}
+							nameKey="tag"
+							innerRadius={60}
+							outerRadius={90}
+							paddingAngle={2}
+							label={({ name, percentage }) => `${name} ${percentage}%`}
+						>
+							{data.map((entry, index) => (
+								<Cell
+									key={`slice-${entry.tag}-${index}`}
+									fill={slicePalette[index % slicePalette.length]}
+								/>
+							))}
+						</Pie>
+						<Tooltip
+							formatter={(value: any, name: any, props: any) => {
+								const pct = props.payload?.percentage ?? 0;
+								return [`${value} min (${pct}%)`, "Focus Time"];
+							}}
 						/>
-					</BarChart>
+						<Legend verticalAlign="bottom" height={24} />
+					</PieChart>
 				</ResponsiveContainer>
 			</div>
 		</div>

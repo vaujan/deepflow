@@ -76,18 +76,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 				document.documentElement.classList.remove("dark");
 			}
 		} else {
-			// Check system preference
-			const prefersDark = window.matchMedia(
-				"(prefers-color-scheme: dark)"
-			).matches;
-			const defaultTheme: Theme = prefersDark ? "dark" : "light";
+			// Default to dark theme
+			const defaultTheme: Theme = "dark";
 			setTheme(defaultTheme);
 			document.documentElement.setAttribute("data-theme", defaultTheme);
-			if (defaultTheme === "dark") {
-				document.documentElement.classList.add("dark");
-			} else {
-				document.documentElement.classList.remove("dark");
-			}
+			document.documentElement.classList.add("dark");
 		}
 
 		// Load color preferences
