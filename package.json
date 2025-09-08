@@ -17,6 +17,7 @@
 		"@radix-ui/react-scroll-area": "^1.2.10",
 		"@tailwindcss/postcss": "^4.1.12",
 		"@tanstack/react-table": "^8.21.3",
+		"@tanstack/react-virtual": "^3.13.12",
 		"@tauri-apps/api": "^2.8.0",
 		"@tiptap/extension-code-block": "^3.3.0",
 		"@tiptap/extension-hard-break": "^3.3.1",

@@ -329,7 +329,7 @@ export default function SessionCard() {
 					<Clock className="size-4 me-2" />
 					Planned Session
 				</label>
-				<div className="tab-content rounded-box dark:bg-gray-4 border-border border bg-base-200 p-6">
+				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
 					{/* Planned Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
@@ -378,7 +378,7 @@ export default function SessionCard() {
 					<Timer className="size-4 me-2" />
 					Open Session
 				</label>
-				<div className="tab-content rounded-box bg-base-200 border-border dark:bg-gray-4 border p-6">
+				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
@@ -400,7 +400,7 @@ export default function SessionCard() {
 			</div>
 
 			{/* Optional Inputs Group */}
-			<div className="collapse bg-base-100">
+			<div className="collapse border border-border bg-base-200 dark:bg-base-100">
 				<input type="checkbox" className="peer" />
 				<div className="collapse-title text-sm font-medium">
 					Tags (Optional)

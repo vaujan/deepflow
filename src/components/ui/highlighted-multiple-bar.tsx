@@ -140,7 +140,7 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 			<ResponsiveContainer
 				width="100%"
 				height="100%"
-				className="bg-gray-4/50 rounded-box border border-border animate-in fade-in duration-500"
+				className="bg-base-100 border border-border rounded-box animate-in fade-in duration-500"
 			>
 				<AreaChart
 					data={data}
