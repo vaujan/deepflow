@@ -30,6 +30,7 @@ import {
 	Check,
 	X,
 } from "lucide-react";
+import TagsOverview from "./tags-overview";
 
 // Session row type - represents a single deep work session
 // Planned session: user sets duration beforehand
@@ -590,7 +591,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		<div className="w-full bg-card border-border border rounded-box overflow-hidden">
 			{/* Search and Filters */}
 			{/* Header */}
-			<div className="flex p-4 border-b-1 border-base-100 flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+			<div className="flex p-4 border-b-1 border-border flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
 				{/* Global Search */}
 				<div className="form-control w-full lg:w-96">
 					<label className="input bg-base-100 hover:bg-base-200 border-1">
@@ -674,17 +675,16 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					</div>
 				</div>
 			</div>
-
 			{/* Table */}
 			<div className="overflow-x-auto">
-				<table className="table rounded-none bg-card dark:bg-base-100 table-md w-full min-w-full">
+				<table className="table rounded-none w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
 								{headerGroup.headers.map((header) => (
 									<th
 										key={header.id}
-										className={`bg-base-200 p-1 cursor-move hover:bg-base-300 transition-all duration-200 relative ${
+										className={`bg-base-300 dark:bg-base-100 cursor-move hover:bg-base-300 transition-all duration-200 relative ${
 											dragOverColumn === header.id
 												? "ring-2 ring-primary ring-opacity-50 bg-primary/10"
 												: ""
@@ -800,7 +800,6 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					</tbody>
 				</table>
 			</div>
-
 			{/* Pagination */}
 			<div className="flex items-center p-4 bg-base-200 justify-between">
 				<div className="flex items-center gap-2">
