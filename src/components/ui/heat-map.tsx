@@ -184,7 +184,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 							<div
 								key={index}
 								className={`
-                min-w-2 min-h-12 w-full h-full rounded-sm transition-all duration-200 hover:ring-2 ring-primary ease-out cursor-pointer
+                min-h-12 w-full h-full rounded-sm transition-all duration-200 hover:ring-2 ring-primary ease-out cursor-pointer
                 ${getColorClass(day.value)}
                 ${day.value === 0 ? "opacity-30" : ""}
                 relative group flex items-center justify-center
@@ -211,7 +211,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 								)}
 
 								{/* Tooltip */}
-								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 ">
 									<div className="font-medium text-base-content/80">
 										{day.date.toLocaleDateString()}
 									</div>
@@ -338,10 +338,9 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 	};
 
 	// Group data by weeks
-	const weeks = [];
+	const weeks: HeatMapDay[][] = [];
 	for (let i = 0; i < 53; i++) {
-		const weekDays = yearlyData.slice(i * 7, (i + 1) * 7);
-		weeks.push(weekDays);
+		weeks.push(yearlyData.slice(i * 7, (i + 1) * 7));
 	}
 
 	// Month labels with highlighting for current month
@@ -362,6 +361,32 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 
 	// Check which month is currently being viewed
 	const currentViewedMonth = currentMonth.getMonth();
+
+	// Compute accumulated hours per month
+	const monthlyTotals = useMemo(() => {
+		const totals = Array(12).fill(0);
+		yearlyData.forEach((day) => {
+			const m = day.date.getMonth();
+			totals[m] += day.totalTime / 60; // Convert minutes to hours
+		});
+		return totals.map((t) => Math.round(t));
+	}, [yearlyData]);
+
+	// Compute month spans (number of weeks per month for positioning)
+	const monthSpans = useMemo(() => {
+		const spans = Array(12).fill(0);
+		weeks.forEach((week) => {
+			const midWeekDay = week[3]; // Thursday as representative
+			if (
+				midWeekDay &&
+				midWeekDay.date.getFullYear() === new Date().getFullYear()
+			) {
+				const m = midWeekDay.date.getMonth();
+				spans[m]++;
+			}
+		});
+		return spans;
+	}, [weeks]);
 
 	return (
 		<div className="space-y-3">
@@ -421,6 +446,19 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 						</div>
 					))}
 				</div>
+			</div>
+			{/* Month labels with accumulated hours */}
+			<div className="flex text-xs text-base-content/60">
+				{monthLabels.map((label, idx) => (
+					<div
+						key={idx}
+						className="text-center flex flex-col items-center"
+						style={{ width: `calc(${monthSpans[idx] / 53} * 100%)` }}
+					>
+						<span>{label}</span>
+						<span className="text-[10px]">({monthlyTotals[idx]}h)</span>
+					</div>
+				))}
 			</div>
 		</div>
 	);

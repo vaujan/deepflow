@@ -101,7 +101,7 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 							{/* Weekly Activity Grid */}
 							<div className="bg-base-100 border border-border relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
 								<span className="text-xs invisible md:visible absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
-									Week{" "}
+									W{" "}
 									{Math.ceil(
 										(new Date().getTime() -
 											new Date(new Date().getFullYear(), 0, 1).getTime()) /
