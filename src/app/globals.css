@@ -34,6 +34,112 @@
 	--font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
 	--font-family-sans: var(--font-inter);
+
+	/* Fallback colors to prevent FOUC - these will be overridden by Radix colors when loaded */
+	/* These colors match the Radix DARK theme values to ensure seamless transition */
+	--gray-1: #111111;
+	--gray-2: #191919;
+	--gray-3: #222222;
+	--gray-4: #2a2a2a;
+	--gray-5: #313131;
+	--gray-6: #3a3a3a;
+	--gray-7: #484848;
+	--gray-8: #606060;
+	--gray-9: #6e6e6e;
+	--gray-10: #7b7b7b;
+	--gray-11: #b4b4b4;
+	--gray-12: #eeeeee;
+
+	--blue-1: #0d1520;
+	--blue-2: #111927;
+	--blue-3: #0d2847;
+	--blue-4: #003362;
+	--blue-5: #004074;
+	--blue-6: #104d87;
+	--blue-7: #205d9e;
+	--blue-8: #2870bd;
+	--blue-9: #0090ff;
+	--blue-10: #3b9eff;
+	--blue-11: #70b8ff;
+	--blue-12: #c2e6ff;
+
+	--slate-1: #111113;
+	--slate-2: #18191b;
+	--slate-3: #212225;
+	--slate-4: #272a2d;
+	--slate-5: #2e3135;
+	--slate-6: #363a3f;
+	--slate-7: #43484e;
+	--slate-8: #5a6169;
+	--slate-9: #696e77;
+	--slate-10: #777b84;
+	--slate-11: #b0b4ba;
+	--slate-12: #edeef0;
+
+	--orange-1: #17120e;
+	--orange-2: #1e160f;
+	--orange-3: #331e0b;
+	--orange-4: #462100;
+	--orange-5: #562800;
+	--orange-6: #66350c;
+	--orange-7: #7e451d;
+	--orange-8: #a35829;
+	--orange-9: #f76b15;
+	--orange-10: #ff801f;
+	--orange-11: #ffa057;
+	--orange-12: #ffe0c2;
+
+	--cyan-1: #0b161a;
+	--cyan-2: #101b20;
+	--cyan-3: #082c36;
+	--cyan-4: #003848;
+	--cyan-5: #004558;
+	--cyan-6: #045468;
+	--cyan-7: #12677e;
+	--cyan-8: #11809c;
+	--cyan-9: #00a2c7;
+	--cyan-10: #23afd0;
+	--cyan-11: #4ccce6;
+	--cyan-12: #b6ecf7;
+
+	--green-1: #0e1512;
+	--green-2: #121b17;
+	--green-3: #132d21;
+	--green-4: #113b29;
+	--green-5: #174933;
+	--green-6: #20573e;
+	--green-7: #28684a;
+	--green-8: #2f7c57;
+	--green-9: #30a46c;
+	--green-10: #33b074;
+	--green-11: #3dd68c;
+	--green-12: #b1f1cb;
+
+	--yellow-1: #1c1500;
+	--yellow-2: #221a00;
+	--yellow-3: #2f2500;
+	--yellow-4: #3a2f00;
+	--yellow-5: #453800;
+	--yellow-6: #5c4a00;
+	--yellow-7: #7a5f00;
+	--yellow-8: #a67c00;
+	--yellow-9: #d4a000;
+	--yellow-10: #f1c40f;
+	--yellow-11: #ffd60a;
+	--yellow-12: #ffeaa7;
+
+	--red-1: #191111;
+	--red-2: #1e1515;
+	--red-3: #2d1618;
+	--red-4: #3c181c;
+	--red-5: #481a1f;
+	--red-6: #541b1f;
+	--red-7: #671e22;
+	--red-8: #822025;
+	--red-9: #aa2429;
+	--red-10: #d32029;
+	--red-11: #e5484d;
+	--red-12: #f2a2a5;
 }
 
 /* Configure Tailwind font families */
@@ -169,8 +275,70 @@ body {
 	font-family: var(--font-family-sans);
 }
 
+/* Ensure theme is applied immediately to prevent FOUC */
+html[data-theme="dark"] {
+	color-scheme: dark;
+}
+
+html[data-theme="light"] {
+	color-scheme: light;
+}
+
+/* Default to dark theme if no theme is set */
+html:not([data-theme]) {
+	color-scheme: dark;
+}
+
 /* Google Fonts import for dynamic fonts */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Roboto:wght@100;300;400;500;700;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@100;300;400;700;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Nunito:wght@200;300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&family=Merriweather:wght@300;400;700;900&family=Lora:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Text:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&family=Source+Code+Pro:wght@200;300;400;500;600;700;800;900&family=Inconsolata:wght@200;300;400;500;600;700;800;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=Bebas+Neue&family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=Manrope:wght@200;300;400;500;600;700;800&family=Rubik:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Noto+Sans:wght@100;200;300;400;500;600;700;800;900&family=Source+Sans+3:wght@200;300;400;500;600;700;800;900&family=Crimson+Pro:wght@200;300;400;500;600;700;800;900&family=Libre+Caslon+Text:wght@400;700&family=Spectral:wght@200;300;400;500;600;700;800&family=Vollkorn:wght@400;500;600;700;800;900&family=PT+Serif:wght@400;700&family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&family=Space+Mono:wght@400;700&family=Roboto+Mono:wght@100;200;300;400;500;600;700&family=Overpass+Mono:wght@300;400;500;600;700&family=Anton&family=Barlow:wght@100;200;300;400;500;600;700;800;900&family=Comfortaa:wght@300;400;500;600;700&family=Exo+2:wght@100;200;300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Righteous&family=Teko:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Permanent+Marker&family=Fredoka+One&family=Lobster&family=Bungee:wght@400&family=Creepster&family=Press+Start+2P&display=swap");
+
+/* CSS-based theme switching to prevent FOUC */
+/* Dark theme - matches Radix Colors .dark selector */
+.dark,
+.dark-theme,
+[data-theme="dark"] {
+	color-scheme: dark;
+	/* Radix Colors (dark) */
+	--color-base-100: var(--gray-4);
+	--color-base-200: var(--gray-3);
+	--color-base-300: var(--gray-2);
+	--color-base-content: var(--gray-12);
+	/* Primary uses blue scale */
+	--color-primary: var(--blue-9);
+	--color-primary-content: #ffffff;
+	/* Secondary uses slate scale */
+	--color-secondary: var(--slate-9);
+	--color-secondary-content: #ffffff;
+	/* Accent uses orange scale */
+	--color-accent: var(--orange-9);
+	--color-accent-content: #ffffff;
+	/* Neutral */
+	--color-neutral: var(--gray-9);
+	--color-neutral-content: var(--gray-12);
+	/* Status */
+	--color-info: var(--cyan-9);
+	--color-info-content: #ffffff;
+	--color-success: var(--green-9);
+	--color-success-content: #ffffff;
+	--color-warning: var(--yellow-9);
+	--color-warning-content: #000000;
+	--color-error: var(--red-9);
+	--color-error-content: #ffffff;
+	--radius-selector: 0.5rem;
+	--radius-field: 0.25rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+
+	/* Custom semantic tokens for components */
+	--color-border: var(--gray-4);
+	--color-card: var(--gray-3);
+	--color-sidebar: var(--gray-3);
+	--color-sidebar-border: var(--gray-4);
+}
 
 @plugin "daisyui/theme" {
 	name: "dark";
@@ -217,6 +385,55 @@ body {
 	--color-card: var(--gray-3);
 	--color-sidebar: var(--gray-3);
 	--color-sidebar-border: var(--gray-4);
+}
+
+/* CSS-based light theme switching */
+/* Light theme - matches Radix Colors :root, .light, .light-theme selectors */
+:root:not(.dark):not(.dark-theme),
+.light,
+.light-theme,
+[data-theme="light"] {
+	color-scheme: light;
+	/* Radix Colors (light) - these will be overridden by the actual Radix CSS imports */
+	--color-base-100: #fcfcfc; /* gray-1 from light theme */
+	--color-base-200: #f9f9f9; /* gray-2 from light theme */
+	--color-base-300: #f0f0f0; /* gray-3 from light theme */
+	--color-base-content: #202020; /* gray-12 from light theme */
+	/* Primary uses blue scale */
+	--color-primary: #0090ff; /* blue-9 from light theme */
+	--color-primary-content: #ffffff;
+	/* Secondary uses slate scale */
+	--color-secondary: #8b8d98; /* slate-9 from light theme */
+	--color-secondary-content: #ffffff;
+	/* Accent uses orange scale */
+	--color-accent: #f76b15; /* orange-9 from light theme */
+	--color-accent-content: #ffffff;
+	/* Neutral */
+	--color-neutral: #8d8d8d; /* gray-9 from light theme */
+	--color-neutral-content: #ffffff;
+	/* Status */
+	--color-info: #00a2c7; /* cyan-9 from light theme */
+	--color-info-content: #ffffff;
+	--color-success: #30a46c; /* green-9 from light theme */
+	--color-success-content: #ffffff;
+	--color-warning: #d4a000; /* yellow-9 from light theme */
+	--color-warning-content: #000000;
+	--color-error: #aa2429; /* red-9 from light theme */
+	--color-error-content: #ffffff;
+	--radius-selector: 0.5rem;
+	--radius-field: 0.25rem;
+	--radius-box: 0.5rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+
+	/* Custom semantic tokens for components */
+	--color-border: #e8e8e8; /* gray-4 from light theme */
+	--color-card: #fcfcfc; /* gray-1 from light theme */
+	--color-sidebar: #f9f9f9; /* gray-2 from light theme */
+	--color-sidebar-border: #e8e8e8; /* gray-4 from light theme */
 }
 
 @plugin "daisyui/theme" {

@@ -9,7 +9,7 @@ import {
 	Calendar,
 	Edit3,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { mockTasks, type Task } from "../../data/mockTasks";
 
 export default function WidgetTask() {
@@ -17,6 +17,10 @@ export default function WidgetTask() {
 
 	const [isAddingNew, setIsAddingNew] = useState(false);
 	const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+
+	// Refs for click-outside detection
+	const addTaskRef = useRef<HTMLDivElement>(null);
+	const editTaskRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 	const [newTask, setNewTask] = useState({
 		title: "",
 		description: "",
@@ -136,6 +140,40 @@ export default function WidgetTask() {
 		});
 	};
 
+	// Click outside handler
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			const target = event.target as Node;
+
+			// Check if clicking outside add task form
+			if (
+				isAddingNew &&
+				addTaskRef.current &&
+				!addTaskRef.current.contains(target)
+			) {
+				cancelAddingNew();
+			}
+
+			// Check if clicking outside edit task form
+			if (
+				editingTaskId !== null &&
+				editTaskRefs.current[editingTaskId] &&
+				!editTaskRefs.current[editingTaskId]?.contains(target)
+			) {
+				cancelEditTask();
+			}
+		};
+
+		// Only add listener when we're in adding or editing mode
+		if (isAddingNew || editingTaskId !== null) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [isAddingNew, editingTaskId]);
+
 	return (
 		<div className="w-full h-full min-w-lg max-w-xl  group flex flex-col overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
@@ -155,7 +193,10 @@ export default function WidgetTask() {
 
 			{/* New task form - Todoist style */}
 			{isAddingNew && (
-				<div className="w-full bg-card rounded-lg shadow-sm border border-border mb-4">
+				<div
+					ref={addTaskRef}
+					className="w-full bg-card rounded-lg shadow-sm border border-border mb-4"
+				>
 					{/* Top section - Task inputs */}
 					<div className="p-4">
 						<div className="flex flex-col gap-3">
@@ -259,7 +300,14 @@ export default function WidgetTask() {
 						<div key={task.id}>
 							{editingTaskId === task.id ? (
 								// Edit task form
-								<div className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4">
+								<div
+									ref={(el) => {
+										if (editingTaskId === task.id) {
+											editTaskRefs.current[task.id] = el;
+										}
+									}}
+									className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4"
+								>
 									{/* Top section - Task inputs */}
 									<div className="p-4">
 										<div className="flex flex-col gap-3">

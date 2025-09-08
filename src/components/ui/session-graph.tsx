@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
 	LineChart,
 	Line,
@@ -18,6 +18,8 @@ import {
 	AreaChart,
 	Area,
 } from "recharts";
+import { mockSessions } from "../../data/mockSessions";
+import { radixColorScales } from "../../utils/radixColorMapping";
 
 // Declare custom elements for TypeScript
 declare global {
@@ -35,6 +37,12 @@ declare global {
 	}
 }
 
+const colors = {
+	focus: radixColorScales.blue.blue9,
+	text: radixColorScales.slate.slate12,
+	grid: radixColorScales.slate.slate6,
+};
+
 export default function SessionGraph() {
 	const [timeRange, setTimeRange] = useState<"week" | "month">("week");
 
@@ -50,24 +58,71 @@ export default function SessionGraph() {
 		};
 	}, []);
 
-	// Sample data for the last 7 days
-	const weeklyData = [
-		{ day: "Mon", duration: 150, focus: 8, quality: 9, sessions: 2 },
-		{ day: "Tue", duration: 105, focus: 7, quality: 8, sessions: 1 },
-		{ day: "Wed", duration: 195, focus: 9, quality: 10, sessions: 1 },
-		{ day: "Thu", duration: 80, focus: 6, quality: 7, sessions: 1 },
-		{ day: "Fri", duration: 165, focus: 8, quality: 8, sessions: 1 },
-		{ day: "Sat", duration: 90, focus: 5, quality: 6, sessions: 1 },
-		{ day: "Sun", duration: 120, focus: 7, quality: 8, sessions: 1 },
-	];
+	// Generate real data from mockSessions
+	const weeklyData = useMemo(() => {
+		const days = [];
+		const today = new Date();
 
-	// Sample data for the last 4 weeks
-	const monthlyData = [
-		{ week: "Week 1", duration: 450, focus: 7.5, quality: 8.2, sessions: 6 },
-		{ week: "Week 2", duration: 380, focus: 8.0, quality: 8.8, sessions: 5 },
-		{ week: "Week 3", duration: 520, focus: 7.8, quality: 8.5, sessions: 7 },
-		{ week: "Week 4", duration: 410, focus: 7.2, quality: 7.8, sessions: 5 },
-	];
+		for (let i = 6; i >= 0; i--) {
+			const date = new Date(today);
+			date.setDate(date.getDate() - i);
+			days.push(date);
+		}
+
+		return days.map((day) => {
+			const dayStart = new Date(day);
+			dayStart.setHours(0, 0, 0, 0);
+			const dayEnd = new Date(day);
+			dayEnd.setHours(23, 59, 59, 999);
+
+			const daySessions = mockSessions.filter(
+				(session) =>
+					session.startTime >= dayStart && session.startTime <= dayEnd
+			);
+
+			const totalTime = daySessions.reduce(
+				(acc, session) => acc + session.elapsedTime,
+				0
+			);
+
+			return {
+				day: day.toLocaleDateString("en-US", { weekday: "short" }),
+				focusTime: totalTime / 3600, // Convert to hours
+			};
+		});
+	}, []);
+
+	const monthlyData = useMemo(() => {
+		const weeks = [];
+		const today = new Date();
+
+		for (let i = 3; i >= 0; i--) {
+			const weekStart = new Date(today);
+			weekStart.setDate(weekStart.getDate() - (i * 7 + 6));
+			weeks.push(weekStart);
+		}
+
+		return weeks.map((weekStart, index) => {
+			const weekEnd = new Date(weekStart);
+			weekEnd.setDate(weekEnd.getDate() + 6);
+			weekEnd.setHours(23, 59, 59, 999);
+
+			const weekSessions = mockSessions.filter(
+				(session) =>
+					session.startTime >= weekStart && session.startTime <= weekEnd
+			);
+
+			const totalTime = weekSessions.reduce(
+				(acc, session) => acc + session.elapsedTime,
+				0
+			);
+
+			return {
+				week: `Week ${index + 1}`,
+				focusTime: totalTime / 3600, // Convert to hours
+			};
+		});
+	}, []);
 
 	// Focus level distribution data
 	const focusDistribution = [
@@ -147,67 +202,72 @@ export default function SessionGraph() {
 
 			{/* Main Charts Row */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				{/* Duration & Focus Trend */}
+				{/* Focus Time Trend */}
 				<div className="card bg-base-100 p-4">
-					<h4 className="text-md font-medium mb-4">Duration & Focus Trend</h4>
+					<h4 className="text-md font-medium mb-4">Focus Time Trend</h4>
 					<ResponsiveContainer width="100%" height={250}>
 						<LineChart data={timeRange === "week" ? weeklyData : monthlyData}>
-							<CartesianGrid strokeDasharray="3 3" />
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke={colors.grid}
+								opacity={0.3}
+							/>
 							<XAxis
 								dataKey={timeRange === "week" ? "day" : "week"}
 								className="text-xs"
+								stroke={colors.text}
 							/>
-							<YAxis className="text-xs" />
-							<Tooltip />
-							<Legend />
-							<Line
-								type="monotone"
-								dataKey="duration"
-								stroke="#3b82f6"
-								strokeWidth={2}
-								name="Duration (min)"
+							<YAxis className="text-xs" stroke={colors.text} />
+							<Tooltip
+								formatter={(value: any) => [
+									`${value.toFixed(1)}h`,
+									"Focus Time",
+								]}
+								labelFormatter={(label) => `${label}`}
 							/>
 							<Line
-								type="monotone"
-								dataKey="focus"
-								stroke="#ef4444"
-								strokeWidth={2}
-								name="Focus Level"
+								type="linear"
+								dataKey="focusTime"
+								stroke={colors.focus}
+								strokeWidth={3}
+								strokeDasharray="5 5"
+								dot={{ fill: colors.focus, strokeWidth: 2, r: 4 }}
+								activeDot={{ r: 6, stroke: colors.focus, strokeWidth: 2 }}
 							/>
 						</LineChart>
 					</ResponsiveContainer>
 				</div>
 
-				{/* Quality & Sessions */}
+				{/* Focus Time Distribution */}
 				<div className="card bg-base-100 p-4">
-					<h4 className="text-md font-medium mb-4">Quality & Sessions</h4>
+					<h4 className="text-md font-medium mb-4">Focus Time Distribution</h4>
 					<ResponsiveContainer width="100%" height={250}>
 						<AreaChart data={timeRange === "week" ? weeklyData : monthlyData}>
-							<CartesianGrid strokeDasharray="3 3" />
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke={colors.grid}
+								opacity={0.3}
+							/>
 							<XAxis
 								dataKey={timeRange === "week" ? "day" : "week"}
 								className="text-xs"
+								stroke={colors.text}
 							/>
-							<YAxis className="text-xs" />
-							<Tooltip />
-							<Legend />
-							<Area
-								type="monotone"
-								dataKey="quality"
-								stackId="1"
-								stroke="#10b981"
-								fill="#10b981"
-								fillOpacity={0.6}
-								name="Quality"
+							<YAxis className="text-xs" stroke={colors.text} />
+							<Tooltip
+								formatter={(value: any) => [
+									`${value.toFixed(1)}h`,
+									"Focus Time",
+								]}
+								labelFormatter={(label) => `${label}`}
 							/>
 							<Area
-								type="monotone"
-								dataKey="sessions"
-								stackId="2"
-								stroke="#8b5cf6"
-								fill="#8b5cf6"
-								fillOpacity={0.6}
-								name="Sessions"
+								type="linear"
+								dataKey="focusTime"
+								stroke={colors.focus}
+								strokeDasharray="5 5"
+								fill={colors.focus}
+								fillOpacity={0.3}
 							/>
 						</AreaChart>
 					</ResponsiveContainer>
@@ -267,7 +327,10 @@ export default function SessionGraph() {
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
 							>
-								<path fill="currentColor" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+								<path
+									fill="currentColor"
+									d="M15.75 19.5 8.25 12l7.5-7.5"
+								></path>
 							</svg>
 							<span className="text-lg font-medium">December 2024</span>
 							<svg
