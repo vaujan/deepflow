@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { Clock, Target, TrendingUp, Award } from "lucide-react";
 import { mockSessions } from "../../data/mockSessions";
 import { markCurrentScopeAsDynamic } from "next/dist/server/app-render/dynamic-rendering";
-import HighlightedMultipleBar from "./highlighted-multiple-bar";
+import FocusTimeLineChart from "./highlighted-multiple-bar";
 
 interface StatCardProps {
 	title: string;
@@ -110,16 +110,8 @@ export default function StatsOverview() {
 					<div className="flex flex-col w-full gap-4">
 						{/* Info header */}
 						<div className="grid grid-cols-2 gap-4">
-							<div className="flex p-4 border-r border-border flex-col gap-1">
-								<p className="text-sm text-medium text-base-content/60">
-									Total Sessions
-								</p>
-								<p className="text-2xl font-medium text-base-content font-mono">
-									{stats.totalSessions}
-								</p>
-								<p className="text-xs text-base-content/50">Last 30 days</p>
-							</div>
-							<div className="flex flex-col p-4 gap-1">
+							{/* Card info */}
+							<div className="flex flex-col border-r border-border p-4 gap-1">
 								<p className="text-sm text-medium text-base-content/60">
 									Total Focus Time
 								</p>
@@ -128,9 +120,19 @@ export default function StatsOverview() {
 								</p>
 								<p className="text-xs text-base-content/50">Deep work hours</p>
 							</div>
+
+							<div className="flex p-4  flex-col gap-1">
+								<p className="text-sm text-medium text-base-content/60">
+									Total Sessions
+								</p>
+								<p className="text-2xl font-medium text-base-content font-mono">
+									{stats.totalSessions}
+								</p>
+								<p className="text-xs text-base-content/50">Last 30 days</p>
+							</div>
 						</div>
-						<div className="w-full min-h-48 bg-gray-4/50 pt-4 rounded-box">
-							<HighlightedMultipleBar days={14} />
+						<div className="w-full min-h-48">
+							<FocusTimeLineChart days={14} />
 						</div>
 					</div>
 				</div>
