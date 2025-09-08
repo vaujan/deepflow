@@ -68,13 +68,13 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 
 									{/* Icon - only show if there are daily streaks */}
 									{streaks.currentStreakDays > 0 && (
-										<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
-											<Flame className="size-4 text-orange-10 animate-pulse" />
+										<div className="bg-accent/20 size-8 flex justify-center items-center rounded-sm">
+											<Flame className="size-4 text-accent animate-pulse" />
 										</div>
 									)}
 								</div>
 
-								<div className="flex gap-4 items-center border-r-1 border-border w-full p-4 h-fit">
+								<div className="flex gap-4 items-center w-full p-4 h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
 											Weekly Streak
@@ -91,15 +91,15 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 
 									{/* Icon - only show if there are weekly streaks */}
 									{streaks.currentStreakWeeks > 0 && (
-										<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
-											<Flame className="size-4 text-orange-10 animate-pulse" />
+										<div className="bg-accent/20 size-8 flex justify-center items-center rounded-sm">
+											<Flame className="size-4 text-accent animate-pulse" />
 										</div>
 									)}
 								</div>
 							</div>
 
 							{/* Weekly Activity Grid */}
-							<div className="bg-gray-4/50 relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
+							<div className="bg-base-100 border border-border relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
 								<span className="text-xs invisible md:visible absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
 									Week{" "}
 									{Math.ceil(
@@ -121,13 +121,14 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 										>
 											<div
 												className={`size-7 rounded-full grid place-items-center border relative ${
-													isActive ? "border-transparent" : "border-border"
+													isActive
+														? "border-transparent bg-orange-10"
+														: "border-border"
 												} ${
-													isToday ? "ring-2 ring-orange-500 ring-offset-1" : ""
-												} ${isFuture ? "opacity-50" : ""}`}
-												style={{
-													backgroundColor: isActive ? accent : "transparent",
-												}}
+													isToday ? "ring-2 ring-orange-12 ring-offset-1" : ""
+												} ${isFuture ? "opacity-50" : ""} 
+
+												`}
 											>
 												{isActive ? (
 													<Check className="size-4 text-white" />
