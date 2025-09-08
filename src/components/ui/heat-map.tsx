@@ -211,12 +211,24 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 								)}
 
 								{/* Tooltip */}
-								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-base-100 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-									<div className="font-medium">
+								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+									<div className="font-medium text-base-content/80">
 										{day.date.toLocaleDateString()}
 									</div>
-									<div>{day.sessions} sessions</div>
-									<div>{day.totalTime}min total</div>
+									<div className="mt-1 flex items-center gap-2">
+										<span className="inline-block size-2 rounded-sm bg-primary" />
+										<span className="text-base-content/70">Sessions:</span>
+										<span className="font-mono text-base-content">
+											{day.sessions}
+										</span>
+									</div>
+									<div className="mt-1 flex items-center gap-2">
+										<span className="inline-block size-2 rounded-sm bg-primary/60" />
+										<span className="text-base-content/70">Total Time:</span>
+										<span className="font-mono text-base-content">
+											{day.totalTime}m
+										</span>
+									</div>
 								</div>
 							</div>
 						);
@@ -225,7 +237,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			</div>
 
 			{/* Yearly GitHub-style Heat Map */}
-			<div className="overflow-x-auto lg:flex lg:justify-center border-1 p-2 border-border rounded-box lg:p-0 lg:border-0 lg:overflow-hidden">
+			<div className="overflow-x-auto py-8 overflow-y-hidden lg:py-0 lg:overflow-visible lg:flex lg:justify-center border-1 p-2 border-border rounded-box lg:p-0 lg:border-0">
 				<YearlyHeatMap currentMonth={currentMonth} />
 			</div>
 
@@ -382,12 +394,26 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 										} sessions, ${day.totalTime}min`}
 									>
 										{/* Tooltip */}
-										<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-base-100 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-											<div className="font-medium">
+										<div className="absolute top-1/2 right-full transform -translate-y-1/2 mr-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+											<div className="font-medium text-base-content/80">
 												{day.date.toLocaleDateString()}
 											</div>
-											<div>{day.sessions} sessions</div>
-											<div>{day.totalTime}min total</div>
+											<div className="mt-1 flex items-center gap-2">
+												<span className="inline-block size-2 rounded-sm bg-primary" />
+												<span className="text-base-content/70">Sessions:</span>
+												<span className="font-mono text-base-content">
+													{day.sessions}
+												</span>
+											</div>
+											<div className="mt-1 flex items-center gap-2">
+												<span className="inline-block size-2 rounded-sm bg-primary/60" />
+												<span className="text-base-content/70">
+													Total Time:
+												</span>
+												<span className="font-mono text-base-content">
+													{day.totalTime}m
+												</span>
+											</div>
 										</div>
 									</div>
 								);

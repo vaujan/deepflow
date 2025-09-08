@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
-	LineChart,
-	Line,
+	AreaChart,
+	Area,
 	XAxis,
 	YAxis,
 	Tooltip,
@@ -13,6 +13,7 @@ import {
 import type { TooltipProps } from "recharts";
 import { mockSessions } from "../../data/mockSessions";
 import { radixColorScales } from "../../utils/radixColorMapping";
+import { Loader2 } from "lucide-react";
 
 interface FocusTimeLineChartProps {
 	className?: string;
@@ -28,6 +29,23 @@ const colors = {
 	focus: radixColorScales.blue.blue9,
 	text: radixColorScales.slate.slate9,
 	grid: radixColorScales.slate.slate11,
+};
+
+// Loading skeleton component
+const ChartLoadingSkeleton: React.FC = () => {
+	return (
+		<div className="relative w-full h-full">
+			{/* Loading indicator */}
+			<div className="absolute inset-0 flex items-center justify-center rounded-box border border-border bg-gray-4/50 animate-pulse">
+				<div className="flex flex-col items-center gap-3">
+					<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					<p className="text-sm text-base-content/60 font-medium">
+						Loading chart data...
+					</p>
+				</div>
+			</div>
+		</div>
+	);
 };
 
 const buildDailyData = (days: number): ChartPoint[] => {
@@ -85,23 +103,59 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 	className = "",
 	days = 14,
 }) => {
+	const [isLoading, setIsLoading] = useState(true);
 	const data = useMemo(() => buildDailyData(days), [days]);
+
+	// Simulate loading time for better UX demonstration
+	// In production, this would be replaced with actual data fetching:
+	// useEffect(() => {
+	//   setIsLoading(true);
+	//   fetchChartData(days).then(() => {
+	//     setIsLoading(false);
+	//   }).catch(() => {
+	//     setIsLoading(false);
+	//   });
+	// }, [days]);
+	useEffect(() => {
+		// Simulate data processing time based on the amount of data
+		const processingTime = Math.min(800 + days * 50, 2000); // 0.8-2 seconds based on data size
+
+		const timer = setTimeout(() => {
+			setIsLoading(false);
+		}, processingTime);
+
+		return () => clearTimeout(timer);
+	}, [days]);
+
+	if (isLoading) {
+		return (
+			<div className={`w-full h-full ${className}`}>
+				<ChartLoadingSkeleton />
+			</div>
+		);
+	}
 
 	return (
 		<div className={`w-full h-full ${className}`}>
 			<ResponsiveContainer
 				width="100%"
 				height="100%"
-				className="bg-gray-4/50 rounded-box border border-border"
+				className="bg-gray-4/50 rounded-box border border-border animate-in fade-in duration-500"
 			>
-				<LineChart
+				<AreaChart
 					data={data}
 					margin={{ top: 24, right: 12, left: 0, bottom: 8 }}
 				>
+					<defs>
+						<linearGradient id="focusGradient" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stopColor={colors.focus} stopOpacity={0.4} />
+							<stop offset="100%" stopColor={colors.focus} stopOpacity={0.1} />
+						</linearGradient>
+					</defs>
 					<CartesianGrid
 						strokeWidth={0.5}
 						vertical={false}
-						opacity={0.5}
+						opacity={0.2}
 						className="stroke-gray-8"
 					/>
 					<XAxis
@@ -134,17 +188,18 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 						tickFormatter={(value) => `${value}m`} // Format as minutes
 					/>
 					<Tooltip content={<CustomTooltip />} />
-					<Line
+					<Area
 						type="linear"
 						dataKey="minutes"
 						stroke={colors.focus}
-						strokeWidth={1}
-						strokeDasharray="5 5"
-						dot={{ fill: colors.focus, strokeWidth: 1, r: 2 }}
+						strokeWidth={0.8}
+						strokeDasharray="3 3"
+						fillOpacity={0.4}
+						fill="url(#focusGradient)"
 						activeDot={{ r: 3, stroke: colors.focus, strokeWidth: 2 }}
 						className="transition-all ease-out"
 					/>
-				</LineChart>
+				</AreaChart>
 			</ResponsiveContainer>
 		</div>
 	);

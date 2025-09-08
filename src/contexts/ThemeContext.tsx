@@ -19,6 +19,8 @@ interface ThemeContextType {
 	// Depth toggle
 	depthEnabled: boolean;
 	setDepthEnabled: (enabled: boolean) => void;
+	// Loading state to prevent FOUC
+	isThemeLoaded: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -63,25 +65,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 	const [colorPreferences, setColorPreferencesState] =
 		useState<ColorPreferences>(DEFAULT_COLOR_PREFERENCES);
 	const [depthEnabled, setDepthEnabledState] = useState<boolean>(true);
+	const [isThemeLoaded, setIsThemeLoaded] = useState<boolean>(false);
 
 	useEffect(() => {
-		// Check if theme is stored in localStorage
+		// Set initial theme immediately to prevent FOUC
 		const storedTheme = localStorage.getItem("theme") as Theme;
-		if (storedTheme) {
-			setTheme(storedTheme);
-			document.documentElement.setAttribute("data-theme", storedTheme);
-			if (storedTheme === "dark") {
-				document.documentElement.classList.add("dark");
-			} else {
-				document.documentElement.classList.remove("dark");
-			}
+		const initialTheme = storedTheme || "dark";
+
+		// Apply theme immediately to prevent FOUC
+		document.documentElement.setAttribute("data-theme", initialTheme);
+		if (initialTheme === "dark") {
+			document.documentElement.classList.add("dark", "dark-theme");
+			document.documentElement.classList.remove("light", "light-theme");
 		} else {
-			// Default to dark theme
-			const defaultTheme: Theme = "dark";
-			setTheme(defaultTheme);
-			document.documentElement.setAttribute("data-theme", defaultTheme);
-			document.documentElement.classList.add("dark");
+			document.documentElement.classList.add("light", "light-theme");
+			document.documentElement.classList.remove("dark", "dark-theme");
 		}
+		setTheme(initialTheme);
 
 		// Load color preferences
 		try {
@@ -111,6 +111,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 		} catch (_err) {
 			applyDepthVar(true);
 		}
+
+		// Mark theme as loaded after a short delay to ensure CSS is applied
+		const timer = setTimeout(() => {
+			setIsThemeLoaded(true);
+		}, 100);
+
+		return () => clearTimeout(timer);
 	}, []);
 
 	// Theme variables are provided by CSS (DaisyUI themes in globals.css)
@@ -120,9 +127,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 		setTheme(newTheme);
 		document.documentElement.setAttribute("data-theme", newTheme);
 		if (newTheme === "dark") {
-			document.documentElement.classList.add("dark");
+			document.documentElement.classList.add("dark", "dark-theme");
+			document.documentElement.classList.remove("light", "light-theme");
 		} else {
-			document.documentElement.classList.remove("dark");
+			document.documentElement.classList.add("light", "light-theme");
+			document.documentElement.classList.remove("dark", "dark-theme");
 		}
 		localStorage.setItem("theme", newTheme);
 	};
@@ -184,8 +193,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			setColorPreferences,
 			depthEnabled,
 			setDepthEnabled,
+			isThemeLoaded,
 		}),
-		[theme, colorPreferences, depthEnabled]
+		[theme, colorPreferences, depthEnabled, isThemeLoaded]
 	);
 
 	return (

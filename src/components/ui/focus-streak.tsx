@@ -66,10 +66,12 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 										</p>
 									</div>
 
-									{/* Icon */}
-									<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
-										<Flame className="size-4 text-orange-10 animate-pulse" />
-									</div>
+									{/* Icon - only show if there are daily streaks */}
+									{streaks.currentStreakDays > 0 && (
+										<div className="bg-orange-4 size-8 flex justify-center items-center rounded-sm">
+											<Flame className="size-4 text-orange-10 animate-pulse" />
+										</div>
+									)}
 								</div>
 
 								<div className="flex gap-4 items-center border-r-1 border-border w-full p-4 h-fit">
@@ -97,7 +99,7 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 							</div>
 
 							{/* Weekly Activity Grid */}
-							<div className="dark:bg-gray-4/50 relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
+							<div className="bg-gray-4/50 relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
 								<span className="text-xs invisible md:visible absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
 									Week{" "}
 									{Math.ceil(

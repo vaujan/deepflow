@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import ContextMenuEditor from "./context-menu-editor";
 import { mockNotes, type Note } from "../../data/mockNotes";
 
@@ -12,6 +12,10 @@ export default function WidgetNotes() {
 	const [newNoteTitle, setNewNoteTitle] = useState("");
 	const [newNoteContent, setNewNoteContent] = useState("<p></p>");
 	const [originalNote, setOriginalNote] = useState<Note | null>(null);
+
+	// Refs for click-outside detection
+	const addNoteRef = useRef<HTMLDivElement>(null);
+	const editNoteRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
 	// Debounced update for smoother experience
 	const debouncedUpdate = useCallback(
@@ -127,6 +131,40 @@ export default function WidgetNotes() {
 		};
 	}, [isAddingNew, editingNote]);
 
+	// Click outside handler
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			const target = event.target as Node;
+
+			// Check if clicking outside add note form
+			if (
+				isAddingNew &&
+				addNoteRef.current &&
+				!addNoteRef.current.contains(target)
+			) {
+				cancelAddingNew();
+			}
+
+			// Check if clicking outside edit note form
+			if (
+				editingNote !== null &&
+				editNoteRefs.current[editingNote] &&
+				!editNoteRefs.current[editingNote]?.contains(target)
+			) {
+				cancelEditing();
+			}
+		};
+
+		// Only add listener when we're in adding or editing mode
+		if (isAddingNew || editingNote !== null) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [isAddingNew, editingNote]);
+
 	const renderContent = (content: string) => {
 		return (
 			<ContextMenuEditor
@@ -166,7 +204,10 @@ export default function WidgetNotes() {
 			</div>
 			{/* New note form */}
 			{isAddingNew && (
-				<div className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs">
+				<div
+					ref={addNoteRef}
+					className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs"
+				>
 					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
@@ -252,6 +293,11 @@ export default function WidgetNotes() {
 					notes.map((note) => (
 						<div
 							key={note.id}
+							ref={(el) => {
+								if (editingNote === note.id) {
+									editNoteRefs.current[note.id] = el;
+								}
+							}}
 							className={`w-full border-border border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
 								editingNote === note.id
 									? "bg-card"
