@@ -17,6 +17,7 @@ interface HeatMapProps {
 
 const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const [currentMonth, setCurrentMonth] = useState(new Date());
+	const currentYear = new Date().getFullYear();
 
 	// Generate heat map data for the current month
 	const heatMapData = useMemo(() => {
@@ -96,15 +97,17 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 
 	// Navigation functions
 	const goToPreviousMonth = () => {
-		setCurrentMonth(
-			(prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
-		);
+		setCurrentMonth((prev) => {
+			const candidate = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
+			return candidate.getFullYear() === currentYear ? candidate : prev;
+		});
 	};
 
 	const goToNextMonth = () => {
-		setCurrentMonth(
-			(prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
-		);
+		setCurrentMonth((prev) => {
+			const candidate = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+			return candidate.getFullYear() === currentYear ? candidate : prev;
+		});
 	};
 
 	const goToToday = () => {
@@ -115,6 +118,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const isCurrentMonthView =
 		currentMonth.getMonth() === new Date().getMonth() &&
 		currentMonth.getFullYear() === new Date().getFullYear();
+
+	// Clamp navigation within the current year
+	const isAtMinMonth =
+		currentMonth.getFullYear() === currentYear && currentMonth.getMonth() === 0;
+	const isAtMaxMonth =
+		currentMonth.getFullYear() === currentYear &&
+		currentMonth.getMonth() === 11;
 
 	// Day labels
 	const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -146,14 +156,16 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 				<div className="flex gap-2">
 					<button
 						onClick={goToPreviousMonth}
-						className="btn btn-circle btn-sm"
+						disabled={isAtMinMonth}
+						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
 						aria-label="Previous month"
 					>
 						<ChevronLeft className="size-4" />
 					</button>
 					<button
 						onClick={goToNextMonth}
-						className="btn btn-circle btn-sm"
+						disabled={isAtMaxMonth}
+						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
 						aria-label="Next month"
 					>
 						<ChevronRight className="size-4" />
@@ -211,9 +223,12 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 								)}
 
 								{/* Tooltip */}
-								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 ">
+								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
 									<div className="font-medium text-base-content/80">
 										{day.date.toLocaleDateString()}
+									</div>
+									<div className="mt-0.5 text-[11px] text-base-content/60">
+										{day.date.toLocaleDateString("en-US", { weekday: "long" })}
 									</div>
 									<div className="mt-1 flex items-center gap-2">
 										<span className="inline-block size-2 rounded-sm bg-primary" />
@@ -389,12 +404,12 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 	}, [weeks]);
 
 	return (
-		<div className="space-y-3">
+		<div className="space-y-3 w-full">
 			{/* Heat map grid - responsive */}
-			<div className="flex gap-1">
-				<div className="flex p-1 gap-1 min-w-lg">
+			<div className="flex w-full gap-1">
+				<div className="flex w-full gap-1">
 					{weeks.map((week, weekIndex) => (
-						<div key={weekIndex} className="flex flex-col gap-1">
+						<div key={weekIndex} className="flex w-full flex-col gap-1">
 							{week.map((day, dayIndex) => {
 								const isCurrentYear =
 									day.date.getFullYear() === new Date().getFullYear();
@@ -407,11 +422,11 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 									<div
 										key={dayIndex}
 										className={`
-											w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer
+											w-2.5 h-2.5 rounded-xs transition-all duration-200 hover:scale-110 cursor-pointer
 											${getColorClass(day.value)}
 											${!isCurrentYear ? "opacity-0" : ""}
 											${isToday ? "ring-2 ring-primary ring-offset-1" : ""}
-											${isCurrentMonth ? "ring-1 ring-primary/50" : ""}
+											${isCurrentMonth ? "ring-[1.5px] ring-accent/50" : ""}
 											relative group
 										`}
 										title={`${day.date.toLocaleDateString()} - ${
@@ -422,6 +437,11 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 										<div className="absolute top-1/2 right-full transform -translate-y-1/2 mr-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
 											<div className="font-medium text-base-content/80">
 												{day.date.toLocaleDateString()}
+											</div>
+											<div className="mt-0.5 text-[11px] text-base-content/60">
+												{day.date.toLocaleDateString("en-US", {
+													weekday: "long",
+												})}
 											</div>
 											<div className="mt-1 flex items-center gap-2">
 												<span className="inline-block size-2 rounded-sm bg-primary" />
@@ -448,7 +468,7 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 				</div>
 			</div>
 			{/* Month labels with accumulated hours */}
-			<div className="flex text-xs text-base-content/60">
+			<div className="flex text-xs min-w-[730px] text-base-content/60">
 				{monthLabels.map((label, idx) => (
 					<div
 						key={idx}
