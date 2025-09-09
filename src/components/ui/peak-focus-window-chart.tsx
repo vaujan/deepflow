@@ -175,18 +175,33 @@ const PeakFocusWindowChart: React.FC<PeakFocusWindowChartProps> = ({
 											return (
 												<div
 													key={hourIdx}
-													className={`relative transition-all duration-200 ${
-														minutes > 0 ? "hover:brightness-110" : "opacity-40"
+													className={`relative transition-all duration-200 group ${
+														minutes > 0
+															? "hover:brightness-110 hover:ring-2 ring-primary"
+															: "opacity-40"
 													} ${
 														isHl
-															? "h-5 brightness-110 saturate-125 scale-y-110"
+															? "h-4 brightness-110 saturate-125 scale-y-110"
 															: "h-4"
 													}`}
 													style={{ backgroundColor: bg }}
-													title={`${weekdayLabels[rIdx]} ${formatHour(
-														hourIdx
-													)} • ${minutes}m`}
-												/>
+												>
+													{/* Tooltip */}
+													<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+														<div className="font-medium text-base-content/80">
+															{weekdayLabels[rIdx]} {formatHour(hourIdx)}
+														</div>
+														<div className="mt-1 flex items-center gap-2">
+															<span className="inline-block size-2 rounded-sm bg-primary" />
+															<span className="text-base-content/70">
+																Focus Time:
+															</span>
+															<span className="font-mono text-base-content">
+																{minutes}m
+															</span>
+														</div>
+													</div>
+												</div>
 											);
 										})}
 									</div>

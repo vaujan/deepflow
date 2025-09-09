@@ -110,7 +110,7 @@ export default function TagsOverview() {
 														{tag.name}
 													</span>
 													{index === 0 && (
-														<span className="badge badge-xs badge-soft badge-primary rounded-sm">
+														<span className="badge badge-xs badge-soft badge-accent rounded-sm">
 															Most Used
 														</span>
 													)}

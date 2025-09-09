@@ -120,7 +120,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 	return (
-		<div className={`space-y-4 w-full ${className}`}>
+		<div className={`space-y-4 mt-2  w-full ${className}`}>
 			{/* Header with month navigation */}
 			<div className="flex items-center justify-between">
 				<div className="flex gap-4 items-center">
