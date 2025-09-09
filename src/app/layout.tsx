@@ -27,31 +27,6 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={`${inter.variable} font-sans antialiased`}>
-				{/* Theme initialization script to prevent FOUC */}
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `
-							(function() {
-								try {
-									const theme = localStorage.getItem('theme') || 'dark';
-									document.documentElement.setAttribute('data-theme', theme);
-									if (theme === 'dark') {
-										document.documentElement.classList.add('dark', 'dark-theme');
-										document.documentElement.classList.remove('light', 'light-theme');
-									} else {
-										document.documentElement.classList.add('light', 'light-theme');
-										document.documentElement.classList.remove('dark', 'dark-theme');
-									}
-								} catch (e) {
-									// Fallback to dark theme
-									document.documentElement.setAttribute('data-theme', 'dark');
-									document.documentElement.classList.add('dark', 'dark-theme');
-									document.documentElement.classList.remove('light', 'light-theme');
-								}
-							})();
-						`,
-					}}
-				/>
 				<ThemeProvider>
 					<ThemeLoadingWrapper>
 						<FontProvider>
