@@ -8,6 +8,7 @@ import TagsOverview from "@/src/components/ui/tags-overview";
 // import FocusInsights from "@/src/components/ui/focus-insights";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
+import PeakFocusWindowChart from "@/src/components/ui/peak-focus-window-chart";
 
 export default function StatsPage() {
 	return (
@@ -33,8 +34,10 @@ export default function StatsPage() {
 							</div>
 
 							<div className="flex lg:flex-row h-full flex-col w-full gap-4">
+								<div className="w-full lg:max-w-md">
+									<TagsOverview />
+								</div>
 								<PeakFocusWindowChartLazy />
-								<TagsOverview />
 							</div>
 
 							{/* Session History */}
