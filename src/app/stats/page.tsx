@@ -16,7 +16,7 @@ export default function StatsPage() {
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
 			<Sidebar />
 			{/* Main Content */}
-			<main className="w-full relative flex flex-col gap-4 flex-1 items-start justify-start">
+			<main className="relative flex flex-col gap-4 flex-1 items-start justify-start">
 				<StatsHeader />
 				<div className="flex w-full h-full flex-col">
 					<div className="w-full h-full flex justify-center items-center overflow-x-auto horizontal-scroll-container">
@@ -28,7 +28,7 @@ export default function StatsPage() {
 							<div className="card flex-col lg:flex-row gap-4">
 								<HeatMap />
 
-								<div className="flex h-full  flex-col w-full gap-4">
+								<div className="flex h-full flex-col w-full gap-4">
 									<FocusStreak />
 									<StatsOverview />
 								</div>
