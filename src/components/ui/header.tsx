@@ -29,7 +29,7 @@ export default function Header() {
 							{/* List goes here */}
 							<li>
 								<button
-									className="btn btn-sm btn-square btn-ghost"
+									className="btn btn-sm btn-square btn-ghost opacity-30 hover:opacity-100"
 									onClick={toggleSidebar}
 									title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 								>
