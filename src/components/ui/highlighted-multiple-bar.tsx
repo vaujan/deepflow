@@ -36,7 +36,7 @@ const ChartLoadingSkeleton: React.FC = () => {
 	return (
 		<div className="relative w-full h-full">
 			{/* Loading indicator */}
-			<div className="absolute inset-0 flex items-center justify-center rounded-box border border-border bg-gray-4/50 animate-pulse">
+			<div className="absolute inset-0 flex items-center justify-center rounded-box border border-border bg-gray-4/50 animate-pulse pointer-events-none">
 				<div className="flex flex-col items-center gap-3">
 					<Loader2 className="h-8 w-8 animate-spin text-primary" />
 					<p className="text-sm text-base-content/60 font-medium">
@@ -103,29 +103,10 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 	className = "",
 	days = 14,
 }) => {
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const data = useMemo(() => buildDailyData(days), [days]);
 
-	// Simulate loading time for better UX demonstration
-	// In production, this would be replaced with actual data fetching:
-	// useEffect(() => {
-	//   setIsLoading(true);
-	//   fetchChartData(days).then(() => {
-	//     setIsLoading(false);
-	//   }).catch(() => {
-	//     setIsLoading(false);
-	//   });
-	// }, [days]);
-	useEffect(() => {
-		// Simulate data processing time based on the amount of data
-		const processingTime = Math.min(800 + days * 50, 2000); // 0.8-2 seconds based on data size
-
-		const timer = setTimeout(() => {
-			setIsLoading(false);
-		}, processingTime);
-
-		return () => clearTimeout(timer);
-	}, [days]);
+	// If fetching real data, control isLoading via requests; avoid artificial delays.
 
 	if (isLoading) {
 		return (
@@ -198,6 +179,7 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 						fill="url(#focusGradient)"
 						activeDot={{ r: 3, stroke: colors.focus, strokeWidth: 2 }}
 						className="transition-all ease-out"
+						isAnimationActive={false}
 					/>
 				</AreaChart>
 			</ResponsiveContainer>
