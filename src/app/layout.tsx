@@ -6,6 +6,7 @@ import { SidebarProvider } from "../contexts/SidebarContext";
 import { WidgetProvider } from "../contexts/WidgetContext";
 import { FontProvider } from "../contexts/FontContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeLoadingWrapper } from "../components/ui/theme-loading-wrapper";
 
 const inter = Inter({
@@ -58,6 +59,7 @@ export default function RootLayout({
 								<WidgetProvider>
 									{children}
 									<SpeedInsights />
+									<Analytics />
 								</WidgetProvider>
 							</SidebarProvider>
 						</FontProvider>
