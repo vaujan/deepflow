@@ -30,7 +30,7 @@ export default function StatsPage() {
 
 								<div className="flex h-full flex-col w-full gap-4">
 									<FocusStreak />
-									<StatsOverview />
+									{/* <StatsOverview /> */}
 								</div>
 							</div>
 
