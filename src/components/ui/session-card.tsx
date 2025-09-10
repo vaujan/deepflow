@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Clock, Timer, Check } from "lucide-react";
+import { Play, Clock, Timer, Check, Apple } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useSession, Session } from "../../hooks/useSession";
 import ActiveSession from "./active-session";
@@ -13,7 +13,9 @@ export default function SessionCard() {
 	const [tags, setTags] = useState("");
 	const [additionalNotes, setAdditionalNotes] = useState("");
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
-	const [activeTab, setActiveTab] = useState<"planned" | "open">("planned");
+	const [activeTab, setActiveTab] = useState<
+		"time-boxed" | "open" | "pomodoro"
+	>("time-boxed");
 	const [isHolding, setIsHolding] = useState(false);
 	const [holdProgress, setHoldProgress] = useState(0);
 	const [completedSession, setCompletedSession] = useState<Session | null>(
@@ -64,10 +66,6 @@ export default function SessionCard() {
 		setDuration(parseInt(e.target.value));
 	};
 
-	const handleFocusLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setFocusLevel(e.target.value);
-	};
-
 	const handleGoalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setGoal(e.target.value);
 	};
@@ -96,7 +94,7 @@ export default function SessionCard() {
 		);
 	};
 
-	const handleTabChange = (tab: "planned" | "open") => {
+	const handleTabChange = (tab: "time-boxed" | "open" | "pomodoro") => {
 		setActiveTab(tab);
 	};
 
@@ -131,13 +129,13 @@ export default function SessionCard() {
 	const handleStartSession = () => {
 		const sessionConfig = {
 			goal: goal.trim(),
-			duration: activeTab === "planned" ? duration : undefined,
+			duration: activeTab === "time-boxed" ? duration : undefined,
 			focusLevel: parseInt(focusLevel),
 			tags: tags
 				.trim()
 				.split(/\s+/)
 				.filter((tag) => tag.length > 0),
-			sessionType: activeTab as "planned" | "open",
+			sessionType: activeTab as "time-boxed" | "open" | "pomodoro",
 		};
 
 		startSession(sessionConfig);
@@ -244,7 +242,7 @@ export default function SessionCard() {
 	}
 
 	return (
-		<div className="card border border-border bg-card shadow-xs min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
+		<div className="card h-fit md:border border-border md:bg-card shadow-xs min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
 				<p className="text-base-content/50">
@@ -323,11 +321,11 @@ export default function SessionCard() {
 					<input
 						type="radio"
 						name="session_tabs"
-						checked={activeTab === "planned"}
-						onChange={() => handleTabChange("planned")}
+						checked={activeTab === "time-boxed"}
+						onChange={() => handleTabChange("time-boxed")}
 					/>
 					<Clock className="size-4 me-2" />
-					Planned Session
+					Time-boxed
 				</label>
 				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
 					{/* Planned Session Mode */}
@@ -367,7 +365,6 @@ export default function SessionCard() {
 						</p>
 					</div>
 				</div>
-
 				<label className="font-medium tab">
 					<input
 						type="radio"
@@ -376,8 +373,20 @@ export default function SessionCard() {
 						onChange={() => handleTabChange("open")}
 					/>
 					<Timer className="size-4 me-2" />
-					Open Session
+					Open
 				</label>
+
+				<label className="font-medium tab">
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "open"}
+						onChange={() => handleTabChange("open")}
+					/>
+					<Apple className="size-4 me-2" />
+					Pomodoro
+				</label>
+
 				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
@@ -465,7 +474,7 @@ export default function SessionCard() {
 							{isHolding && holdProgress >= 100
 								? "Session Starting..."
 								: `Hold to Start ${
-										activeTab === "planned" ? formatTime(duration) : "Open"
+										activeTab === "open" ? formatTime(duration) : "Open"
 								  } Session`}
 						</span>
 					</div>

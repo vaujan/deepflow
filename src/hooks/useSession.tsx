@@ -11,7 +11,7 @@ export interface Session {
 	status: "active" | "paused" | "completed" | "stopped";
 	elapsedTime: number;
 	endTime?: Date;
-	sessionType: "planned" | "open";
+	sessionType: "time-boxed" | "open" | "pomodoro";
 	deepWorkQuality?: number; // 1-10 rating for session quality
 	expectedEndTime?: Date; // Calculated expected end time for planned sessions
 	completionType?: "completed" | "premature" | "overtime"; // How the session ended
@@ -23,7 +23,7 @@ export interface SessionConfig {
 	focusLevel: number;
 	tags: string[];
 	notes?: string;
-	sessionType: "planned" | "open";
+	sessionType: "time-boxed" | "open" | "pomodoro";
 }
 
 export const useSession = () => {
