@@ -21,9 +21,13 @@ export default function Header() {
 	const { activeWidgets, toggleWidget } = useWidgets();
 
 	return (
-		<header className="w-full relative flex flex-col gap-4 flex-1 items-center justify-start">
-			<div className="flex w-full h-full flex-col">
-				<div className="max-w-8xl items-start h-full flex gap-6 w-full px-8 py-3">
+		<header className="w-full relative flex flex-col gap-4 items-center justify-start">
+			<div className="flex w-full h-fit flex-col">
+				<div className="max-w-8xl items-center h-fit flex gap-6 w-full px-8 py-3">
+					{/* active widgets count */}
+					{/* <div className="flex rounded-box justify-center items-center w-8 h-8 bg-blue-4 text-blue-8">
+						{activeWidgets.length}
+					</div> */}
 					<nav className="flex gap-2 items-center flex-1">
 						<ul className="mr-2 pr-2 border-r border-base-200">
 							{/* List goes here */}
