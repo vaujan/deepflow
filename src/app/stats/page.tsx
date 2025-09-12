@@ -9,6 +9,7 @@ import TagsOverview from "@/src/components/ui/tags-overview";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
 import PeakFocusWindowChart from "@/src/components/ui/peak-focus-window-chart";
+import TauriDemo from "@/src/components/ui/tauri-demo";
 
 export default function StatsPage() {
 	return (
@@ -32,14 +33,13 @@ export default function StatsPage() {
 									<LazyStatsOverview />
 								</div>
 							</div>
-
 							<div className="flex lg:flex-row h-full flex-col w-full gap-4">
 								<div className="w-full lg:max-w-md">
 									<TagsOverview />
 								</div>
 								<PeakFocusWindowChartLazy />
 							</div>
-
+							<TauriDemo />
 							{/* Session History */}
 							<div className="flex mt-4 gap-4 flex-col lg:flex-row">
 								<SessionHistoryLazy />
