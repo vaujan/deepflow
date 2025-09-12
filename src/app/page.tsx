@@ -6,7 +6,6 @@ import React from "react";
 
 import Header from "../components/ui/header";
 import { useWidgets } from "../contexts/WidgetContext";
-import WidgetKanban from "../components/ui/widget-kanban";
 import WidgetNotes from "../components/ui/widget-notes";
 import WidgetTask from "../components/ui/widget-task";
 
