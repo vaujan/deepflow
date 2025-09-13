@@ -9,8 +9,10 @@ export const transformSessionsToDataItems = (
 ): DataItem[] => {
 	return sessions.map((session) => {
 		// Convert session type from "planned" | "open" to "planned session" | "open session"
-		const sessionType: "planned session" | "open session" =
-			session.sessionType === "planned" ? "planned session" : "open session";
+		const sessionType: "time-boxed session" | "open session" =
+			session.sessionType === "time-boxed"
+				? "time-boxed session"
+				: "open session";
 
 		// Convert duration from seconds to minutes
 		const durationMinutes = Math.round(session.elapsedTime / 60);

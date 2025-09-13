@@ -33,7 +33,7 @@ export default function SessionCompletion({
 	const [hoverRating, setHoverRating] = useState<number>(0);
 	const [notes, setNotes] = useState<string>(session.notes || "");
 
-	const isPlannedSession = session.sessionType === "planned";
+	const isPlannedSession = session.sessionType === "time-boxed";
 
 	const formatTime = (seconds: number) => {
 		const hours = Math.floor(seconds / 3600);
@@ -49,13 +49,13 @@ export default function SessionCompletion({
 	};
 
 	const getSessionTypeLabel = () => {
-		return session.sessionType === "planned"
+		return session.sessionType === "time-boxed"
 			? "Time-boxed Session"
 			: "Flow Session";
 	};
 
 	const getCompletionMessage = () => {
-		if (session.sessionType === "planned") {
+		if (session.sessionType === "time-boxed") {
 			return "Great job! You completed your planned focus session.";
 		}
 		return "Excellent work! You finished your flow session.";
