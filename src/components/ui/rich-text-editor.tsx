@@ -389,8 +389,8 @@ export default function RichTextEditor({
 		},
 		extensions: [
 			StarterKit.configure({
-				codeBlock: true,
-				code: true,
+				codeBlock: false,
+				code: false,
 			}),
 			Placeholder.configure({
 				placeholder,

@@ -375,7 +375,7 @@ export default function ActiveSession({
 	};
 
 	const progressPercentage = getProgressPercentage();
-	const isPlannedSession = session.sessionType === "planned";
+	const isPlannedSession = session.sessionType === "time-boxed";
 
 	// Helper function to truncate extremely long goals for display
 	const truncateGoal = (goal: string, maxLength: number = 100) => {

@@ -54,8 +54,6 @@ const EnhancedTagFocusChart: React.FC<EnhancedTagFocusChartProps> = ({
 	// Enhanced color palette with better contrast
 	const slicePalette = [
 		radixColorScales.blue.blue9,
-		radixColorScales.purple.purple9,
-		radixColorScales.pink.pink9,
 		radixColorScales.cyan.cyan9,
 		radixColorScales.green.green9,
 		radixColorScales.orange.orange9,

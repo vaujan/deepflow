@@ -9,39 +9,37 @@ import TagsOverview from "@/src/components/ui/tags-overview";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
 import PeakFocusWindowChart from "@/src/components/ui/peak-focus-window-chart";
+import HeatMap from "@/src/components/ui/heat-map";
 
 export default function StatsPage() {
 	return (
-		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
+		<div className="flex flex-col min-h-screen bg-base-300 lg:flex-row">
 			<Sidebar />
 			{/* Main Content */}
-			<main className="relative flex flex-col gap-4 flex-1 items-start justify-start">
+			<main className="relative flex flex-col items-start justify-start flex-1 gap-4">
 				<StatsHeader />
-				<div className="flex w-full h-full flex-col">
-					<div className="w-full h-full flex justify-center items-center overflow-x-auto horizontal-scroll-container">
+				<div className="flex flex-col w-full h-full">
+					<div className="flex items-center justify-center w-full h-full overflow-x-auto horizontal-scroll-container">
 						<div
 							id="stats-content"
 							className="flex max-w-[1440px] flex-col gap-4 w-full h-full px-4 lg:px-8 py-4"
 						>
 							{/* Stats Overview Cards */}
-							<div className="card flex-col lg:flex-row gap-4">
-								<HeatMapLazy />
+							<div className="flex-col gap-4 card lg:flex-row">
+								{/* <HeatMapLazy /> */}
+								<HeatMap />
 
-								<div className="flex h-full flex-col w-full gap-4">
+								<div className="flex flex-col w-full h-full gap-4">
 									<FocusStreak />
-									<LazyStatsOverview />
+									<TagsOverview />
+									{/* <LazyStatsOverview /> */}
 								</div>
 							</div>
-
-							<div className="flex lg:flex-row h-full flex-col w-full gap-4">
-								<div className="w-full lg:max-w-md">
-									<TagsOverview />
-								</div>
+							<div className="flex flex-col w-full h-full gap-4 lg:flex-row">
 								<PeakFocusWindowChartLazy />
 							</div>
-
 							{/* Session History */}
-							<div className="flex mt-4 gap-4 flex-col lg:flex-row">
+							<div className="flex flex-col gap-4 mt-4 lg:flex-row">
 								<SessionHistoryLazy />
 							</div>
 						</div>

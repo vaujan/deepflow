@@ -13,12 +13,12 @@ export default function Page() {
 	const { activeWidgets } = useWidgets();
 
 	return (
-		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
+		<div className="flex flex-col min-h-screen bg-base-300 lg:flex-row">
 			<Sidebar />
 			{/* Container */}
-			<main className="w-full h-full relative overflow-hidden flex flex-col gap-4 flex-1 items-start justify-start">
+			<main className="relative flex flex-col items-start justify-start flex-1 w-full h-full gap-4 overflow-hidden">
 				<Header />
-				<div className="flex w-full h-full flex-col">
+				<div className="flex flex-col w-full h-full">
 					<div className="w-full h-full overflow-x-auto horizontal-scroll-container">
 						<div
 							className={`flex flex-col lg:flex-row ${
@@ -33,14 +33,14 @@ export default function Page() {
 								activeWidgets.includes("tasks") ||
 								activeWidgets.includes("kanban")) && (
 								<div
-									className={`flex flex-row rounded-box w-full border-border border md:bg-pink-500 lg:bg-cyan-500 p-4 md:w-fit md:p-0 md:border-0 overflow-x-auto gap-8 h-fit`}
+									className={`flex flex-row rounded-box w-full overflow-x-scroll border-border border p-4 lg:w-fit lg:p-0 lg:border-0 lg:overflow-x-visible gap-8 h-fit`}
 								>
 									{activeWidgets.includes("note") && <WidgetNotes />}
 									{activeWidgets.includes("tasks") && <WidgetTask />}
 									{/* {activeWidgets.includes("kanban") && <WidgetKanban />} */}
 								</div>
 							)}
-							{/* <div className="w-xl h-xl bg-red-500">hello world</div> */}
+							{/* <div className="bg-red-500 w-xl h-xl">hello world</div> */}
 						</div>
 					</div>
 				</div>

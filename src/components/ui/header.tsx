@@ -98,10 +98,10 @@ export default function Header() {
 					</nav>
 
 					{/* Theme + Font controls */}
-					<div className="flex items-center gap-1">
+					{/* <div className="flex items-center gap-1">
 						<ThemeCustomizer />
 						<FontSelector />
-					</div>
+					</div> */}
 				</div>
 			</div>
 		</header>
