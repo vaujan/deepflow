@@ -6,12 +6,14 @@ interface InViewportProps {
 	children: React.ReactNode;
 	rootMargin?: string;
 	onEnterOnce?: boolean;
+	fallback?: React.ReactNode;
 }
 
 export default function InViewport({
 	children,
 	rootMargin = "200px",
 	onEnterOnce = true,
+	fallback,
 }: InViewportProps) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
@@ -39,5 +41,5 @@ export default function InViewport({
 		};
 	}, [rootMargin, onEnterOnce]);
 
-	return <div ref={ref}>{isVisible ? children : null}</div>;
+	return <div ref={ref}>{isVisible ? children : fallback ?? null}</div>;
 }

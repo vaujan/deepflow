@@ -121,7 +121,7 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 			<ResponsiveContainer
 				width="100%"
 				height="100%"
-				className="bg-base-100 border border-border rounded-box animate-in fade-in duration-500"
+				className="bg-base-100 rounded-box animate-in fade-in duration-500"
 			>
 				<AreaChart
 					data={data}
@@ -168,7 +168,15 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 						allowDecimals={false} // No decimal numbers
 						tickFormatter={(value) => `${value}m`} // Format as minutes
 					/>
-					<Tooltip content={<CustomTooltip />} />
+					<Tooltip
+						content={<CustomTooltip />}
+						cursor={{
+							stroke: colors.text,
+							strokeWidth: 1,
+							strokeOpacity: 0.3,
+							strokeDasharray: "4 4",
+						}}
+					/>
 					<Area
 						type="linear"
 						dataKey="minutes"

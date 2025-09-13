@@ -18,52 +18,6 @@ interface StatCardProps {
 	chart?: React.ReactNode;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
-	title,
-	value,
-	subtitle,
-	icon: Icon,
-	trend,
-	chart,
-}) => {
-	return (
-		<div className="card border border-border w-full transition-all ease-out bg-card p-2">
-			<div className="h-full flex justify-between">
-				<div className="flex flex-col w-full gap-4">
-					{/* Data & informations */}
-					<div className="flex flex-col gap-2 p-2 h-fit">
-						<p className="text-sm text-medium text-base-content/60">{title}</p>
-						<p className="text-2xl font-medium text-base-content font-mono">
-							{value}
-						</p>
-						<p className="text-xs text-base-content/50">{subtitle}</p>
-						{trend && (
-							<div
-								className={`flex items-center gap-1 text-xs ${
-									trend.isPositive ? "text-success" : "text-error"
-								}`}
-							>
-								<TrendingUp
-									className={`size-3 ${!trend.isPositive ? "rotate-180" : ""}`}
-								/>
-								<span>{trend.value}</span>
-							</div>
-						)}
-					</div>
-
-					<div className="w-full h-full bg-gray-4/50 pt-6 rounded-box">
-						{chart ? (
-							chart
-						) : (
-							<span className="text-gray-8 font-medium">chart</span>
-						)}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-};
-
 const calculateStats = () => {
 	const totalSessions = mockSessions.length;
 	const totalTime = mockSessions.reduce(
@@ -106,7 +60,7 @@ export default function StatsOverview() {
 		<div className="w-full h-full">
 			<div className="flex w-full gap-4">
 				{/* Combined totals card: Total Sessions + Total Focus Time */}
-				<div className="card border border-border w-full transition-all ease-out bg-card p-2">
+				<div className="card bg-card border-border border w-full transition-all ease-out p-2">
 					<div className="flex flex-col w-full gap-4">
 						{/* Info header */}
 						<div className="grid grid-cols-2 gap-4">

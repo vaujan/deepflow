@@ -1,20 +1,21 @@
-// "use client";
+"use client";
 
 import React from "react";
 import dynamic from "next/dynamic";
 import InViewport from "./in-viewport";
+import ChartSkeleton from "./chart-skeleton";
 
 const SessionHistory = dynamic(() => import("./session-history"), {
-	ssr: true,
-	loading: () => (
-		<div className="w-full min-h-56 rounded-box border border-border bg-card animate-pulse" />
-	),
+	ssr: false,
+	loading: () => <ChartSkeleton className="min-h-56" />,
 });
 
 export default function SessionHistoryLazy() {
 	return (
 		<>
-			<SessionHistory />
+			<InViewport>
+				<SessionHistory />
+			</InViewport>
 		</>
 	);
 }

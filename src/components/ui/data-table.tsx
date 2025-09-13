@@ -676,8 +676,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				</div>
 			</div>
 			{/* Table */}
-			<div className="overflow-x-auto">
-				<table className="table rounded-none w-full min-w-full">
+			<div className="overflow-x-auto w-full">
+				<table className="table rounded-none w-full min-w-full table-fixed">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
@@ -750,7 +750,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 									className="hover hover:bg-base-300/50 transition-all ease-out"
 								>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id}>
+										<td key={cell.id} className="whitespace-normal break-words">
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()
