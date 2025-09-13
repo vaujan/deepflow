@@ -4,11 +4,12 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
+		"dev:electron": "cross-env ELECTRON_DEV=true concurrently \"pnpm:dev\" \"pnpm:electron\"",
+		"electron": "wait-on http://localhost:3000 && electron .",
+		"build:electron": "pnpm build && electron-builder -c.extraMetadata.main=electron/main.js",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint",
-		"dev:tauri": "tauri dev",
-		"build:tauri": "tauri build"
+		"lint": "next lint"
 	},
 	"dependencies": {
 		"@radix-ui/colors": "^3.0.0",
@@ -54,15 +55,57 @@
 		"tailwindcss": "^4.1.12"
 	},
 	"devDependencies": {
+		"@electron/notarize": "^3.1.0",
+		"@electron/osx-sign": "^2.2.0",
 		"@tailwindcss/typography": "^0.5.16",
 		"@tauri-apps/cli": "^2.8.4",
 		"@types/katex": "^0.16.7",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"concurrently": "^9.2.1",
+		"cross-env": "^10.0.0",
 		"daisyui": "^5.0.50",
+		"electron": "^38.1.0",
+		"electron-builder": "^26.0.12",
 		"eslint": "^9.34.0",
 		"eslint-config-next": "15.5.0",
-		"typescript": "^5"
+		"typescript": "^5",
+		"wait-on": "^8.0.4"
+	},
+	"main": "electron/main.js",
+	"build": {
+		"appId": "com.deepflow.app",
+		"directories": {
+			"buildResources": "build"
+		},
+		"files": [
+			"electron/**/*",
+			"out/**/*",
+			"package.json"
+		],
+		"extraMetadata": {
+			"main": "electron/main.js"
+		},
+		"win": {
+			"target": [
+				"nsis"
+			],
+			"artifactName": "Deepflow-${version}-Setup.${ext}"
+		},
+		"mac": {
+			"category": "public.app-category.productivity",
+			"target": [
+				"dmg"
+			],
+			"entitlementsInherit": "build/entitlements.mac.inherit.plist",
+			"hardenedRuntime": true
+		},
+		"linux": {
+			"target": [
+				"AppImage"
+			],
+			"category": "Utility"
+		}
 	}
 }
