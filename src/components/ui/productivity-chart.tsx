@@ -112,7 +112,15 @@ const ProductivityChart: React.FC = () => {
 							className="text-slate-600 dark:text-slate-400 text-xs"
 							tick={{ fill: "currentColor", fontSize: 12 }}
 						/>
-						<Tooltip content={<CustomTooltip />} />
+						<Tooltip
+							content={<CustomTooltip />}
+							cursor={{
+								stroke: colors.text,
+								strokeWidth: 1,
+								strokeOpacity: 0.3,
+								strokeDasharray: "4 4",
+							}}
+						/>
 						<Line
 							type="linear"
 							dataKey="totalTime"

@@ -3,13 +3,10 @@ import Sidebar from "../../components/ui/sidebar";
 import StatsHeader from "../../components/ui/stats-header";
 import SessionHistoryLazy from "../../components/ui/session-history-lazy";
 import HeatMapLazy from "../../components/ui/heat-map-lazy";
-import FocusStreak from "../../components/ui/focus-streak";
-import TagsOverview from "@/src/components/ui/tags-overview";
-// import FocusInsights from "@/src/components/ui/focus-insights";
+import FocusStreakLazy from "../../components/ui/focus-streak-lazy";
+import TagsOverviewLazy from "@/src/components/ui/tags-overview-lazy";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
-import PeakFocusWindowChart from "@/src/components/ui/peak-focus-window-chart";
-import HeatMap from "@/src/components/ui/heat-map";
 
 export default function StatsPage() {
 	return (
@@ -26,22 +23,20 @@ export default function StatsPage() {
 						>
 							{/* Stats Overview Cards */}
 							<div className="flex-col gap-4 card lg:flex-row">
-								{/* <HeatMapLazy /> */}
-								<HeatMap />
-
+								<div className="w-full">
+									<HeatMapLazy />
+								</div>
 								<div className="flex flex-col w-full h-full gap-4">
-									<FocusStreak />
-									<TagsOverview />
-									{/* <LazyStatsOverview /> */}
+									<FocusStreakLazy />
+									<PeakFocusWindowChartLazy />
 								</div>
 							</div>
 							<div className="flex flex-col w-full h-full gap-4 lg:flex-row">
-								<PeakFocusWindowChartLazy />
+								<TagsOverviewLazy />
+								<LazyStatsOverview />
 							</div>
 							{/* Session History */}
-							<div className="flex flex-col gap-4 mt-4 lg:flex-row">
-								<SessionHistoryLazy />
-							</div>
+							<SessionHistoryLazy />
 						</div>
 					</div>
 				</div>

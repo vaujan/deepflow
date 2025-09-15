@@ -30,66 +30,7 @@ import {
 	Check,
 	X,
 } from "lucide-react";
-import TagsOverview from "./tags-overview";
-
-// Session row type - represents a single deep work session
-// Planned session: user sets duration beforehand
-// Open session: flow-based, ends naturally when done
-export type DataItem = {
-	id: string;
-	goal: string;
-	sessionType: "planned session" | "open session";
-	duration: number; // in minutes
-	focusLevel: number | null; // 1-10 or null if not set
-	quality: number; // 1-10
-	notes: string;
-	tags: string[]; // optional tags for categorization
-	sessionDate: string; // when the session was taken
-	// Legacy fields to avoid breaking other components; optional
-	name?: string;
-	status?: "active" | "inactive" | "pending";
-	category?: string;
-	priority?: "low" | "medium" | "high";
-	createdAt?: string;
-};
-
-// Sample data
-const sampleData: DataItem[] = [
-	{
-		id: "1",
-		goal: "Complete API integration",
-		sessionType: "planned session",
-		duration: 150,
-		focusLevel: 8,
-		quality: 9,
-		notes:
-			"Had some interruptions but managed to complete the core functionality",
-		tags: ["coding", "api", "backend"],
-		sessionDate: "2024-01-15",
-	},
-	{
-		id: "2",
-		goal: "Draft blog post outline",
-		sessionType: "open session",
-		duration: 105,
-		focusLevel: null,
-		quality: 8,
-		notes: "Good flow; outline is comprehensive",
-		tags: ["writing", "content"],
-		sessionDate: "2024-01-14",
-	},
-	{
-		id: "3",
-		goal: "Redesign landing page",
-		sessionType: "planned session",
-		duration: 195,
-		focusLevel: 9,
-		quality: 10,
-		notes: "Excellent focus; design came together",
-		tags: ["design", "ui", "frontend"],
-		sessionDate: "2024-01-13",
-	},
-];
+import { DataItem, mockDataTableData } from "../../data/mockDataTable";
 
 // Custom filter function for duration
 const durationFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
@@ -129,7 +70,7 @@ interface DataTableProps {
 	data?: DataItem[];
 }
 
-export function DataTable({ data = sampleData }: DataTableProps) {
+export function DataTable({ data = mockDataTableData }: DataTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
@@ -155,6 +96,18 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 	]);
 	const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 	const [tagsSearchTerm, setTagsSearchTerm] = useState("");
+
+	// Minimum widths per column to keep layout readable
+	const columnMinWidth: Record<string, string> = {
+		goal: "min-w-[200px]",
+		sessionType: "min-w-[120px]",
+		duration: "min-w-[80px]",
+		sessionDate: "min-w-[100px]",
+		focusLevel: "min-w-[80px]",
+		quality: "min-w-[100px]",
+		tags: "min-w-[160px]",
+		notes: "min-w-[250px]",
+	};
 
 	// Helper component for available tags list
 	const AvailableTagsList = ({
@@ -196,7 +149,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			.filter((tag): tag is string => tag !== null && typeof tag === "string");
 
 		return (
-			<ul className="max-h-52 overflow-y-auto space-y-1">
+			<ul className="max-h-52 space-y-1">
 				{sortedTags.length === 0 ? (
 					<li className="text-center text-sm text-base-content/60 py-4">
 						No tags found matching "{searchTerm}"
@@ -294,7 +247,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											: ""
 									}`}
 								>
-									{column.getFilterValue() === "openx	 session" && (
+									{column.getFilterValue() === "open session" && (
 										<Check className="size-3" />
 									)}
 									Open
@@ -535,7 +488,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							{tags.map((tag, index) => (
 								<span
 									key={index}
-									className="badge badge-sm rounded-sm badge-neutral"
+									className="badge badge-sm rounded-sm badge-soft badge-neutral"
 								>
 									#{tag}
 								</span>
@@ -547,9 +500,9 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			},
 			{
 				accessorKey: "notes",
-				header: () => <span className="text-xs">Notes</span>,
+				header: () => <span className="text-xs text-wrap">Notes</span>,
 				cell: ({ row }) => (
-					<div className="min-w-[250px] max-w-[400px]">
+					<div className="min-w-[250px] max-w-[480px]">
 						{row.getValue("notes")}
 					</div>
 				),
@@ -676,7 +629,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				</div>
 			</div>
 			{/* Table */}
-			<div className="overflow-x-auto">
+			<div className="overflow-y-auto w-full">
 				<table className="table rounded-none w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -688,7 +641,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											dragOverColumn === header.id
 												? "ring-2 ring-primary ring-opacity-50 bg-primary/10"
 												: ""
-										}`}
+										} ${columnMinWidth[header.column.id as string] ?? ""}`}
 										onDragStart={(e) => {
 											e.dataTransfer.effectAllowed = "move";
 											e.dataTransfer.setData("text/plain", header.id);
@@ -750,7 +703,12 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 									className="hover hover:bg-base-300/50 transition-all ease-out"
 								>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id}>
+										<td
+											key={cell.id}
+											className={`whitespace-normal break-words ${
+												columnMinWidth[cell.column.id as string] ?? ""
+											}`}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()

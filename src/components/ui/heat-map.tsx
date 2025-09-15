@@ -19,7 +19,24 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const currentYear = new Date().getFullYear();
 
-	// Generate heat map data for the current month
+	// Pre-bucket sessions by day for the current year to avoid repeated filtering
+	const perDayBuckets = useMemo(() => {
+		const yearStart = new Date(currentYear, 0, 1);
+		const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+		const map = new Map<string, { sessions: number; totalMinutes: number }>();
+		for (const s of mockSessions) {
+			if (s.startTime < yearStart || s.startTime > yearEnd) continue;
+			const key = s.startTime.toISOString().split("T")[0];
+			const prev = map.get(key) || { sessions: 0, totalMinutes: 0 };
+			map.set(key, {
+				sessions: prev.sessions + 1,
+				totalMinutes: prev.totalMinutes + Math.round((s.elapsedTime || 0) / 60),
+			});
+		}
+		return map;
+	}, [currentYear]);
+
+	// Generate heat map data for the current month using the pre-bucketed map
 	const heatMapData = useMemo(() => {
 		const year = currentMonth.getFullYear();
 		const month = currentMonth.getMonth();
@@ -34,27 +51,11 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 		for (let i = 0; i < 42; i++) {
 			const date = new Date(startDate);
 			date.setDate(startDate.getDate() + i);
-
-			// Check if this date is in the current month
 			const isCurrentMonth = date.getMonth() === month;
-
 			if (isCurrentMonth) {
-				// Calculate activity for this day
-				const dayStart = new Date(date);
-				dayStart.setHours(0, 0, 0, 0);
-				const dayEnd = new Date(date);
-				dayEnd.setHours(23, 59, 59, 999);
-
-				const daySessions = mockSessions.filter(
-					(session) =>
-						session.startTime >= dayStart && session.startTime <= dayEnd
-				);
-
-				const totalTime =
-					daySessions.reduce((acc, session) => acc + session.elapsedTime, 0) /
-					60; // Convert to minutes
-
-				// Calculate activity level (0-4)
+				const key = date.toISOString().split("T")[0];
+				const agg = perDayBuckets.get(key);
+				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;
 				if (totalTime > 0) {
 					if (totalTime < 30) value = 1;
@@ -62,26 +63,18 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 					else if (totalTime < 120) value = 3;
 					else value = 4;
 				}
-
 				days.push({
 					date,
 					value,
-					sessions: daySessions.length,
-					totalTime: Math.round(totalTime),
+					sessions: agg?.sessions || 0,
+					totalTime: totalTime,
 				});
 			} else {
-				// Empty day (not in current month)
-				days.push({
-					date,
-					value: 0,
-					sessions: 0,
-					totalTime: 0,
-				});
+				days.push({ date, value: 0, sessions: 0, totalTime: 0 });
 			}
 		}
-
 		return days;
-	}, [currentMonth]);
+	}, [currentMonth, perDayBuckets]);
 
 	// Get color class based on activity level
 	const getColorClass = (value: number) => {
@@ -96,21 +89,21 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	};
 
 	// Navigation functions
-	const goToPreviousMonth = () => {
+	const handleGoToPreviousMonth = () => {
 		setCurrentMonth((prev) => {
 			const candidate = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
 			return candidate.getFullYear() === currentYear ? candidate : prev;
 		});
 	};
 
-	const goToNextMonth = () => {
+	const handleGoToNextMonth = () => {
 		setCurrentMonth((prev) => {
 			const candidate = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
 			return candidate.getFullYear() === currentYear ? candidate : prev;
 		});
 	};
 
-	const goToToday = () => {
+	const handleGoToToday = () => {
 		setCurrentMonth(new Date());
 	};
 
@@ -143,7 +136,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 
 					{!isCurrentMonthView && (
 						<button
-							onClick={goToToday}
+							onClick={handleGoToToday}
 							className="btn btn-xs"
 							aria-label="Go to current month"
 						>
@@ -155,7 +148,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 
 				<div className="flex gap-2">
 					<button
-						onClick={goToPreviousMonth}
+						onClick={handleGoToPreviousMonth}
 						disabled={isAtMinMonth}
 						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
 						aria-label="Previous month"
@@ -163,7 +156,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 						<ChevronLeft className="size-4" />
 					</button>
 					<button
-						onClick={goToNextMonth}
+						onClick={handleGoToNextMonth}
 						disabled={isAtMaxMonth}
 						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
 						aria-label="Next month"
@@ -253,7 +246,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 
 			{/* Yearly GitHub-style Heat Map */}
 			<div className="overflow-x-auto py-8 overflow-y-hidden lg:py-0 lg:overflow-visible lg:flex lg:justify-center border-1 p-2 border-border rounded-box lg:p-0 lg:border-0">
-				<YearlyHeatMap currentMonth={currentMonth} />
+				<YearlyHeatMap currentMonth={currentMonth} perDay={perDayBuckets} />
 			</div>
 
 			{/* Legend */}
@@ -274,44 +267,26 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 };
 
 // Yearly GitHub-style Heat Map Component
-const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
-	// Generate data for the entire year
+const YearlyHeatMap: React.FC<{
+	currentMonth: Date;
+	perDay: Map<string, { sessions: number; totalMinutes: number }>;
+}> = ({ currentMonth, perDay }) => {
+	// Generate data for the entire year (via map lookup, not per-day filters)
 	const yearlyData = useMemo(() => {
 		const currentYear = new Date().getFullYear();
-		const startDate = new Date(currentYear, 0, 1); // January 1st
-		const endDate = new Date(currentYear, 11, 31); // December 31st
-
-		// Calculate the start of the first week (Monday)
+		const startDate = new Date(currentYear, 0, 1);
 		const firstMonday = new Date(startDate);
 		const dayOfWeek = (startDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
 		firstMonday.setDate(startDate.getDate() - dayOfWeek);
-
-		// Generate 53 weeks × 7 days = 371 days
 		const days: HeatMapDay[] = [];
 		for (let i = 0; i < 371; i++) {
 			const date = new Date(firstMonday);
 			date.setDate(firstMonday.getDate() + i);
-
-			// Check if this date is within the current year
 			const isCurrentYear = date.getFullYear() === currentYear;
-
 			if (isCurrentYear) {
-				// Calculate activity for this day
-				const dayStart = new Date(date);
-				dayStart.setHours(0, 0, 0, 0);
-				const dayEnd = new Date(date);
-				dayEnd.setHours(23, 59, 59, 999);
-
-				const daySessions = mockSessions.filter(
-					(session) =>
-						session.startTime >= dayStart && session.startTime <= dayEnd
-				);
-
-				const totalTime =
-					daySessions.reduce((acc, session) => acc + session.elapsedTime, 0) /
-					60; // Convert to minutes
-
-				// Calculate activity level (0-4)
+				const key = date.toISOString().split("T")[0];
+				const agg = perDay.get(key);
+				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;
 				if (totalTime > 0) {
 					if (totalTime < 15) value = 1;
@@ -319,26 +294,18 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 					else if (totalTime < 60) value = 3;
 					else value = 4;
 				}
-
 				days.push({
 					date,
 					value,
-					sessions: daySessions.length,
-					totalTime: Math.round(totalTime),
+					sessions: agg?.sessions || 0,
+					totalTime: totalTime,
 				});
 			} else {
-				// Empty day (not in current year)
-				days.push({
-					date,
-					value: 0,
-					sessions: 0,
-					totalTime: 0,
-				});
+				days.push({ date, value: 0, sessions: 0, totalTime: 0 });
 			}
 		}
-
 		return days;
-	}, []);
+	}, [perDay]);
 
 	// Use the same color system as monthly calendar
 	const getColorClass = (value: number) => {
@@ -380,10 +347,10 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 	// Compute accumulated hours per month
 	const monthlyTotals = useMemo(() => {
 		const totals = Array(12).fill(0);
-		yearlyData.forEach((day) => {
-			const m = day.date.getMonth();
-			totals[m] += day.totalTime / 60; // Convert minutes to hours
-		});
+		for (const d of yearlyData) {
+			const m = d.date.getMonth();
+			totals[m] += d.totalTime / 60;
+		}
 		return totals.map((t) => Math.round(t));
 	}, [yearlyData]);
 
@@ -484,4 +451,4 @@ const YearlyHeatMap: React.FC<{ currentMonth: Date }> = ({ currentMonth }) => {
 	);
 };
 
-export default HeatMap;
+export default React.memo(HeatMap);
