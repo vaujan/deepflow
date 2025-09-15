@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Clock, Target, TrendingUp, Award } from "lucide-react";
+import React from "react";
 import { mockSessions } from "../../data/mockSessions";
-import { markCurrentScopeAsDynamic } from "next/dist/server/app-render/dynamic-rendering";
 import FocusTimeLineChart from "./highlighted-multiple-bar";
 
 interface StatCardProps {
