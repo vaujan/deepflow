@@ -2,11 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Widgets = "note" | "kanban" | "tasks";
+export type Widgets = "note" | "kanban" | "tasks" | "journal";
 
 interface WidgetContextType {
 	activeWidgets: Widgets[];
 	toggleWidget: (widget: Widgets) => void;
+	setActiveWidget: (widget: Widgets | null) => void;
+	clearAllWidgets: () => void;
 }
 
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
@@ -36,6 +38,25 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 		});
 	};
 
+	const setActiveWidget = (widget: Widgets | null) => {
+		const newState = widget ? [widget] : [];
+		setActiveWidgets(newState);
+
+		// Save to localStorage
+		if (typeof window !== "undefined") {
+			localStorage.setItem("activeWidgets", JSON.stringify(newState));
+		}
+	};
+
+	const clearAllWidgets = () => {
+		setActiveWidgets([]);
+
+		// Save to localStorage
+		if (typeof window !== "undefined") {
+			localStorage.setItem("activeWidgets", JSON.stringify([]));
+		}
+	};
+
 	// Sync with localStorage changes from other tabs/windows
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
@@ -54,7 +75,14 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	return (
-		<WidgetContext.Provider value={{ activeWidgets, toggleWidget }}>
+		<WidgetContext.Provider
+			value={{
+				activeWidgets,
+				toggleWidget,
+				setActiveWidget,
+				clearAllWidgets,
+			}}
+		>
 			{children}
 		</WidgetContext.Provider>
 	);

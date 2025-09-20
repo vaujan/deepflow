@@ -1,5 +1,4 @@
 import React from "react";
-import Sidebar from "../../components/ui/sidebar";
 import StatsHeader from "../../components/ui/stats-header";
 import SessionHistoryLazy from "../../components/ui/session-history-lazy";
 import HeatMapLazy from "../../components/ui/heat-map-lazy";
@@ -7,6 +6,7 @@ import FocusStreakLazy from "../../components/ui/focus-streak-lazy";
 import TagsOverviewLazy from "@/src/components/ui/tags-overview-lazy";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
+import Sidebar from "@/src/components/ui/sidebar";
 
 export default function StatsPage() {
 	return (

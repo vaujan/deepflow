@@ -567,10 +567,7 @@ export default function ActiveSession({
 							<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
 							<div className="flex flex-wrap gap-2">
 								{session.tags.map((tag, index) => (
-									<span
-										key={index}
-										className="badge rounded-sm badge-neutral badge-sm"
-									>
+									<span key={index} className="badge rounded-sm badge-sm">
 										#{tag}
 									</span>
 								))}

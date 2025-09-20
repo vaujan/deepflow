@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/src/components/ui/sidebar";
+import TwoSidedSidebar from "@/src/components/ui/two-sided-sidebar";
 import Dock from "@/src/components/ui/dock";
 import Image from "next/image";
 
@@ -24,7 +24,7 @@ export default function ProfilePage() {
 
 	return (
 		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
-			<Sidebar />
+			<TwoSidedSidebar />
 			<main className="w-full relative flex flex-col gap-6 flex-1 items-center justify-start">
 				{/* Container */}
 				<div className="max-w-4xl flex flex-col gap-6 w-full px-8 py-16">
