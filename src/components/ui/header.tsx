@@ -25,9 +25,9 @@ export default function Header() {
 			<div className="flex w-full h-fit flex-col">
 				<div className="max-w-8xl items-center h-fit flex gap-6 w-full px-8 py-3">
 					{/* active widgets count */}
-					{/* <div className="flex rounded-box justify-center items-center w-8 h-8 bg-blue-4 text-blue-8">
+					<div className="flex rounded-box justify-center items-center w-8 h-8 bg-blue-4 text-blue-8">
 						{activeWidgets.length}
-					</div> */}
+					</div>
 					<nav className="flex gap-2 items-center flex-1">
 						<ul className="mr-2 pr-2 border-r border-base-200">
 							{/* List goes here */}
@@ -98,10 +98,10 @@ export default function Header() {
 					</nav>
 
 					{/* Theme + Font controls */}
-					{/* <div className="flex items-center gap-1">
+					<div className="flex items-center gap-1">
 						<ThemeCustomizer />
 						<FontSelector />
-					</div> */}
+					</div>
 				</div>
 			</div>
 		</header>

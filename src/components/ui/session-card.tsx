@@ -86,7 +86,7 @@ export default function SessionCard() {
 		return (
 			<div className="flex flex-wrap gap-2 mt-2">
 				{tagArray.map((tag, index) => (
-					<span key={index} className="badge rounded-sm badge-neutral badge-sm">
+					<span key={index} className="badge rounded-sm badge-soft badge-sm">
 						#{tag}
 					</span>
 				))}
