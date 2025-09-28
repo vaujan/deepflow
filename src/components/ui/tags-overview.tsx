@@ -80,6 +80,11 @@ export default function TagsOverview() {
 									? `${barData[0].sessions} sessions`
 									: "No data"}
 							</p>
+							{barData.length > 0 && (
+								<p className="text-xs text-base-content/50">
+									{formatTime(barData[0].value)} total
+								</p>
+							)}
 						</div>
 
 						{/* Tag Diversity */}

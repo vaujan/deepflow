@@ -21,6 +21,7 @@ import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSidebar } from "../../contexts/SidebarContext";
+import Link from "next/link";
 
 interface SidebarItem {
 	label: string;
@@ -87,7 +88,7 @@ export default function Sidebar() {
 						<ul className="menu space-y-2 w-full">
 							{navigationItems.map((item) => (
 								<li key={item.href}>
-									<a
+									<Link
 										href={item.href}
 										className={`gap-3 ${
 											isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
@@ -96,7 +97,7 @@ export default function Sidebar() {
 									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
 										{!isCollapsed && <span>{item.label}</span>}
-									</a>
+									</Link>
 								</li>
 							))}
 						</ul>

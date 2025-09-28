@@ -14,6 +14,9 @@ function createMainWindow() {
 	const win = new BrowserWindow({
 		width: 1200,
 		height: 800,
+		frame: false,
+		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
+		autoHideMenuBar: true,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
 			contextIsolation: true,
@@ -26,6 +29,18 @@ function createMainWindow() {
 	win.on("ready-to-show", () => win.show());
 	win.on("closed", () => {
 		mainWindow = null;
+	});
+
+	// Reflect maximize state changes to renderer (for toggle icon)
+	win.on("maximize", () => {
+		try {
+			win.webContents.send("window:maximize-changed", true);
+		} catch (_) {}
+	});
+	win.on("unmaximize", () => {
+		try {
+			win.webContents.send("window:maximize-changed", false);
+		} catch (_) {}
 	});
 
 	return win;
@@ -100,6 +115,35 @@ function setupAppEvents() {
 function setupIpc() {
 	ipcMain.handle("open-external", async (_event, url) => {
 		await shell.openExternal(url);
+		return true;
+	});
+
+	ipcMain.handle("window:minimize", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.minimize();
+		return true;
+	});
+
+	ipcMain.handle("window:toggleMaximize", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		if (!win) return false;
+		if (win.isMaximized()) {
+			win.unmaximize();
+			return false;
+		} else {
+			win.maximize();
+			return true;
+		}
+	});
+
+	ipcMain.handle("window:isMaximized", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		return win?.isMaximized?.() ?? false;
+	});
+
+	ipcMain.handle("window:close", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.close();
 		return true;
 	});
 }

@@ -2,13 +2,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-export type Widgets = "note" | "kanban" | "tasks" | "journal";
+export type Widgets = "note" | "kanban" | "tasks" | "journal" | "timer";
 
 interface WidgetContextType {
 	activeWidgets: Widgets[];
 	toggleWidget: (widget: Widgets) => void;
 	setActiveWidget: (widget: Widgets | null) => void;
 	clearAllWidgets: () => void;
+	visibleWidgets: Widgets[];
+	toggleVisibility: (widget: Widgets) => void;
 }
 
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
@@ -23,8 +25,27 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 		return [];
 	});
 
+	const [visibleWidgets, setVisibleWidgets] = useState<Widgets[]>(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const savedVisible = localStorage.getItem("visibleWidgets");
+				if (savedVisible) return JSON.parse(savedVisible);
+				const savedActive = localStorage.getItem("activeWidgets");
+				return savedActive ? JSON.parse(savedActive) : [];
+			} catch {
+				return [];
+			}
+		}
+		return [];
+	});
+
 	const toggleWidget = (widget: Widgets) => {
 		setActiveWidgets((prev) => {
+			// Prevent disabling the last active widget
+			if (prev.includes(widget) && prev.length === 1) {
+				return prev;
+			}
+
 			const newState = prev.includes(widget)
 				? prev.filter((w) => w !== widget)
 				: [...prev, widget];
@@ -34,39 +55,89 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 				localStorage.setItem("activeWidgets", JSON.stringify(newState));
 			}
 
+			// Keep visibleWidgets in sync: enabling adds to visible, disabling removes
+			setVisibleWidgets((prevVisible) => {
+				// Prevent removing last visible via active disable path
+				if (
+					!newState.includes(widget) &&
+					prevVisible.length === 1 &&
+					prevVisible[0] === widget
+				) {
+					return prevVisible;
+				}
+				const nextVisible = newState.includes(widget)
+					? Array.from(new Set([...prevVisible, widget]))
+					: prevVisible.filter((w) => w !== widget);
+				if (typeof window !== "undefined") {
+					localStorage.setItem("visibleWidgets", JSON.stringify(nextVisible));
+				}
+				return nextVisible;
+			});
+
 			return newState;
 		});
 	};
 
 	const setActiveWidget = (widget: Widgets | null) => {
-		const newState = widget ? [widget] : [];
-		setActiveWidgets(newState);
-
-		// Save to localStorage
-		if (typeof window !== "undefined") {
-			localStorage.setItem("activeWidgets", JSON.stringify(newState));
-		}
+		setActiveWidgets((prev) => {
+			const nextActive = widget ? [widget] : prev.length ? [prev[0]] : ["note"];
+			if (typeof window !== "undefined") {
+				localStorage.setItem("activeWidgets", JSON.stringify(nextActive));
+			}
+			setVisibleWidgets(nextActive);
+			if (typeof window !== "undefined") {
+				localStorage.setItem("visibleWidgets", JSON.stringify(nextActive));
+			}
+			return nextActive;
+		});
 	};
 
 	const clearAllWidgets = () => {
-		setActiveWidgets([]);
+		// Keep at least one widget active/visible
+		setActiveWidgets((prev) => {
+			const fallback: Widgets = prev[0] ?? "note";
+			const nextActive: Widgets[] = [fallback];
+			if (typeof window !== "undefined") {
+				localStorage.setItem("activeWidgets", JSON.stringify(nextActive));
+			}
+			setVisibleWidgets(nextActive);
+			if (typeof window !== "undefined") {
+				localStorage.setItem("visibleWidgets", JSON.stringify(nextActive));
+			}
+			return nextActive;
+		});
+	};
 
-		// Save to localStorage
-		if (typeof window !== "undefined") {
-			localStorage.setItem("activeWidgets", JSON.stringify([]));
-		}
+	const toggleVisibility = (widget: Widgets) => {
+		// Only affect visibility if the widget is enabled
+		setVisibleWidgets((prev) => {
+			if (!activeWidgets.includes(widget)) return prev;
+			// Prevent hiding the last visible widget
+			if (prev.includes(widget) && prev.length === 1) return prev;
+			const next = prev.includes(widget)
+				? prev.filter((w) => w !== widget)
+				: [...prev, widget];
+			if (typeof window !== "undefined") {
+				localStorage.setItem("visibleWidgets", JSON.stringify(next));
+			}
+			return next;
+		});
 	};
 
 	// Sync with localStorage changes from other tabs/windows
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === "activeWidgets" && e.newValue) {
-				try {
-					const newValue = JSON.parse(e.newValue);
-					setActiveWidgets(newValue);
-				} catch (error) {
-					console.error("Error parsing widget state from localStorage:", error);
+			try {
+				if (e.key === "activeWidgets" && e.newValue) {
+					const newActive = JSON.parse(e.newValue);
+					setActiveWidgets(newActive);
 				}
+				if (e.key === "visibleWidgets" && e.newValue) {
+					const newVisible = JSON.parse(e.newValue);
+					setVisibleWidgets(newVisible);
+				}
+			} catch (error) {
+				console.error("Error parsing widget state from localStorage:", error);
 			}
 		};
 
@@ -81,6 +152,8 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 				toggleWidget,
 				setActiveWidget,
 				clearAllWidgets,
+				visibleWidgets,
+				toggleVisibility,
 			}}
 		>
 			{children}

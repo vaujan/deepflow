@@ -177,7 +177,7 @@ export default function WidgetNotes() {
 	};
 
 	return (
-		<div className="w-full min-w-lg max-w-xl h-full group flex flex-col gap-2 overflow-hidden">
+		<div className="w-full min-w-lg lg:w-2xl h-full group flex flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
 					<span className="font-medium text-lg">Notes</span>

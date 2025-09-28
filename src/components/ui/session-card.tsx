@@ -1,9 +1,10 @@
 "use client";
 
-import { Play, Clock, Timer, Check, Apple } from "lucide-react";
+import { Play, Clock, Timer, Apple } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useSession, Session } from "../../hooks/useSession";
 import ActiveSession from "./active-session";
+import { usePomodoroSettings } from "../../hooks/usePomodoroSettings";
 import SessionCompletion from "./session-completion";
 
 export default function SessionCard() {
@@ -16,17 +17,10 @@ export default function SessionCard() {
 	const [activeTab, setActiveTab] = useState<
 		"time-boxed" | "open" | "pomodoro"
 	>("time-boxed");
-	const [isHolding, setIsHolding] = useState(false);
-	const [holdProgress, setHoldProgress] = useState(0);
 	const [completedSession, setCompletedSession] = useState<Session | null>(
 		null
 	);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
-	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
-	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
-
-	const HOLD_DURATION = 1500; // 1.5 seconds in milliseconds
-	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
 
 	// Session management
 	const {
@@ -36,6 +30,8 @@ export default function SessionCard() {
 		updateDeepWorkQuality,
 		updateSessionNotes,
 	} = useSession();
+
+	const { settings, updateSettings } = usePomodoroSettings();
 
 	const placeholders = [
 		"Complete the project proposal...",
@@ -96,6 +92,10 @@ export default function SessionCard() {
 
 	const handleTabChange = (tab: "time-boxed" | "open" | "pomodoro") => {
 		setActiveTab(tab);
+		// If switching to Pomodoro, initialize slider with saved setting
+		if (tab === "pomodoro") {
+			setDuration(settings.pomodoroMinutes || 25);
+		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -129,7 +129,7 @@ export default function SessionCard() {
 	const handleStartSession = () => {
 		const sessionConfig = {
 			goal: goal.trim(),
-			duration: activeTab === "time-boxed" ? duration : undefined,
+			duration: activeTab !== "open" ? duration : undefined,
 			focusLevel: parseInt(focusLevel),
 			tags: tags
 				.trim()
@@ -166,57 +166,6 @@ export default function SessionCard() {
 			});
 		}
 	};
-	const handleMouseDown = () => {
-		if (!isGoalValid) return;
-
-		setIsHolding(true);
-		setHoldProgress(0);
-
-		// Start progress bar animation
-		holdProgressRef.current = setInterval(() => {
-			setHoldProgress((prev) => {
-				const newProgress =
-					prev + (PROGRESS_UPDATE_INTERVAL / HOLD_DURATION) * 100;
-				return Math.min(newProgress, 100);
-			});
-		}, PROGRESS_UPDATE_INTERVAL);
-
-		// Start hold timer
-		holdTimerRef.current = setTimeout(() => {
-			handleStartSession();
-			setIsHolding(false);
-			setHoldProgress(0);
-		}, HOLD_DURATION);
-	};
-
-	const handleMouseUp = () => {
-		if (holdTimerRef.current) {
-			clearTimeout(holdTimerRef.current);
-			holdTimerRef.current = null;
-		}
-		if (holdProgressRef.current) {
-			clearInterval(holdProgressRef.current);
-			holdProgressRef.current = null;
-		}
-		setIsHolding(false);
-		setHoldProgress(0);
-	};
-
-	const handleMouseLeave = () => {
-		handleMouseUp();
-	};
-
-	// Cleanup timers on unmount
-	useEffect(() => {
-		return () => {
-			if (holdTimerRef.current) {
-				clearTimeout(holdTimerRef.current);
-			}
-			if (holdProgressRef.current) {
-				clearInterval(holdProgressRef.current);
-			}
-		};
-	}, []);
 
 	const isGoalValid = goal.trim().length > 0;
 
@@ -375,18 +324,7 @@ export default function SessionCard() {
 					<Timer className="size-4 me-2" />
 					Open
 				</label>
-
-				<label className="font-medium tab">
-					<input
-						type="radio"
-						name="session_tabs"
-						checked={activeTab === "open"}
-						onChange={() => handleTabChange("open")}
-					/>
-					<Apple className="size-4 me-2" />
-					Pomodoro
-				</label>
-
+				{/* Open content (flow-based) */}
 				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
 					{/* Open Session Mode */}
 					<div className="space-y-4">
@@ -404,6 +342,87 @@ export default function SessionCard() {
 						<p className="text-xs text-base-content/60">
 							Timer will count up from zero until you manually stop
 						</p>
+					</div>
+				</div>
+
+				{/* Hiding pomodoro for now */}
+				{/* <label className="font-medium tab">
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "pomodoro"}
+						onChange={() => handleTabChange("pomodoro")}
+					/>
+					<Apple className="size-4 me-2" />
+					Pomodoro
+				</label> */}
+
+				{/* Pomodoro content with settings */}
+				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
+					<div className="space-y-4">
+						<div className="flex text-sm justify-between items-center">
+							<p className="font-medium">Pomodoro focus duration</p>
+							<span className="badge rounded-sm badge-soft badge-primary">
+								Pomodoro
+							</span>
+						</div>
+						<div className="space-y-2">
+							<input
+								type="range"
+								min="15"
+								max="60"
+								step={5}
+								value={duration}
+								onChange={handleDurationChange}
+								className="range range-sm range-primary w-full"
+							/>
+
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>|</span>
+								<span>|</span>
+								<span>|</span>
+								<span>|</span>
+							</div>
+
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>15 min</span>
+								<span>30 min</span>
+								<span>45 min</span>
+								<span>60 min</span>
+							</div>
+						</div>
+						<div className="gap-1 flex flex-col">
+							<div className="text-xs font-medium mb-1">
+								Long Break interval
+							</div>
+							<input
+								type="range"
+								min="2"
+								max="6"
+								step={1}
+								value={settings.longBreakInterval}
+								onChange={(e) =>
+									updateSettings({
+										longBreakInterval: parseInt(e.target.value),
+									})
+								}
+								className="range range-xs range-secondary w-full"
+							/>
+
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>|</span>
+								<span>|</span>
+								<span>|</span>
+							</div>
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>1</span>
+								<span>3</span>
+								<span>6</span>
+							</div>
+							<div>{}</div>
+						</div>
+
+						{/* Task preferences removed */}
 					</div>
 				</div>
 			</div>
@@ -438,56 +457,19 @@ export default function SessionCard() {
 
 			<div className="card-actions">
 				<button
-					className={`btn btn-block h-14 transition-all duration-200 relative overflow-hidden ${
-						isGoalValid
-							? isHolding
-								? "btn-primary"
-								: "btn-neutral"
-							: "btn-disabled"
+					className={`btn btn-block h-14 transition-all duration-200 ${
+						isGoalValid ? "btn-primary" : "btn-disabled"
 					}`}
 					disabled={!isGoalValid}
-					onMouseDown={handleMouseDown}
-					onMouseUp={handleMouseUp}
-					onMouseLeave={handleMouseLeave}
-					onTouchStart={handleMouseDown}
-					onTouchEnd={handleMouseUp}
+					onClick={handleStartSession}
+					style={{ touchAction: "manipulation" }}
+					aria-disabled={!isGoalValid}
+					aria-label="Start focus session"
 				>
-					{/* Progress bar overlay */}
-					{isHolding && (
-						<div
-							className="absolute inset-0 bg-primary/20 transition-all duration-75 ease-out"
-							style={{
-								width: `${holdProgress}%`,
-								transition: `width ${PROGRESS_UPDATE_INTERVAL}ms linear`,
-							}}
-						/>
-					)}
-
-					{/* Button content */}
-					<div className="relative z-10 flex items-center gap-2">
-						{isHolding && holdProgress >= 100 ? (
-							<Check className="size-4" />
-						) : (
-							<Play className="size-4" />
-						)}
-						<span>
-							{isHolding && holdProgress >= 100
-								? "Session Starting..."
-								: `Hold to Start ${
-										activeTab === "open" ? formatTime(duration) : "Open"
-								  } Session`}
-						</span>
-					</div>
-
-					{/* Hold indicator */}
-					{isHolding && (
-						<div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-primary-content/80">
-							{Math.ceil(
-								(HOLD_DURATION - (holdProgress / 100) * HOLD_DURATION) / 1000
-							)}
-							s
-						</div>
-					)}
+					<Play className="size-4" />
+					<span>
+						Start {activeTab === "open" ? "Open" : formatTime(duration)} Session
+					</span>
 				</button>
 			</div>
 		</div>

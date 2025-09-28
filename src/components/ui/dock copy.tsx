@@ -117,67 +117,57 @@ export default function Dock() {
 	const { toggleTheme, theme } = useTheme();
 
 	return (
-		<div className="fixed group bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-			<div className="bg-base-200/10 flex-col border-border/50 border backdrop-blur-md flex gap-2 rounded-xl shadow-xl">
-				{/* Widget list */}
-				<div className="flex gap-2 p-2">
-					{dockItems.map((item, index) => (
-						<DockItem
-							key={item.id}
-							id={item.id}
-							label={item.label}
-							icon={item.icon}
-							widgetType={item.widgetType}
-						/>
-					))}
-					<div className="ml-4 pl-4 gap-2 flex border-l border-border">
-						<div className="tooltip">
-							<div className="tooltip-content">Settings</div>
-							<button
-								className={`gap-3 text-base-content/50 btn btn-sm btn-ghost btn-square`}
-								title="Settings"
-								aria-label="Settings"
-							>
-								<Settings className="size-4" />
-							</button>
-						</div>
+		<div className="bg-base-200/10 flex-col backdrop-blur-md flex gap-2 rounded-xl">
+			{/* Widget list */}
+			<div className="flex gap-2 p-2">
+				{dockItems.map((item, index) => (
+					<DockItem
+						key={item.id}
+						id={item.id}
+						label={item.label}
+						icon={item.icon}
+						widgetType={item.widgetType}
+					/>
+				))}
+				<div className="ml-4 pl-4 gap-2 flex border-l border-border">
+					<div className="tooltip">
+						<div className="tooltip-content">Settings</div>
+						<button
+							className={`gap-3 text-base-content/50 btn btn-sm btn-ghost btn-square`}
+							title="Settings"
+							aria-label="Settings"
+						>
+							<Settings className="size-4" />
+						</button>
+					</div>
 
-						<div className="tooltip">
-							<div className="tooltip-content">Toggle theme</div>
-							<button
-								onClick={toggleTheme}
-								className={`gap-3 btn btn-sm btn-ghost btn-square`}
-								title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-							>
-								{theme === "dark" ? (
-									<Sun className="w-4 h-4 text-base-content/50" />
-								) : (
-									<Moon className="w-4 h-4 text-base-content/50" />
-								)}
-							</button>
-						</div>
+					<div className="tooltip">
+						<div className="tooltip-content">Toggle theme</div>
+						<button
+							onClick={toggleTheme}
+							className={`gap-3 btn btn-sm btn-ghost btn-square`}
+							title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+						>
+							{theme === "dark" ? (
+								<Sun className="w-4 h-4 text-base-content/50" />
+							) : (
+								<Moon className="w-4 h-4 text-base-content/50" />
+							)}
+						</button>
+					</div>
 
-						<div className="tooltip">
-							<div className="tooltip-content">Stats</div>
-							<button
-								className={`gap-3 text-base-content/50 btn btn-sm btn-ghost btn-square`}
-								title="Stats"
-								aria-label="Stats"
-							>
-								<ChartAreaIcon className="size-4" />
-							</button>
-						</div>
+					<div className="tooltip">
+						<div className="tooltip-content">Stats</div>
+						<button
+							className={`gap-3 text-base-content/50 btn btn-sm btn-ghost btn-square`}
+							title="Stats"
+							aria-label="Stats"
+						>
+							<ChartAreaIcon className="size-4" />
+						</button>
 					</div>
 				</div>
 			</div>
-
-			{/* Keyboard shortcuts hint */}
-			{/* {activeWidgets.length > 0 && (
-				<div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-base-100 border border-border rounded-lg px-3 py-2 text-xs text-base-content/70 shadow-lg">
-					<span className="font-medium">Keyboard shortcuts:</span> 1-5 to
-					toggle, Esc to close all
-				</div>
-			)} */}
 		</div>
 	);
 }

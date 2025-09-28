@@ -169,6 +169,14 @@ body {
 	font-family: var(--font-family-sans);
 }
 
+/* Electron custom titlebar drag helpers */
+.electron-drag {
+	-webkit-app-region: drag;
+}
+.electron-no-drag {
+	-webkit-app-region: no-drag;
+}
+
 /* Ensure theme is applied immediately to prevent FOUC */
 html[data-theme="dark"] {
 	color-scheme: dark;

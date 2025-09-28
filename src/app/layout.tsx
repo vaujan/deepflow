@@ -8,6 +8,8 @@ import { FontProvider } from "../contexts/FontContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeLoadingWrapper } from "../components/ui/theme-loading-wrapper";
+import SonnerToaster from "../components/ui/sonner-toaster";
+import ElectronTitlebar from "../components/ui/electron-titlebar";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -31,8 +33,10 @@ export default function RootLayout({
 					<ThemeLoadingWrapper>
 						<FontProvider>
 							<SidebarProvider>
+								<ElectronTitlebar />
 								<WidgetProvider>
 									{children}
+									<SonnerToaster />
 									<SpeedInsights />
 									<Analytics />
 								</WidgetProvider>

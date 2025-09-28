@@ -11,7 +11,7 @@ import {
 	ChevronUp,
 } from "lucide-react";
 import { Session } from "../../hooks/useSession";
-import Toast from "./toast";
+import { toast } from "sonner";
 
 interface ActiveSessionProps {
 	session: Session;
@@ -29,30 +29,23 @@ export default function ActiveSession({
 	);
 	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
 	const [isTimeVisible, setIsTimeVisible] = useState(true); // Time is shown by default
-	const [toast, setToast] = useState<{
-		message: string;
-		type: "success" | "info" | "warning" | "error";
-		isVisible: boolean;
-	} | null>(null);
-	// Hold-to-confirm state for complete button
-	const [isHoldingComplete, setIsHoldingComplete] = useState(false);
-	const [holdProgress, setHoldProgress] = useState(0);
+	// Remove local toast state; using Sonner's global toast instead
+	// Confirm end session dialog state
+	const [isConfirmingComplete, setIsConfirmingComplete] = useState(false);
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const startTimeRef = useRef<number>(session.startTime.getTime());
 	const pauseTimeRef = useRef<number | null>(null);
 	const totalPausedTimeRef = useRef(0);
-	// Hold-to-confirm refs for complete button
-	const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
-	const holdProgressRef = useRef<NodeJS.Timeout | null>(null);
+	// Refs for a11y focus management
+	const completeButtonRef = useRef<HTMLButtonElement | null>(null);
+	const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 	// Refs to access current values in timer
 	const sessionRef = useRef(session);
 	const onSessionCompleteRef = useRef(onSessionComplete);
 	const hasInitializedRef = useRef(false);
 
-	// Hold duration constants for complete button
-	const HOLD_DURATION = 1500; // 1.5 seconds in milliseconds
-	const PROGRESS_UPDATE_INTERVAL = 16; // ~60fps for smooth progress bar
+	// No long-press: replaced with click + confirm modal
 
 	// Update refs when props change
 	useEffect(() => {
@@ -178,13 +171,6 @@ export default function ActiveSession({
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
 			}
-			// Cleanup hold timers
-			if (holdTimerRef.current) {
-				clearTimeout(holdTimerRef.current);
-			}
-			if (holdProgressRef.current) {
-				clearInterval(holdProgressRef.current);
-			}
 		};
 	}, []);
 
@@ -203,12 +189,8 @@ export default function ActiveSession({
 		// Play pause sound
 		playSound(400, 0.2, 0.3);
 
-		// Show toast notification
-		setToast({
-			message: "Session paused",
-			type: "warning",
-			isVisible: true,
-		});
+		// Show toast notification (Sonner)
+		toast.warning("Session paused");
 
 		// Timer will be cleared by the useEffect
 	};
@@ -223,12 +205,8 @@ export default function ActiveSession({
 		// Play resume sound
 		playSound(600, 0.2, 0.3);
 
-		// Show toast notification
-		setToast({
-			message: "Session resumed",
-			type: "info",
-			isVisible: true,
-		});
+		// Show toast notification (Sonner)
+		toast.info("Session resumed");
 
 		// Timer will be started by the useEffect
 	};
@@ -302,80 +280,67 @@ export default function ActiveSession({
 		}
 	};
 
-	// Hold-to-confirm handlers for complete button
-	const handleCompleteMouseDown = () => {
-		setIsHoldingComplete(true);
-		setHoldProgress(0);
-
-		// Start progress bar animation
-		holdProgressRef.current = setInterval(() => {
-			setHoldProgress((prev) => {
-				const newProgress =
-					prev + (PROGRESS_UPDATE_INTERVAL / HOLD_DURATION) * 100;
-				return Math.min(newProgress, 100);
-			});
-		}, PROGRESS_UPDATE_INTERVAL);
-
-		// Start hold timer
-		holdTimerRef.current = setTimeout(() => {
-			// Clear timer
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-
-			// Play completion sound
-			playSound(800, 0.3, 0.5);
-
-			// Create completed session object
-			const endTime = new Date();
-			let completionType: "completed" | "premature" | "overtime" = "completed";
-
-			// Determine completion type for planned sessions
-			if (session.duration && session.expectedEndTime) {
-				const expectedEnd = session.expectedEndTime.getTime();
-				const actualEnd = endTime.getTime();
-				const timeDiff = actualEnd - expectedEnd;
-				const toleranceMs = 60000; // 1 minute tolerance
-
-				if (timeDiff < -toleranceMs) {
-					completionType = "premature";
-				} else if (timeDiff > toleranceMs) {
-					completionType = "overtime";
-				} else {
-					completionType = "completed";
-				}
-			}
-
-			const completedSession = {
-				...session,
-				status: "completed" as const,
-				endTime: endTime,
-				elapsedTime,
-				completionType,
-			};
-
-			onSessionComplete(completedSession);
-			setIsHoldingComplete(false);
-			setHoldProgress(0);
-		}, HOLD_DURATION);
+	// Open/close confirm dialog and confirm completion
+	const openCompleteConfirm = () => {
+		setIsConfirmingComplete(true);
+		// Move focus into the dialog for a11y
+		setTimeout(() => {
+			if (confirmButtonRef.current) confirmButtonRef.current.focus();
+		}, 0);
 	};
 
-	const handleCompleteMouseUp = () => {
-		if (holdTimerRef.current) {
-			clearTimeout(holdTimerRef.current);
-			holdTimerRef.current = null;
+	const closeCompleteConfirm = () => {
+		setIsConfirmingComplete(false);
+		// Return focus to the trigger button
+		setTimeout(() => {
+			if (completeButtonRef.current) completeButtonRef.current.focus();
+		}, 0);
+	};
+
+	const confirmComplete = () => {
+		// Clear running timer
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+			timerRef.current = null;
 		}
-		if (holdProgressRef.current) {
-			clearInterval(holdProgressRef.current);
-			holdProgressRef.current = null;
+
+		// Play completion sound
+		playSound(800, 0.3, 0.5);
+
+		// Create completed session object
+		const endTime = new Date();
+		let completionType: "completed" | "premature" | "overtime" = "completed";
+
+		// Determine completion type for planned sessions
+		if (session.duration && session.expectedEndTime) {
+			const expectedEnd = session.expectedEndTime.getTime();
+			const actualEnd = endTime.getTime();
+			const timeDiff = actualEnd - expectedEnd;
+			const toleranceMs = 60000; // 1 minute tolerance
+
+			if (timeDiff < -toleranceMs) {
+				completionType = "premature";
+			} else if (timeDiff > toleranceMs) {
+				completionType = "overtime";
+			} else {
+				completionType = "completed";
+			}
 		}
-		setIsHoldingComplete(false);
-		setHoldProgress(0);
+
+		const completedSession = {
+			...session,
+			status: "completed" as const,
+			endTime: endTime,
+			elapsedTime,
+			completionType,
+		};
+
+		onSessionComplete(completedSession);
+		closeCompleteConfirm();
 	};
 
 	const progressPercentage = getProgressPercentage();
-	const isPlannedSession = session.sessionType === "time-boxed";
+	const isPlannedSession = session.sessionType !== "open";
 
 	// Helper function to truncate extremely long goals for display
 	const truncateGoal = (goal: string, maxLength: number = 100) => {
@@ -389,16 +354,7 @@ export default function ActiveSession({
 
 	return (
 		<>
-			{/* Toast Notification */}
-			{toast && (
-				<Toast
-					message={toast.message}
-					type={toast.type}
-					isVisible={toast.isVisible}
-					onClose={() => setToast(null)}
-					duration={2000}
-				/>
-			)}
+			{/* Toast Notification removed - using Sonner's global Toaster */}
 
 			<div className="card bg-transparent min-w-lg w-full xl:max-w-lg p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
 				{/* Session Header */}
@@ -414,8 +370,10 @@ export default function ActiveSession({
 						{truncateGoal(session.goal, 80)}
 					</h1>
 					<p className="text-base-content/70 text-sm">
-						{isPlannedSession
+						{session.sessionType === "time-boxed"
 							? "Time-boxed focus session"
+							: session.sessionType === "pomodoro"
+							? "Pomodoro focus session"
 							: "Flow-based session"}
 					</p>
 				</div>
@@ -555,11 +513,11 @@ export default function ActiveSession({
 					)}
 
 					{/* Focus level */}
-					<div className="flex align-middle items-center gap-2">
+					{/* <div className="flex align-middle items-center gap-2">
 						<Target className="size-4 text-base-content/50" />
 						<span className="text-base-content/70">Focus Level</span>
 						<span>{session.focusLevel}</span>
-					</div>
+					</div> */}
 
 					{/* Tags */}
 					{session.tags.length > 0 && (
@@ -578,28 +536,17 @@ export default function ActiveSession({
 
 				{/* Session Controls */}
 				<div className="flex gap-3 w-full">
-					{/* Complete Button */}
+					{/* End session button triggers confirm dialog */}
 					<button
-						onMouseDown={handleCompleteMouseDown}
-						onMouseUp={handleCompleteMouseUp}
-						onMouseLeave={handleCompleteMouseUp}
-						onTouchStart={handleCompleteMouseDown}
-						onTouchEnd={handleCompleteMouseUp}
-						className={`btn btn-lg group relative overflow-hidden ${
-							isHoldingComplete ? "btn-neutral" : "btn-ghost"
-						}`}
-						title="End and complete this session (hold for 1.5s to confirm)"
-						aria-label="Complete session (hold for 1.5 seconds to confirm)"
+						onClick={openCompleteConfirm}
+						ref={completeButtonRef}
+						className="btn btn-lg btn-ghost"
+						title="End and complete this session"
+						aria-label="End and complete this session"
 						aria-describedby="complete-button-description"
+						style={{ touchAction: "manipulation" }}
 					>
-						{/* Progress bar overlay */}
-						{isHoldingComplete && (
-							<div
-								className="absolute inset-0 bg-error/50 transition-all duration-75 ease-out"
-								style={{ width: `${holdProgress}%` }}
-							/>
-						)}
-						<Square className="size-5 group-hover:text-error relative z-10" />
+						<Square className="size-5" />
 					</button>
 
 					{/* Pause/Resume Button */}
@@ -623,8 +570,7 @@ export default function ActiveSession({
 				{/* Accessibility descriptions */}
 				<div className="sr-only">
 					<div id="complete-button-description">
-						Hold this button for 1.5 seconds to complete and end the current
-						focus session.
+						End and complete the current focus session.
 					</div>
 					<div id="pause-button-description">
 						{isPaused
@@ -650,6 +596,7 @@ export default function ActiveSession({
 						className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
 						title={isTimeVisible ? "Hide time display" : "Show time display"}
 						aria-label={isTimeVisible ? "Hide time" : "Show time"}
+						style={{ touchAction: "manipulation" }}
 					>
 						{isTimeVisible ? "Hide Time" : "Show Time"}
 					</button>
@@ -666,6 +613,44 @@ export default function ActiveSession({
 					</div>
 				</div> */}
 			</div>
+			{/* Confirm End Session Dialog */}
+			{isConfirmingComplete && (
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="end-session-title"
+					onKeyDown={(e) => {
+						if (e.key === "Escape") closeCompleteConfirm();
+					}}
+				>
+					<div className="card bg-base-100 p-6 w-full max-w-sm rounded-box shadow-xl">
+						<h2 id="end-session-title" className="font-semibold mb-2">
+							End session?
+						</h2>
+						<p className="text-sm text-base-content/70 mb-4">
+							This will stop the timer and mark the session as complete.
+						</p>
+						<div className="flex gap-2 justify-end">
+							<button
+								className="btn btn-ghost"
+								onClick={closeCompleteConfirm}
+								style={{ touchAction: "manipulation" }}
+							>
+								Cancel
+							</button>
+							<button
+								ref={confirmButtonRef}
+								className="btn btn-error"
+								onClick={confirmComplete}
+								style={{ touchAction: "manipulation" }}
+							>
+								End session
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</>
 	);
 }
