@@ -12,6 +12,10 @@ declare global {
 				onMaximizeChanged: (
 					handler: (isMaximized: boolean) => void
 				) => () => void;
+				zoomIn: () => Promise<number>;
+				zoomOut: () => Promise<number>;
+				zoomReset: () => Promise<number>;
+				getZoom: () => Promise<number>;
 			};
 		};
 	}

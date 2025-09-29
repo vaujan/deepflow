@@ -1,4 +1,11 @@
-const { app, BrowserWindow, ipcMain, shell, protocol } = require("electron");
+const {
+	app,
+	BrowserWindow,
+	ipcMain,
+	shell,
+	protocol,
+	globalShortcut,
+} = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 
@@ -14,7 +21,7 @@ function createMainWindow() {
 	const win = new BrowserWindow({
 		width: 1200,
 		height: 800,
-		frame: false,
+		frame: true,
 		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
 		autoHideMenuBar: true,
 		webPreferences: {
@@ -146,11 +153,61 @@ function setupIpc() {
 		win?.close();
 		return true;
 	});
+
+	ipcMain.handle("window:zoom-in", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		const currentZoom = win?.webContents?.getZoomFactor() ?? 1;
+		const newZoom = Math.min(currentZoom + 0.1, 3); // Max zoom 300%
+		win?.webContents?.setZoomFactor(newZoom);
+		return newZoom;
+	});
+
+	ipcMain.handle("window:zoom-out", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		const currentZoom = win?.webContents?.getZoomFactor() ?? 1;
+		const newZoom = Math.max(currentZoom - 0.1, 0.5); // Min zoom 50%
+		win?.webContents?.setZoomFactor(newZoom);
+		return newZoom;
+	});
+
+	ipcMain.handle("window:zoom-reset", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.webContents?.setZoomFactor(1);
+		return 1;
+	});
+
+	ipcMain.handle("window:get-zoom", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		return win?.webContents?.getZoomFactor() ?? 1;
+	});
 }
 
 async function bootstrap() {
 	setupIpc();
 	setupAppEvents();
+
+	// Register global shortcuts for zoom
+	globalShortcut.register("CommandOrControl+=", () => {
+		if (mainWindow) {
+			const currentZoom = mainWindow.webContents.getZoomFactor();
+			const newZoom = Math.min(currentZoom + 0.1, 3);
+			mainWindow.webContents.setZoomFactor(newZoom);
+		}
+	});
+
+	globalShortcut.register("CommandOrControl+-", () => {
+		if (mainWindow) {
+			const currentZoom = mainWindow.webContents.getZoomFactor();
+			const newZoom = Math.max(currentZoom - 0.1, 0.5);
+			mainWindow.webContents.setZoomFactor(newZoom);
+		}
+	});
+
+	globalShortcut.register("CommandOrControl+0", () => {
+		if (mainWindow) {
+			mainWindow.webContents.setZoomFactor(1);
+		}
+	});
 
 	if (!isDev) {
 		// If you decide to serve SSR instead of static files, uncomment below
@@ -170,5 +227,6 @@ app
 	});
 
 app.on("before-quit", () => {
+	globalShortcut.unregisterAll();
 	stopNextServer();
 });

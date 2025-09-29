@@ -13,6 +13,10 @@ const api = {
 			return () =>
 				ipcRenderer.removeListener("window:maximize-changed", listener);
 		},
+		zoomIn: () => ipcRenderer.invoke("window:zoom-in"),
+		zoomOut: () => ipcRenderer.invoke("window:zoom-out"),
+		zoomReset: () => ipcRenderer.invoke("window:zoom-reset"),
+		getZoom: () => ipcRenderer.invoke("window:get-zoom"),
 	},
 };
 
