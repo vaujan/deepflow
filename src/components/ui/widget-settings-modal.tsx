@@ -115,7 +115,9 @@ export default function WidgetSettingsModal({
 
 							{/* Content */}
 							<section className="col-span-8 lg:col-span-9 p-5">
-								<h2 className="font-medium mb-2">Widgets</h2>
+								<Dialog.Title asChild>
+									<h2 className="font-medium mb-2">Widgets</h2>
+								</Dialog.Title>
 								<p className="text-sm text-base-content/70 mb-4">
 									Pick which widgets to show in your workspace.
 								</p>
