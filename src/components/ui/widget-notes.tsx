@@ -177,7 +177,7 @@ export default function WidgetNotes() {
 	};
 
 	return (
-		<div className="w-full min-w-lg lg:w-2xl h-full group flex flex-col gap-2 overflow-hidden">
+		<div className="w-full h-full group flex flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
 					<span className="font-medium text-lg">Notes</span>
@@ -206,14 +206,14 @@ export default function WidgetNotes() {
 			{isAddingNew && (
 				<div
 					ref={addNoteRef}
-					className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs"
+					className="w-full card text-base-content/90 overflow-hidden bg-card border-border shadow-xs"
 				>
 					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
 								type="text"
 								placeholder="Note title..."
-								className="border-b-1  border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
+								className="border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
 								value={newNoteTitle}
 								onChange={(e) => setNewNoteTitle(e.target.value)}
 								onKeyDown={(e) => {
@@ -298,7 +298,7 @@ export default function WidgetNotes() {
 									editNoteRefs.current[note.id] = el;
 								}
 							}}
-							className={`w-full border-border border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
+							className={`w-full border-border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
 								editingNote === note.id
 									? "bg-card"
 									: editingNote !== null || isAddingNew

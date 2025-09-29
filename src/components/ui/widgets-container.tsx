@@ -6,8 +6,7 @@ import { useWidgets, Widgets } from "@/src/contexts/WidgetContext";
 import WidgetNotes from "./widget-notes";
 import WidgetTask from "./widget-task";
 import WidgetKanban from "./widget-kanban";
-import WidgetActiveSession from "./widget-active-session";
-import SessionCard from "./session-card";
+import WidgetTimer from "./widget-timer";
 
 type WidgetComponent = React.ComponentType<unknown>;
 
@@ -16,7 +15,7 @@ const widgetRegistry: Record<Widgets, WidgetComponent> = {
 	kanban: WidgetKanban,
 	tasks: WidgetTask,
 	journal: WidgetNotes, // temporary reuse until a dedicated widget exists
-	timer: SessionCard,
+	timer: WidgetTimer,
 };
 
 export default function WidgetsContainer() {
@@ -39,21 +38,23 @@ export default function WidgetsContainer() {
 	if (widgetsToRender.length === 1) {
 		const { Component } = widgetsToRender[0];
 		return (
-			<div className="w-full max-w-full overflow-hidden flex justify-center">
-				<Component />
+			<div className="w-full max-w-full overflow-hidden flex items-center justify-center">
+				<div className="w-full max-w-2xl">
+					<Component />
+				</div>
 			</div>
 		);
 	}
 
 	return (
 		<div className="w-full rounded-box border border-border lg:border-0 p-2 lg:p-0">
-			<div className="flex gap-2 lg:gap-3">
+			<div className="flex gap-2 lg:gap-3 justify-center">
 				{widgetsToRender.map(({ Component }, index) => (
 					<div
 						key={`pane-${index}`}
-						className="overflow-auto p-4 border-border border rounded-lg flex-1 min-w-0"
+						className="overflow-auto max-w-2xl p-4 border-border border rounded-lg flex-1 min-w-0"
 					>
-						<div className="h-full w-full">
+						<div className="h-full w-full justify-center flex">
 							<Component />
 						</div>
 					</div>
