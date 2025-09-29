@@ -633,7 +633,7 @@ function ActiveSessionView({
 			<div
 				className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
 					isTimerExpanded
-						? "max-h-96 opacity-100 -mt-14 pt-14"
+						? "max-h-96 h-fit opacity-100 -mt-14 pt-14"
 						: "max-h-0 opacity-0 p-0 mt-0"
 				}`}
 			>
