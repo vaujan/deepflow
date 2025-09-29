@@ -7,11 +7,12 @@ import TagsOverviewLazy from "@/src/components/ui/tags-overview-lazy";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
 import Sidebar from "@/src/components/ui/sidebar";
+import Header from "@/src/components/ui/header";
 
 export default function StatsPage() {
 	return (
 		<div className="flex flex-col min-h-screen bg-base-300 lg:flex-row">
-			<Sidebar />
+			{/* <Sidebar /> */}
 			{/* Main Content */}
 			<main className="relative flex flex-col items-start justify-start flex-1 gap-4">
 				<StatsHeader />

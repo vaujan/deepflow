@@ -10,6 +10,7 @@ import {
 	Edit3,
 } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import { ScrollArea } from "./scroll-area";
 import { mockTasks, type Task } from "../../data/mockTasks";
 
 export default function WidgetTask() {
@@ -175,7 +176,7 @@ export default function WidgetTask() {
 	}, [isAddingNew, editingTaskId]);
 
 	return (
-		<div className="w-full h-full min-w-lg max-w-xl  group flex flex-col overflow-hidden">
+		<div className="w-full h-full group flex flex-col overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
 				<span className="font-medium text-lg">
 					Tasks{" "}
@@ -276,220 +277,222 @@ export default function WidgetTask() {
 			)}
 
 			{/* Task list */}
-			<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-				{tasks.length === 0 && !isAddingNew ? (
-					// Empty state
-					<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-						<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
-							<ListTodo className="size-6 text-base-content/35" />
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col overflow-x-hidden pr-2">
+					{tasks.length === 0 && !isAddingNew ? (
+						// Empty state
+						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+							<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
+								<ListTodo className="size-6 text-base-content/35" />
+							</div>
+							<h3 className="text-lg font-semibold text-base-content/80 mb-2">
+								No tasks yet
+							</h3>
+							<p className="text-base-content/60 mb-6 max-w-sm">
+								Start organizing your work and personal life. Create your first
+								task to get started.
+							</p>
+							<button onClick={startAddingNew} className="btn btn-sm gap-2">
+								<Plus className="size-4" />
+								Create your first task
+							</button>
 						</div>
-						<h3 className="text-lg font-semibold text-base-content/80 mb-2">
-							No tasks yet
-						</h3>
-						<p className="text-base-content/60 mb-6 max-w-sm">
-							Start organizing your work and personal life. Create your first
-							task to get started.
-						</p>
-						<button onClick={startAddingNew} className="btn btn-sm gap-2">
-							<Plus className="size-4" />
-							Create your first task
-						</button>
-					</div>
-				) : (
-					tasks.map((task, index) => (
-						<div key={task.id}>
-							{editingTaskId === task.id ? (
-								// Edit task form
-								<div
-									ref={(el) => {
-										if (editingTaskId === task.id) {
-											editTaskRefs.current[task.id] = el;
-										}
-									}}
-									className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4"
-								>
-									{/* Top section - Task inputs */}
-									<div className="p-4">
-										<div className="flex flex-col gap-3">
-											<input
-												type="text"
-												placeholder="Task name"
-												className="text-base-content placeholder-base-content/50 bg-transparent border-none outline-none text-lg font-medium w-full"
-												value={editTask.title}
-												onChange={(e) =>
-													setEditTask({ ...editTask, title: e.target.value })
-												}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" && e.shiftKey) {
-														e.preventDefault();
-														saveEditTask();
-													} else if (e.key === "Escape") {
-														e.preventDefault();
-														cancelEditTask();
+					) : (
+						tasks.map((task, index) => (
+							<div key={task.id}>
+								{editingTaskId === task.id ? (
+									// Edit task form
+									<div
+										ref={(el) => {
+											if (editingTaskId === task.id) {
+												editTaskRefs.current[task.id] = el;
+											}
+										}}
+										className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4"
+									>
+										{/* Top section - Task inputs */}
+										<div className="p-4">
+											<div className="flex flex-col gap-3">
+												<input
+													type="text"
+													placeholder="Task name"
+													className="text-base-content placeholder-base-content/50 bg-transparent border-none outline-none text-lg font-medium w-full"
+													value={editTask.title}
+													onChange={(e) =>
+														setEditTask({ ...editTask, title: e.target.value })
 													}
-												}}
-												autoFocus
-											/>
-											<input
-												type="text"
-												placeholder="Description"
-												className="text-base-content/70 placeholder-base-content/40 bg-transparent border-none outline-none w-full"
-												value={editTask.description}
-												onChange={(e) =>
-													setEditTask({
-														...editTask,
-														description: e.target.value,
-													})
-												}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" && e.shiftKey) {
-														e.preventDefault();
-														saveEditTask();
-													} else if (e.key === "Escape") {
-														e.preventDefault();
-														cancelEditTask();
+													onKeyDown={(e) => {
+														if (e.key === "Enter" && e.shiftKey) {
+															e.preventDefault();
+															saveEditTask();
+														} else if (e.key === "Escape") {
+															e.preventDefault();
+															cancelEditTask();
+														}
+													}}
+													autoFocus
+												/>
+												<input
+													type="text"
+													placeholder="Description"
+													className="text-base-content/70 placeholder-base-content/40 bg-transparent border-none outline-none w-full"
+													value={editTask.description}
+													onChange={(e) =>
+														setEditTask({
+															...editTask,
+															description: e.target.value,
+														})
 													}
-												}}
-											/>
-										</div>
-									</div>
-
-									{/* Bottom section - Project and actions */}
-									<div className="px-4 py-4 flex justify-between items-center">
-										<button
-											className="btn btn-sm"
-											onClick={() => {
-												const today = new Date().toISOString().split("T")[0];
-												setEditTask({ ...editTask, dueDate: today });
-											}}
-										>
-											<Calendar className="size-4" />
-											Date
-										</button>
-
-										{/* Action buttons */}
-										<div className="flex gap-2">
-											<button
-												className="btn-sm btn btn-ghost"
-												onClick={cancelEditTask}
-											>
-												Cancel
-											</button>
-											<button
-												className="btn-sm btn btn-primary"
-												onClick={saveEditTask}
-												disabled={!editTask.title.trim()}
-											>
-												Save changes
-												<kbd className="kbd kbd-xs text-base-content">
-													shift
-												</kbd>
-												+
-												<kbd className="kbd kbd-xs text-base-content">
-													enter
-												</kbd>
-											</button>
-										</div>
-									</div>
-								</div>
-							) : (
-								// Regular task display
-								<div
-									className={`w-full py-4 px-0 border-b border-base-content/10 transition-all ease-out cursor-pointer hover:bg-base-50 ${
-										task.completed ? "opacity-75" : ""
-									} ${index === 0 ? "border-t border-base-300" : ""}`}
-								>
-									<div className="flex items-start gap-3">
-										<button
-											onClick={() => toggleTask(task.id)}
-											className="mt-0.5 flex-shrink-0"
-										>
-											{task.completed ? (
-												<CheckCircle className="size-5 text-success" />
-											) : (
-												<Circle className="size-5 text-base-content/40" />
-											)}
-										</button>
-
-										<div className="flex-1 min-w-0 overflow-hidden">
-											<div className="flex flex-col gap-1">
-												<span
-													className={`font-medium text-base-content break-words ${
-														task.completed
-															? "line-through text-base-content/50"
-															: ""
-													}`}
-												>
-													{task.title}
-												</span>
-
-												{task.description && (
-													<span className="text-sm text-base-content/60 break-words">
-														{task.description}
-													</span>
-												)}
-
-												{task.dueDate && (
-													<div className="flex items-center gap-1 mt-1">
-														<Calendar
-															className={`size-3 ${
-																new Date(task.dueDate).toDateString() ===
-																new Date().toDateString()
-																	? "text-success"
-																	: "text-base-content/50"
-															}`}
-														/>
-														<span
-															className={`text-xs ${
-																new Date(task.dueDate).toDateString() ===
-																new Date().toDateString()
-																	? "text-success"
-																	: "text-base-content/50"
-															}`}
-														>
-															{new Date(task.dueDate).toDateString() ===
-															new Date().toDateString()
-																? "Today"
-																: new Date(task.dueDate).toLocaleDateString(
-																		"en-US",
-																		{ day: "numeric", month: "short" }
-																  )}
-														</span>
-													</div>
-												)}
+													onKeyDown={(e) => {
+														if (e.key === "Enter" && e.shiftKey) {
+															e.preventDefault();
+															saveEditTask();
+														} else if (e.key === "Escape") {
+															e.preventDefault();
+															cancelEditTask();
+														}
+													}}
+												/>
 											</div>
 										</div>
 
-										{/* Actions buttons */}
-										<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+										{/* Bottom section - Project and actions */}
+										<div className="px-4 py-4 flex justify-between items-center">
 											<button
-												className="btn btn-sm btn-square btn-ghost"
-												onClick={(e) => {
-													e.stopPropagation();
-													startEditTask(task);
+												className="btn btn-sm"
+												onClick={() => {
+													const today = new Date().toISOString().split("T")[0];
+													setEditTask({ ...editTask, dueDate: today });
 												}}
-												title="Edit task"
 											>
-												<Edit3 className="size-3" />
+												<Calendar className="size-4" />
+												Date
 											</button>
-											<button
-												className="btn btn-sm btn-square btn-ghost text-error hover:bg-error/20"
-												onClick={(e) => {
-													e.stopPropagation();
-													deleteTask(task.id);
-												}}
-												title="Delete task"
-											>
-												<Trash2 className="size-3" />
-											</button>
+
+											{/* Action buttons */}
+											<div className="flex gap-2">
+												<button
+													className="btn-sm btn btn-ghost"
+													onClick={cancelEditTask}
+												>
+													Cancel
+												</button>
+												<button
+													className="btn-sm btn btn-primary"
+													onClick={saveEditTask}
+													disabled={!editTask.title.trim()}
+												>
+													Save changes
+													<kbd className="kbd kbd-xs text-base-content">
+														shift
+													</kbd>
+													+
+													<kbd className="kbd kbd-xs text-base-content">
+														enter
+													</kbd>
+												</button>
+											</div>
 										</div>
 									</div>
-								</div>
-							)}
-						</div>
-					))
-				)}
-			</div>
+								) : (
+									// Regular task display
+									<div
+										className={`w-full py-4 px-0 border-b border-base-content/10 transition-all ease-out cursor-pointer hover:bg-base-50 ${
+											task.completed ? "opacity-75" : ""
+										} ${index === 0 ? "border-t border-base-300" : ""}`}
+									>
+										<div className="flex items-start gap-3">
+											<button
+												onClick={() => toggleTask(task.id)}
+												className="mt-0.5 flex-shrink-0"
+											>
+												{task.completed ? (
+													<CheckCircle className="size-5 text-success" />
+												) : (
+													<Circle className="size-5 text-base-content/40" />
+												)}
+											</button>
+
+											<div className="flex-1 min-w-0 overflow-hidden">
+												<div className="flex flex-col gap-1">
+													<span
+														className={`font-medium text-base-content break-words ${
+															task.completed
+																? "line-through text-base-content/50"
+																: ""
+														}`}
+													>
+														{task.title}
+													</span>
+
+													{task.description && (
+														<span className="text-sm text-base-content/60 break-words">
+															{task.description}
+														</span>
+													)}
+
+													{task.dueDate && (
+														<div className="flex items-center gap-1 mt-1">
+															<Calendar
+																className={`size-3 ${
+																	new Date(task.dueDate).toDateString() ===
+																	new Date().toDateString()
+																		? "text-success"
+																		: "text-base-content/50"
+																}`}
+															/>
+															<span
+																className={`text-xs ${
+																	new Date(task.dueDate).toDateString() ===
+																	new Date().toDateString()
+																		? "text-success"
+																		: "text-base-content/50"
+																}`}
+															>
+																{new Date(task.dueDate).toDateString() ===
+																new Date().toDateString()
+																	? "Today"
+																	: new Date(task.dueDate).toLocaleDateString(
+																			"en-US",
+																			{ day: "numeric", month: "short" }
+																	  )}
+															</span>
+														</div>
+													)}
+												</div>
+											</div>
+
+											{/* Actions buttons */}
+											<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+												<button
+													className="btn btn-sm btn-square btn-ghost"
+													onClick={(e) => {
+														e.stopPropagation();
+														startEditTask(task);
+													}}
+													title="Edit task"
+												>
+													<Edit3 className="size-3" />
+												</button>
+												<button
+													className="btn btn-sm btn-square btn-ghost text-error hover:bg-error/20"
+													onClick={(e) => {
+														e.stopPropagation();
+														deleteTask(task.id);
+													}}
+													title="Delete task"
+												>
+													<Trash2 className="size-3" />
+												</button>
+											</div>
+										</div>
+									</div>
+								)}
+							</div>
+						))
+					)}
+				</div>
+			</ScrollArea>
 		</div>
 	);
 }

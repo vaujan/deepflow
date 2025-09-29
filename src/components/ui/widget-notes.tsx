@@ -3,6 +3,7 @@
 import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import ContextMenuEditor from "./context-menu-editor";
+import { ScrollArea } from "./scroll-area";
 import { mockNotes, type Note } from "../../data/mockNotes";
 
 export default function WidgetNotes() {
@@ -177,7 +178,7 @@ export default function WidgetNotes() {
 	};
 
 	return (
-		<div className="w-full min-w-lg max-w-xl h-full group flex flex-col gap-2 overflow-hidden">
+		<div className="group flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
 					<span className="font-medium text-lg">Notes</span>
@@ -206,14 +207,14 @@ export default function WidgetNotes() {
 			{isAddingNew && (
 				<div
 					ref={addNoteRef}
-					className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs"
+					className="w-full card text-base-content/90 overflow-hidden bg-card border-border shadow-xs"
 				>
 					<div className="flex justify-between p-4">
 						<div className="flex items-center gap-2">
 							<input
 								type="text"
 								placeholder="Note title..."
-								className="border-b-1  border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
+								className="border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
 								value={newNoteTitle}
 								onChange={(e) => setNewNoteTitle(e.target.value)}
 								onKeyDown={(e) => {
@@ -266,163 +267,165 @@ export default function WidgetNotes() {
 				</div>
 			)}{" "}
 			{/* Note list */}
-			<div
-				className={`flex flex-col gap-4 rounded-box flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${
-					editingNote !== null || isAddingNew ? "relative" : ""
-				}`}
-			>
-				{notes.length === 0 && !isAddingNew ? (
-					// Empty state
-					<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-						<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
-							<Notebook className="size-6 text-base-content/35" />
+			<ScrollArea className="flex-1 min-h-0">
+				<div
+					className={`flex flex-col gap-4 rounded-box pr-2 transition-all duration-300 overflow-x-hidden ${
+						editingNote !== null || isAddingNew ? "relative" : ""
+					}`}
+				>
+					{notes.length === 0 && !isAddingNew ? (
+						// Empty state
+						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+							<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
+								<Notebook className="size-6 text-base-content/35" />
+							</div>
+							<h3 className="text-lg font-semibold text-base-content/80 mb-2">
+								No notes yet
+							</h3>
+							<p className="text-base-content/60 mb-6 max-w-sm">
+								Start capturing your thoughts, ideas, and important information.
+								Create your first note to get started.
+							</p>
+							<button onClick={startAddingNew} className="btn btn-sm gap-2">
+								<Plus className="size-4" />
+								Create your first note
+							</button>
 						</div>
-						<h3 className="text-lg font-semibold text-base-content/80 mb-2">
-							No notes yet
-						</h3>
-						<p className="text-base-content/60 mb-6 max-w-sm">
-							Start capturing your thoughts, ideas, and important information.
-							Create your first note to get started.
-						</p>
-						<button onClick={startAddingNew} className="btn btn-sm gap-2">
-							<Plus className="size-4" />
-							Create your first note
-						</button>
-					</div>
-				) : (
-					notes.map((note) => (
-						<div
-							key={note.id}
-							ref={(el) => {
-								if (editingNote === note.id) {
-									editNoteRefs.current[note.id] = el;
-								}
-							}}
-							className={`w-full border-border border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
-								editingNote === note.id
-									? "bg-card"
-									: editingNote !== null || isAddingNew
-									? "bg-card opacity-40"
-									: "bg-card"
-							}`}
-							onClick={() => {
-								// Only handle clicks when not in editing mode
-								if (editingNote !== note.id) {
-									// Handle note selection or other actions here if needed
-								}
-							}}
-						>
-							{editingNote === note.id ? (
-								// Editing mode - same interface as adding new note
-								<>
-									<div className="flex justify-between p-4 -m-4 mb-3">
-										<div className="flex items-center gap-2">
-											<input
-												type="text"
-												placeholder="Note title..."
-												className="border-b-1  border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
-												value={note.title}
-												onChange={(e) =>
-													updateNote(note.id, { title: e.target.value })
-												}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" && e.shiftKey) {
-														e.preventDefault();
-														stopEditing();
-													} else if (e.key === "Escape") {
-														e.preventDefault();
-														cancelEditing();
+					) : (
+						notes.map((note) => (
+							<div
+								key={note.id}
+								ref={(el) => {
+									if (editingNote === note.id) {
+										editNoteRefs.current[note.id] = el;
+									}
+								}}
+								className={`w-full border-border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
+									editingNote === note.id
+										? "bg-card"
+										: editingNote !== null || isAddingNew
+										? "bg-card opacity-40"
+										: "bg-card"
+								}`}
+								onClick={() => {
+									// Only handle clicks when not in editing mode
+									if (editingNote !== note.id) {
+										// Handle note selection or other actions here if needed
+									}
+								}}
+							>
+								{editingNote === note.id ? (
+									// Editing mode - same interface as adding new note
+									<>
+										<div className="flex justify-between p-4 -m-4 mb-3">
+											<div className="flex items-center gap-2">
+												<input
+													type="text"
+													placeholder="Note title..."
+													className="border-b-1  border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
+													value={note.title}
+													onChange={(e) =>
+														updateNote(note.id, { title: e.target.value })
 													}
-												}}
-											/>
+													onKeyDown={(e) => {
+														if (e.key === "Enter" && e.shiftKey) {
+															e.preventDefault();
+															stopEditing();
+														} else if (e.key === "Escape") {
+															e.preventDefault();
+															cancelEditing();
+														}
+													}}
+												/>
+											</div>
+											<div className="flex gap-2">
+												<button
+													className="btn btn-sm btn-ghost"
+													onClick={stopEditing}
+													disabled={
+														!note.title.trim() ||
+														note.content.trim() === "<p></p>"
+													}
+												>
+													Save
+													<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
+													<kbd className="kbd kbd-xs">enter</kbd>
+												</button>
+												<button
+													className="btn btn-ghost btn-sm btn-circle"
+													onClick={cancelEditing}
+												>
+													<X className="size-3" />
+												</button>
+											</div>
 										</div>
-										<div className="flex gap-2">
-											<button
-												className="btn btn-sm btn-ghost"
-												onClick={stopEditing}
-												disabled={
-													!note.title.trim() ||
-													note.content.trim() === "<p></p>"
+
+										<ContextMenuEditor
+											content={note.content}
+											onChange={(content) => updateNote(note.id, { content })}
+											className="h-fit -m-4"
+											autoFocus={true}
+											onKeyDown={(e) => {
+												if (e.key === "Enter" && e.shiftKey) {
+													e.preventDefault();
+													stopEditing();
+												} else if (e.key === "Escape") {
+													e.preventDefault();
+													cancelEditing();
 												}
-											>
-												Save
-												<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
-												<kbd className="kbd kbd-xs">enter</kbd>
-											</button>
-											<button
-												className="btn btn-ghost btn-sm btn-circle"
-												onClick={cancelEditing}
-											>
-												<X className="size-3" />
-											</button>
+											}}
+										/>
+									</>
+								) : (
+									// Read mode
+									<>
+										{/* Note header with title, time, and actions */}
+										<div
+											className={`flex ${
+												note.title ? "justify-between" : "justify-end"
+											} text-base-content/50 items-center mb-3`}
+										>
+											{note.title && (
+												<span className="badge badge-sm rounded-sm">
+													{note.title}
+												</span>
+											)}
+											<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+												<p className="text-xs">{note.timestamp}</p>
+												<button
+													className="btn btn-sm btn-ghost btn-square"
+													onClick={(e) => {
+														e.stopPropagation();
+														startEditing(note.id);
+													}}
+													title="Edit note"
+												>
+													<Edit3 className="size-3" />
+												</button>
+												<button
+													className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/20"
+													onClick={(e) => {
+														e.stopPropagation();
+														deleteNote(note.id);
+													}}
+													title="Delete note"
+												>
+													<Trash2 className="size-3" />
+												</button>
+											</div>
 										</div>
-									</div>
 
-									<ContextMenuEditor
-										content={note.content}
-										onChange={(content) => updateNote(note.id, { content })}
-										className="h-fit -m-4"
-										autoFocus={true}
-										onKeyDown={(e) => {
-											if (e.key === "Enter" && e.shiftKey) {
-												e.preventDefault();
-												stopEditing();
-											} else if (e.key === "Escape") {
-												e.preventDefault();
-												cancelEditing();
-											}
-										}}
-									/>
-								</>
-							) : (
-								// Read mode
-								<>
-									{/* Note header with title, time, and actions */}
-									<div
-										className={`flex ${
-											note.title ? "justify-between" : "justify-end"
-										} text-base-content/50 items-center mb-3`}
-									>
-										{note.title && (
-											<span className="badge badge-sm rounded-sm">
-												{note.title}
-											</span>
-										)}
-										<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-											<p className="text-xs">{note.timestamp}</p>
-											<button
-												className="btn btn-sm btn-ghost btn-square"
-												onClick={(e) => {
-													e.stopPropagation();
-													startEditing(note.id);
-												}}
-												title="Edit note"
-											>
-												<Edit3 className="size-3" />
-											</button>
-											<button
-												className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/20"
-												onClick={(e) => {
-													e.stopPropagation();
-													deleteNote(note.id);
-												}}
-												title="Delete note"
-											>
-												<Trash2 className="size-3" />
-											</button>
+										{/* Note content */}
+										<div className="h-fit break-words">
+											{renderContent(note.content)}
 										</div>
-									</div>
-
-									{/* Note content */}
-									<div className="h-fit break-words">
-										{renderContent(note.content)}
-									</div>
-								</>
-							)}
-						</div>
-					))
-				)}
-			</div>
+									</>
+								)}
+							</div>
+						))
+					)}
+				</div>
+			</ScrollArea>
 		</div>
 	);
 }

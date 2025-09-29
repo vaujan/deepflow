@@ -1,4 +1,11 @@
-const { app, BrowserWindow, ipcMain, shell, protocol } = require("electron");
+const {
+	app,
+	BrowserWindow,
+	ipcMain,
+	shell,
+	protocol,
+	globalShortcut,
+} = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 
@@ -14,6 +21,9 @@ function createMainWindow() {
 	const win = new BrowserWindow({
 		width: 1200,
 		height: 800,
+		frame: true,
+		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
+		autoHideMenuBar: true,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
 			contextIsolation: true,
@@ -26,6 +36,18 @@ function createMainWindow() {
 	win.on("ready-to-show", () => win.show());
 	win.on("closed", () => {
 		mainWindow = null;
+	});
+
+	// Reflect maximize state changes to renderer (for toggle icon)
+	win.on("maximize", () => {
+		try {
+			win.webContents.send("window:maximize-changed", true);
+		} catch (_) {}
+	});
+	win.on("unmaximize", () => {
+		try {
+			win.webContents.send("window:maximize-changed", false);
+		} catch (_) {}
 	});
 
 	return win;
@@ -102,11 +124,90 @@ function setupIpc() {
 		await shell.openExternal(url);
 		return true;
 	});
+
+	ipcMain.handle("window:minimize", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.minimize();
+		return true;
+	});
+
+	ipcMain.handle("window:toggleMaximize", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		if (!win) return false;
+		if (win.isMaximized()) {
+			win.unmaximize();
+			return false;
+		} else {
+			win.maximize();
+			return true;
+		}
+	});
+
+	ipcMain.handle("window:isMaximized", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		return win?.isMaximized?.() ?? false;
+	});
+
+	ipcMain.handle("window:close", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.close();
+		return true;
+	});
+
+	ipcMain.handle("window:zoom-in", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		const currentZoom = win?.webContents?.getZoomFactor() ?? 1;
+		const newZoom = Math.min(currentZoom + 0.1, 3); // Max zoom 300%
+		win?.webContents?.setZoomFactor(newZoom);
+		return newZoom;
+	});
+
+	ipcMain.handle("window:zoom-out", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		const currentZoom = win?.webContents?.getZoomFactor() ?? 1;
+		const newZoom = Math.max(currentZoom - 0.1, 0.5); // Min zoom 50%
+		win?.webContents?.setZoomFactor(newZoom);
+		return newZoom;
+	});
+
+	ipcMain.handle("window:zoom-reset", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		win?.webContents?.setZoomFactor(1);
+		return 1;
+	});
+
+	ipcMain.handle("window:get-zoom", (event) => {
+		const win = BrowserWindow.fromWebContents(event.sender);
+		return win?.webContents?.getZoomFactor() ?? 1;
+	});
 }
 
 async function bootstrap() {
 	setupIpc();
 	setupAppEvents();
+
+	// Register global shortcuts for zoom
+	globalShortcut.register("CommandOrControl+=", () => {
+		if (mainWindow) {
+			const currentZoom = mainWindow.webContents.getZoomFactor();
+			const newZoom = Math.min(currentZoom + 0.1, 3);
+			mainWindow.webContents.setZoomFactor(newZoom);
+		}
+	});
+
+	globalShortcut.register("CommandOrControl+-", () => {
+		if (mainWindow) {
+			const currentZoom = mainWindow.webContents.getZoomFactor();
+			const newZoom = Math.max(currentZoom - 0.1, 0.5);
+			mainWindow.webContents.setZoomFactor(newZoom);
+		}
+	});
+
+	globalShortcut.register("CommandOrControl+0", () => {
+		if (mainWindow) {
+			mainWindow.webContents.setZoomFactor(1);
+		}
+	});
 
 	if (!isDev) {
 		// If you decide to serve SSR instead of static files, uncomment below
@@ -126,5 +227,6 @@ app
 	});
 
 app.on("before-quit", () => {
+	globalShortcut.unregisterAll();
 	stopNextServer();
 });
