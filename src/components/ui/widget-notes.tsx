@@ -181,7 +181,7 @@ export default function WidgetNotes() {
 		<div className="group flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
-					<span className="font-medium text-lg">Notes</span>
+					<span className="font-medium">Notes</span>
 					<button className="btn btn-xs btn-circle btn-ghost invisible group-hover:visible">
 						<Ellipsis className="size-4" />
 					</button>

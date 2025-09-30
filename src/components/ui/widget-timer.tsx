@@ -15,6 +15,7 @@ import {
 	ChevronUp,
 	AlertCircle,
 } from "lucide-react";
+import { ScrollArea } from "./scroll-area";
 import { useSession, type Session } from "../../hooks/useSession";
 import { usePomodoroSettings } from "../../hooks/usePomodoroSettings";
 import { toast } from "sonner";
@@ -140,9 +141,9 @@ export default function WidgetTimer() {
 
 	return (
 		<div
-			className={`card h-fit border-border ${
-				visibleWidgets.length === 1 ? "md:bg-card border" : "md:bg-transparent"
-			} shadow-xs w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden`}
+			className={`card border-border ${
+				visibleWidgets.length === 1 ? "md:bg-card" : "md:bg-transparent"
+			} shadow-xs w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col`}
 		>
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
@@ -151,177 +152,195 @@ export default function WidgetTimer() {
 				</p>
 			</div>
 
-			<div className="flex flex-col space-y-3">
-				<div className="relative">
-					<textarea
-						ref={textareaRef}
-						id="goal"
-						placeholder=""
-						value={goal}
-						onChange={handleGoalChange}
-						maxLength={200}
-						className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
-							!isGoalValid && goal.length > 0 ? "textarea-error" : ""
-						} ${goal.length >= 200 ? "border-warning" : ""}`}
-						style={{
-							wordWrap: "break-word",
-							overflowWrap: "break-word",
-							whiteSpace: "pre-wrap",
-							lineHeight: "1.5",
-						}}
-						required
-					/>
-					{!goal && (
-						<div className="absolute inset-0 pointer-events-none flex items-start px-4 py-3">
-							<div className="h-6 overflow-hidden">
-								<div
-									className="text-base-content/40 transition-transform duration-500 ease-in-out"
-									style={{
-										transform: `translateY(-${
-											currentPlaceholderIndex * 1.5
-										}rem)`,
-									}}
-								>
-									{placeholders.map((placeholder, index) => (
-										<div key={index} className="h-6 flex items-center">
-											{placeholder}
-										</div>
-									))}
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col space-y-6 pr-2">
+					<div className="relative">
+						<textarea
+							ref={textareaRef}
+							id="goal"
+							placeholder=""
+							value={goal}
+							onChange={handleGoalChange}
+							maxLength={200}
+							className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
+								!isGoalValid && goal.length > 0 ? "textarea-error" : ""
+							} ${goal.length >= 200 ? "border-warning" : ""}`}
+							style={{
+								wordWrap: "break-word",
+								overflowWrap: "break-word",
+								whiteSpace: "pre-wrap",
+								lineHeight: "1.5",
+							}}
+							required
+						/>
+						{!goal && (
+							<div className="absolute inset-0 pointer-events-none flex items-start px-4 py-3">
+								<div className="h-6 overflow-hidden">
+									<div
+										className="text-base-content/40 transition-transform duration-500 ease-in-out"
+										style={{
+											transform: `translateY(-${
+												currentPlaceholderIndex * 1.5
+											}rem)`,
+										}}
+									>
+										{placeholders.map((placeholder, index) => (
+											<div key={index} className="h-6 flex items-center">
+												{placeholder}
+											</div>
+										))}
+									</div>
 								</div>
 							</div>
+						)}
+					</div>
+					{!isGoalValid && goal.length > 0 && (
+						<p className="text-error text-sm">
+							Please enter your goal to continue
+						</p>
+					)}
+					{goal.trim().length > 0 && (
+						<div className="flex justify-start items-center text-xs">
+							<span
+								className={`${
+									goal.length >= 180
+										? goal.length >= 200
+											? "text-error"
+											: "text-warning"
+										: "text-base-content/60"
+								}`}
+							>
+								{goal.length}/200 characters
+							</span>
 						</div>
 					)}
 				</div>
-				{!isGoalValid && goal.length > 0 && (
-					<p className="text-error text-sm">
-						Please enter your goal to continue
-					</p>
-				)}
-				{goal.trim().length > 0 && (
-					<div className="flex justify-start items-center text-xs">
-						<span
-							className={`${
-								goal.length >= 180
-									? goal.length >= 200
-										? "text-error"
-										: "text-warning"
-									: "text-base-content/60"
-							}`}
-						>
-							{goal.length}/200 characters
-						</span>
-					</div>
-				)}
-			</div>
 
-			<div className="tabs tabs-border">
-				<label className="tab font-medium">
-					<input
-						type="radio"
-						name="session_tabs"
-						checked={activeTab === "time-boxed"}
-						onChange={() => handleTabChange("time-boxed")}
-					/>
-					<Clock className="size-4 me-2" />
-					Time-boxed
-				</label>
-				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
-					<div className="space-y-4">
-						<div className="flex text-sm justify-between items-center">
-							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-sm badge-accent badge-soft">
-								Time-boxed
-							</span>
-						</div>
-						<div className="space-y-2">
-							<input
-								type="range"
-								min="5"
-								max="240"
-								step={5}
-								value={duration}
-								onChange={handleDurationChange}
-								className="range range-sm range-primary w-full"
-							/>
-							<div className="flex justify-between text-xs text-base-content/60">
-								<span>|</span>
-								<span>|</span>
-								<span>|</span>
+				<div className="tabs my-4 tabs-border">
+					<label className="tab font-medium">
+						<input
+							type="radio"
+							name="session_tabs"
+							checked={activeTab === "time-boxed"}
+							onChange={() => handleTabChange("time-boxed")}
+						/>
+						<Clock className="size-4 me-2" />
+						Time-boxed
+					</label>
+					<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
+						<div className="space-y-4">
+							<div className="flex text-sm justify-between items-center">
+								<p className="font-medium">Duration: {formatTime(duration)}</p>
+								<span className="badge rounded-sm badge-accent badge-soft">
+									Time-boxed
+								</span>
 							</div>
-							<div className="flex justify-between text-xs text-base-content/60">
-								<span>5 min</span>
-								<span>120 min</span>
-								<span>240 min</span>
+							<div className="space-y-2">
+								<input
+									type="range"
+									min="5"
+									max="240"
+									step={5}
+									value={duration}
+									onChange={handleDurationChange}
+									className="range range-sm range-primary w-full"
+								/>
+								<div className="flex justify-between text-xs text-base-content/60">
+									<span>|</span>
+									<span>|</span>
+									<span>|</span>
+								</div>
+								<div className="flex justify-between text-xs text-base-content/60">
+									<span>5 min</span>
+									<span>120 min</span>
+									<span>240 min</span>
+								</div>
 							</div>
-						</div>
-						<p className="text-xs text-base-content/60">
-							Session will automatically end after {formatTime(duration)} at{" "}
-							<span className="font-semibold">{getEndTime(duration)}</span>
-						</p>
-					</div>
-				</div>
-				<label className="font-medium tab">
-					<input
-						type="radio"
-						name="session_tabs"
-						checked={activeTab === "open"}
-						onChange={() => handleTabChange("open")}
-					/>
-					<TimerIcon className="size-4 me-2" />
-					Open
-				</label>
-				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
-					<div className="space-y-4">
-						<div className="flex text-sm justify-between items-center">
-							<p className="font-medium">Flow-based session</p>
-							<span className="badge rounded-sm badge-soft badge-secondary">
-								No time limit
-							</span>
-						</div>
-						<div className="bg-base-300 p-3 rounded-box text-center">
-							<p className="text-sm text-base-content/70">
-								Start when ready, end when you naturally done
+							<p className="text-xs text-base-content/60">
+								Session will automatically end after {formatTime(duration)} at{" "}
+								<span className="font-semibold">{getEndTime(duration)}</span>
 							</p>
 						</div>
-						<p className="text-xs text-base-content/60">
-							Timer will count up from zero until you manually stop
-						</p>
 					</div>
-				</div>
-				{/* Pomodoro scaffold (hidden in UI but keeps settings accessible) */}
-				{/* <label className="font-medium tab">
+					<label className="font-medium tab">
+						<input
+							type="radio"
+							name="session_tabs"
+							checked={activeTab === "open"}
+							onChange={() => handleTabChange("open")}
+						/>
+						<TimerIcon className="size-4 me-2" />
+						Open
+					</label>
+					<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
+						<div className="space-y-4">
+							<div className="flex text-sm justify-between items-center">
+								<p className="font-medium">Flow-based session</p>
+								<span className="badge rounded-sm badge-soft badge-secondary">
+									No time limit
+								</span>
+							</div>
+							<div className="bg-base-300 p-3 rounded-box text-center">
+								<p className="text-sm text-base-content/70">
+									Start when ready, end when you naturally done
+								</p>
+							</div>
+							<p className="text-xs text-base-content/60">
+								Timer will count up from zero until you manually stop
+							</p>
+						</div>
+					</div>
+					{/* Pomodoro scaffold (hidden in UI but keeps settings accessible) */}
+					{/* <label className="font-medium tab">
                     <input type="radio" name="session_tabs" checked={activeTab === "pomodoro"} onChange={() => handleTabChange("pomodoro")} />
                     <Apple className="size-4 me-2" />
                     Pomodoro
                 </label> */}
-			</div>
-
-			<div className="collapse border border-border bg-base-200 dark:bg-base-100">
-				<input type="checkbox" className="peer" />
-				<div className="collapse-title text-sm font-medium">
-					Tags (Optional)
 				</div>
-				<div className="collapse-content">
-					<div className="space-y-4 pt-2">
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text-alt text-xs text-base-content/60">
-									Separate with spaces
-								</span>
-							</label>
-							<input
-								type="text"
-								placeholder="blog essay urgent work"
-								value={tags}
-								onChange={handleTagsChange}
-								className="input input-sm w-full bg-base-200"
-							/>
+
+				<div className="collapse border border-border bg-base-200 dark:bg-base-100">
+					<input type="checkbox" className="peer" />
+					<div className="collapse-title text-sm font-medium">
+						Tags (Optional)
+					</div>
+					<div className="collapse-content">
+						<div className="space-y-4 pt-2">
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text-alt text-xs text-base-content/60">
+										Separate with spaces
+									</span>
+								</label>
+								<input
+									type="text"
+									placeholder="blog essay urgent work"
+									value={tags}
+									onChange={handleTagsChange}
+									className="input input-sm w-full bg-base-200"
+								/>
+								{tags.trim() && (
+									<div className="flex flex-wrap gap-1 mt-2">
+										{tags
+											.trim()
+											.split(/\s+/)
+											.filter((tag) => tag.length > 0)
+											.map((tag, index) => (
+												<span
+													key={index}
+													className="badge badge-sm badge-soft badge-neutral rounded-sm"
+												>
+													#{tag.replace(/^#/, "")}
+												</span>
+											))}
+									</div>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
+			</ScrollArea>
 
-			<div className="card-actions">
+			<div className="card-actions flex-shrink-0">
 				<button
 					className={`btn btn-block h-14 transition-all duration-200 ${
 						isGoalValid ? "btn-primary" : "btn-disabled"
@@ -535,8 +554,8 @@ function ActiveSessionView({
 	};
 
 	return (
-		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
-			<div className="flex flex-col text-center">
+		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
+			<div className="flex flex-col text-center flex-shrink-0">
 				<h1
 					className="font-semibold text-lg break-words"
 					style={{
@@ -556,173 +575,180 @@ function ActiveSessionView({
 				</p>
 			</div>
 
-			<div
-				className={`text-center border border-border bg-card z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer transition-all duration-300 ease-out transform ${
-					isTimerExpanded ? "bg-base-200" : "bg-card scale-100"
-				}`}
-				onClick={() => setIsTimerExpanded(!isTimerExpanded)}
-				title="Click to show/hide session details"
-			>
-				{isTimeVisible ? (
-					<>
-						{isPlannedSession ? (
-							<div className="space-y-2">
-								<div className="text-4xl text-base-content font-mono">
-									{remainingTime ? formatTime(remainingTime) : "00:00"}
-								</div>
-								<p className="text-sm text-base-content/60">
-									{isPaused ? "Paused" : "Remaining"}
-								</p>
-							</div>
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col gap-4 pr-2">
+					<div
+						className={`text-center border border-border bg-card z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer transition-all duration-300 ease-out transform ${
+							isTimerExpanded ? "bg-base-200" : "bg-card scale-100"
+						}`}
+						onClick={() => setIsTimerExpanded(!isTimerExpanded)}
+						title="Click to show/hide session details"
+					>
+						{isTimeVisible ? (
+							<>
+								{isPlannedSession ? (
+									<div className="space-y-2">
+										<div className="text-4xl text-base-content font-mono">
+											{remainingTime ? formatTime(remainingTime) : "00:00"}
+										</div>
+										<p className="text-sm text-base-content/60">
+											{isPaused ? "Paused" : "Remaining"}
+										</p>
+									</div>
+								) : (
+									<div className="space-y-2">
+										<div className="text-4xl font-medium text-base-content font-mono">
+											{formatTime(elapsedTime)}
+										</div>
+										<p className="text-sm text-base-content/60">
+											{isPaused ? "Paused" : "Elapsed time"}
+										</p>
+									</div>
+								)}
+							</>
 						) : (
 							<div className="space-y-2">
-								<div className="text-4xl font-medium text-base-content font-mono">
-									{formatTime(elapsedTime)}
-								</div>
 								<p className="text-sm text-base-content/60">
-									{isPaused ? "Paused" : "Elapsed time"}
+									{isPaused ? "Paused" : " "}
 								</p>
+								{!isPlannedSession && (
+									<p className="text-sm text-base-content/60">
+										{isPaused ? null : "Session is running..."}
+									</p>
+								)}
 							</div>
 						)}
-					</>
-				) : (
-					<div className="space-y-2">
-						<p className="text-sm text-base-content/60">
-							{isPaused ? "Paused" : " "}
-						</p>
-						{!isPlannedSession && (
-							<p className="text-sm text-base-content/60">
-								{isPaused ? null : "Session is running..."}
-							</p>
-						)}
-					</div>
-				)}
 
-				{isPlannedSession && (
-					<div className="space-y-3">
+						{isPlannedSession && (
+							<div className="space-y-3">
+								{isTimeVisible && (
+									<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
+										<span className="text-base-content/70 font-medium">
+											Progress
+										</span>
+										<span className="text-base-content font-medium">
+											{Math.round(progressPercentage)}%
+										</span>
+									</div>
+								)}
+								<div className="relative">
+									<div className="w-full flex align-middle items-center h-2 bg-base-300">
+										<div
+											className="h-4 bg-base-content transition-all ease-out relative "
+											style={{ width: `${progressPercentage}%` }}
+										></div>
+									</div>
+								</div>
+							</div>
+						)}
+
+						<div className="flex invisible group-hover:visible justify-center">
+							{isTimerExpanded ? (
+								<ChevronUp className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+							) : (
+								<ChevronDown className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+							)}
+						</div>
+					</div>
+
+					<div
+						className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
+							isTimerExpanded
+								? "max-h-96 h-fit opacity-100 -mt-14 pt-14"
+								: "max-h-0 opacity-0 p-0 mt-0"
+						}`}
+					>
+						<div className="flex flex-1 items-start gap-2">
+							<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+							<div className="flex-1 flex flex-col gap-1">
+								<span className="text-base-content/70 text-sm">Goal:</span>
+								<span
+									className="text-base-content font-medium leading-relaxed break-words"
+									style={{
+										wordWrap: "break-word",
+										overflowWrap: "break-word",
+										whiteSpace: "pre-wrap",
+									}}
+								>
+									{truncateGoal(session.goal, 120) || "No goal set"}
+								</span>
+							</div>
+						</div>
 						{isTimeVisible && (
-							<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
-								<span className="text-base-content/70 font-medium">
-									Progress
-								</span>
-								<span className="text-base-content font-medium">
-									{Math.round(progressPercentage)}%
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/70">Started:</span>
+								<span>{session.startTime.toLocaleTimeString()}</span>
+							</div>
+						)}
+						{isTimeVisible && (
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/50">Ends at:</span>
+								<span>
+									{isPlannedSession && session.duration
+										? new Date(
+												session.startTime.getTime() +
+													session.duration * 60 * 1000
+										  ).toLocaleTimeString()
+										: "-"}
 								</span>
 							</div>
 						)}
-						<div className="relative">
-							<div className="w-full flex align-middle items-center h-2 bg-base-300">
-								<div
-									className="h-4 bg-base-content transition-all ease-out relative "
-									style={{ width: `${progressPercentage}%` }}
-								></div>
+						{session.tags.length > 0 && (
+							<div className="flex items-start gap-2">
+								<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+								<div className="flex flex-wrap gap-2">
+									{session.tags.map((tag, index) => (
+										<span key={index} className="badge rounded-sm badge-sm">
+											#{tag}
+										</span>
+									))}
+								</div>
 							</div>
-						</div>
+						)}
 					</div>
-				)}
 
-				<div className="flex invisible group-hover:visible justify-center">
-					{isTimerExpanded ? (
-						<ChevronUp className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
-					) : (
-						<ChevronDown className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
-					)}
-				</div>
-			</div>
-
-			<div
-				className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
-					isTimerExpanded
-						? "max-h-96 h-fit opacity-100 -mt-14 pt-14"
-						: "max-h-0 opacity-0 p-0 mt-0"
-				}`}
-			>
-				<div className="flex flex-1 items-start gap-2">
-					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-					<div className="flex-1 flex flex-col gap-1">
-						<span className="text-base-content/70 text-sm">Goal:</span>
-						<span
-							className="text-base-content font-medium leading-relaxed break-words"
-							style={{
-								wordWrap: "break-word",
-								overflowWrap: "break-word",
-								whiteSpace: "pre-wrap",
-							}}
+					<div className="flex gap-3 w-full">
+						<button
+							onClick={confirmComplete}
+							className="btn btn-lg btn-ghost"
+							title="End and complete this session"
+							aria-label="End and complete this session"
+							style={{ touchAction: "manipulation" }}
 						>
-							{truncateGoal(session.goal, 120) || "No goal set"}
-						</span>
+							<Square className="size-5" />
+						</button>
+						<button
+							onClick={handlePauseResume}
+							className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
+							title={
+								isPaused
+									? "Resume the focus session"
+									: "Pause the focus session"
+							}
+							aria-label={isPaused ? "Resume session" : "Pause session"}
+						>
+							{isPaused ? (
+								<Play className="size-5" />
+							) : (
+								<Pause className="size-5" />
+							)}
+						</button>
+					</div>
+
+					<div className="text-center w-full justify-center">
+						<button
+							onClick={toggleTimeVisibility}
+							className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
+							title={isTimeVisible ? "Hide time display" : "Show time display"}
+							aria-label={isTimeVisible ? "Hide time" : "Show time"}
+						>
+							{isTimeVisible ? "Hide Time" : "Show Time"}
+						</button>
 					</div>
 				</div>
-				{isTimeVisible && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Started:</span>
-						<span>{session.startTime.toLocaleTimeString()}</span>
-					</div>
-				)}
-				{isTimeVisible && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/50">Ends at:</span>
-						<span>
-							{isPlannedSession && session.duration
-								? new Date(
-										session.startTime.getTime() + session.duration * 60 * 1000
-								  ).toLocaleTimeString()
-								: "-"}
-						</span>
-					</div>
-				)}
-				{session.tags.length > 0 && (
-					<div className="flex items-start gap-2">
-						<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex flex-wrap gap-2">
-							{session.tags.map((tag, index) => (
-								<span key={index} className="badge rounded-sm badge-sm">
-									#{tag}
-								</span>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
-
-			<div className="flex gap-3 w-full">
-				<button
-					onClick={confirmComplete}
-					className="btn btn-lg btn-ghost"
-					title="End and complete this session"
-					aria-label="End and complete this session"
-					style={{ touchAction: "manipulation" }}
-				>
-					<Square className="size-5" />
-				</button>
-				<button
-					onClick={handlePauseResume}
-					className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
-					title={
-						isPaused ? "Resume the focus session" : "Pause the focus session"
-					}
-					aria-label={isPaused ? "Resume session" : "Pause session"}
-				>
-					{isPaused ? (
-						<Play className="size-5" />
-					) : (
-						<Pause className="size-5" />
-					)}
-				</button>
-			</div>
-
-			<div className="text-center w-full justify-center">
-				<button
-					onClick={toggleTimeVisibility}
-					className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
-					title={isTimeVisible ? "Hide time display" : "Show time display"}
-					aria-label={isTimeVisible ? "Hide time" : "Show time"}
-				>
-					{isTimeVisible ? "Hide Time" : "Show Time"}
-				</button>
-			</div>
+			</ScrollArea>
 		</div>
 	);
 }
@@ -826,8 +852,8 @@ function SessionCompletionView({
 	};
 
 	return (
-		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
-			<div className="flex flex-col text-center">
+		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
+			<div className="flex flex-col text-center flex-shrink-0">
 				<h1 className="font-semibold">Session Complete</h1>
 				<p className="text-base-content/50">
 					{isPlannedSession
@@ -835,176 +861,184 @@ function SessionCompletionView({
 						: "Excellent work! You finished your flow session."}
 				</p>
 			</div>
-			{session.completionType && isPlannedSession && (
-				<div className={`${getCompletionTypeColor()} gap-2`}>
-					<AlertCircle className="size-4" />
-					<span className="text-sm font-medium">
-						{getCompletionTypeMessage()}
-					</span>
-				</div>
-			)}
-			<div className="flex flex-col gap-4 text-sm bg-card border border-border card rounded-box p-6">
-				<div className="flex flex-1 items-start gap-2">
-					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-					<div className="flex-1 flex flex-col gap-1">
-						<span className="text-base-content/70 text-sm">Goal:</span>
-						<span
-							className="text-base-content font-medium leading-relaxed break-words"
-							style={{
-								wordWrap: "break-word",
-								overflowWrap: "break-word",
-								whiteSpace: "pre-wrap",
-							}}
-						>
-							{session.goal}
-						</span>
-					</div>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Target className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Session Type:</span>
-					<span className="font-medium">
-						{session.sessionType === "time-boxed"
-							? "Time-boxed Session"
-							: "Flow Session"}
-					</span>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Started:</span>
-					<span>{session.startTime.toLocaleTimeString()}</span>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Duration:</span>
-					<span className="font-medium">
-						{Math.round((session.elapsedTime ?? 0) / 60)} minutes
-					</span>
-				</div>
-				{isPlannedSession && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Expected End:</span>
-						<span>
-							{session.expectedEndTime
-								? session.expectedEndTime.toLocaleTimeString()
-								: "-"}
-						</span>
-					</div>
-				)}
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Actual End:</span>
-					<span>
-						{session.endTime ? session.endTime.toLocaleTimeString() : "-"}
-					</span>
-				</div>
-				{session.tags.length > 0 && (
-					<div className="flex items-start gap-2">
-						<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex flex-wrap gap-2">
-							{session.tags.map((tag, index) => (
-								<span
-									key={index}
-									className="badge rounded-sm badge-neutral badge-sm"
-								>
-									#{tag}
-								</span>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
 
-			<div className="card bg-card border border-border p-6 gap-6">
-				<div className="flex flex-col gap-1 text-center">
-					<h3 className="font-medium text-base-content w-full text-center">
-						Rate Your Deep Work Quality
-					</h3>
-					<p className="text-sm text-base-content/70">
-						How would you rate the quality of your focus during this session?
-					</p>
-				</div>
-				<div className="space-y-4">
-					<div className="flex flex-col items-center gap-3">
-						<div className="flex justify-center">
-							<div className="rating">
-								{Array.from({ length: 10 }, (_, i) => (
-									<input
-										key={i + 1}
-										type="radio"
-										name={`rating-${session.id}`}
-										className="mask mask-star cursor-pointer"
-										checked={deepWorkQuality === i + 1}
-										onChange={() => handleQualityRating(i + 1)}
-										onMouseEnter={() => setHoverRating(i + 1)}
-										onMouseLeave={() => setHoverRating(0)}
-									/>
-								))}
-							</div>
-						</div>
-						{hoverRating > 0 && (
-							<div className={`text-center ${getRatingColor(hoverRating)}`}>
-								<span className="font-medium text-sm">
-									{hoverRating}/10 - {getRatingLabel(hoverRating)}
-								</span>
-							</div>
-						)}
-						{!hoverRating && deepWorkQuality > 0 && (
-							<div className={`text-center ${getRatingColor(deepWorkQuality)}`}>
-								<span className="font-medium text-sm">
-									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
-								</span>
-							</div>
-						)}
-					</div>
-					{hasRated && (
-						<div className="text-center pt-2 border-t border-base-300">
-							<p className="text-xs text-base-content/70 mt-mp1">
-								Current rating:
-								<button
-									className={`font-medium badge badge-sm badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
-									onClick={() => handleQualityRating(0)}
-									title="Reset Rating"
-								>
-									<span className="group-hover:hidden">
-										{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
-									</span>
-									<span className="hidden group-hover:inline">
-										Reset Rating
-									</span>
-								</button>
-							</p>
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col gap-4 pr-2">
+					{session.completionType && isPlannedSession && (
+						<div className={`${getCompletionTypeColor()} gap-2`}>
+							<AlertCircle className="size-4" />
+							<span className="text-sm font-medium">
+								{getCompletionTypeMessage()}
+							</span>
 						</div>
 					)}
-				</div>
-			</div>
-
-			<div className="collapse border border-base-100 bg-card">
-				<input type="checkbox" className="peer" />
-				<div className="collapse-title text-sm font-medium">
-					Notes (Optional)
-				</div>
-				<div className="collapse-content">
-					<div className="space-y-4 pt-2">
-						<div className="form-control">
-							<textarea
-								className="textarea w-full min-h-[100px] resize-none"
-								placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
-								value={notes}
-								onChange={(e) => handleNotesChange(e.target.value)}
-							/>
-							<label className="label">
-								<span className="label-text-alt text-xs text-base-content/60">
-									Add any thoughts, insights, or observations
+					<div className="flex flex-col gap-4 text-sm bg-card border border-border card rounded-box p-6">
+						<div className="flex flex-1 items-start gap-2">
+							<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+							<div className="flex-1 flex flex-col gap-1">
+								<span className="text-base-content/70 text-sm">Goal:</span>
+								<span
+									className="text-base-content font-medium leading-relaxed break-words"
+									style={{
+										wordWrap: "break-word",
+										overflowWrap: "break-word",
+										whiteSpace: "pre-wrap",
+									}}
+								>
+									{session.goal}
 								</span>
-							</label>
+							</div>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Target className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Session Type:</span>
+							<span className="font-medium">
+								{session.sessionType === "time-boxed"
+									? "Time-boxed Session"
+									: "Flow Session"}
+							</span>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Started:</span>
+							<span>{session.startTime.toLocaleTimeString()}</span>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Duration:</span>
+							<span className="font-medium">
+								{Math.round((session.elapsedTime ?? 0) / 60)} minutes
+							</span>
+						</div>
+						{isPlannedSession && (
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/70">Expected End:</span>
+								<span>
+									{session.expectedEndTime
+										? session.expectedEndTime.toLocaleTimeString()
+										: "-"}
+								</span>
+							</div>
+						)}
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Actual End:</span>
+							<span>
+								{session.endTime ? session.endTime.toLocaleTimeString() : "-"}
+							</span>
+						</div>
+						{session.tags.length > 0 && (
+							<div className="flex items-start gap-2">
+								<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+								<div className="flex flex-wrap gap-2">
+									{session.tags.map((tag, index) => (
+										<span
+											key={index}
+											className="badge rounded-sm badge-neutral badge-sm"
+										>
+											#{tag}
+										</span>
+									))}
+								</div>
+							</div>
+						)}
+					</div>
+
+					<div className="card bg-card border border-border p-6 gap-6">
+						<div className="flex flex-col gap-1 text-center">
+							<h3 className="font-medium text-base-content w-full text-center">
+								Rate Your Deep Work Quality
+							</h3>
+							<p className="text-sm text-base-content/70">
+								How would you rate the quality of your focus during this
+								session?
+							</p>
+						</div>
+						<div className="space-y-4">
+							<div className="flex flex-col items-center gap-3">
+								<div className="flex justify-center">
+									<div className="rating">
+										{Array.from({ length: 10 }, (_, i) => (
+											<input
+												key={i + 1}
+												type="radio"
+												name={`rating-${session.id}`}
+												className="mask mask-star cursor-pointer"
+												checked={deepWorkQuality === i + 1}
+												onChange={() => handleQualityRating(i + 1)}
+												onMouseEnter={() => setHoverRating(i + 1)}
+												onMouseLeave={() => setHoverRating(0)}
+											/>
+										))}
+									</div>
+								</div>
+								{hoverRating > 0 && (
+									<div className={`text-center ${getRatingColor(hoverRating)}`}>
+										<span className="font-medium text-sm">
+											{hoverRating}/10 - {getRatingLabel(hoverRating)}
+										</span>
+									</div>
+								)}
+								{!hoverRating && deepWorkQuality > 0 && (
+									<div
+										className={`text-center ${getRatingColor(deepWorkQuality)}`}
+									>
+										<span className="font-medium text-sm">
+											{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+										</span>
+									</div>
+								)}
+							</div>
+							{hasRated && (
+								<div className="text-center pt-2 border-t border-base-300">
+									<p className="text-xs text-base-content/70 mt-mp1">
+										Current rating:
+										<button
+											className={`font-medium badge badge-sm badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
+											onClick={() => handleQualityRating(0)}
+											title="Reset Rating"
+										>
+											<span className="group-hover:hidden">
+												{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+											</span>
+											<span className="hidden group-hover:inline">
+												Reset Rating
+											</span>
+										</button>
+									</p>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="collapse border border-base-100 bg-card">
+						<input type="checkbox" className="peer" />
+						<div className="collapse-title text-sm font-medium">
+							Notes (Optional)
+						</div>
+						<div className="collapse-content">
+							<div className="space-y-4 pt-2">
+								<div className="form-control">
+									<textarea
+										className="textarea w-full min-h-[100px] resize-none"
+										placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
+										value={notes}
+										onChange={(e) => handleNotesChange(e.target.value)}
+									/>
+									<label className="label">
+										<span className="label-text-alt text-xs text-base-content/60">
+											Add any thoughts, insights, or observations
+										</span>
+									</label>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
+			</ScrollArea>
 
-			<div className="card-actions justify-center">
+			<div className="card-actions justify-center flex-shrink-0">
 				<button
 					onClick={handleSaveSession}
 					className="btn btn-primary btn-block"

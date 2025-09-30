@@ -178,7 +178,7 @@ export default function WidgetTask() {
 	return (
 		<div className="w-full h-full group flex flex-col overflow-hidden">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
-				<span className="font-medium text-lg">
+				<span className="font-medium">
 					Tasks{" "}
 					<span className="badge rounded-box badge-neutral badge-sm">
 						{tasks.length}
@@ -400,18 +400,20 @@ export default function WidgetTask() {
 										className={`w-full py-4 px-0 border-b border-base-content/10 transition-all ease-out cursor-pointer hover:bg-base-50 ${
 											task.completed ? "opacity-75" : ""
 										} ${index === 0 ? "border-t border-base-300" : ""}`}
+										onClick={() => toggleTask(task.id)}
 									>
 										<div className="flex items-start gap-3">
-											<button
-												onClick={() => toggleTask(task.id)}
-												className="mt-0.5 flex-shrink-0"
-											>
-												{task.completed ? (
-													<CheckCircle className="size-5 text-success" />
-												) : (
-													<Circle className="size-5 text-base-content/40" />
-												)}
-											</button>
+											<label className="mt-0.5 flex-shrink-0 cursor-pointer">
+												<input
+													type="checkbox"
+													className="checkbox checkbox-sm"
+													checked={task.completed}
+													onChange={(e) => {
+														e.stopPropagation();
+														toggleTask(task.id);
+													}}
+												/>
+											</label>
 
 											<div className="flex-1 min-w-0 overflow-hidden">
 												<div className="flex flex-col gap-1">

@@ -6,7 +6,7 @@ import Header from "../components/ui/header";
 import WidgetsContainer from "../components/ui/widgets-container";
 export default function Page() {
 	return (
-		<div className="flex flex-col bg-gray-2 h-screen overflow-hidden lg:flex-row">
+		<div className="flex flex-col bg-gray-2 h-screen overflow-hidden">
 			{/* Container */}
 			<main
 				className={`flex flex-col flex-1 items-start justify-start min-h-0`}
