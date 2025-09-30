@@ -114,10 +114,10 @@ export default function WidgetSettingsModal({
 			className="modal"
 			aria-labelledby="widget-settings-title"
 		>
-			<div className="modal-box bg-base-300 p-0 w-full max-w-4xl">
-				<div className="grid grid-cols-12 gap-0">
+			<div className="modal-box bg-base-300 border border-border p-0 w-full max-w-4xl">
+				<div className="flex">
 					{/* Sidebar */}
-					<aside className="col-span-4 lg:col-span-3 border-r bg-sidebar border-border p-4">
+					{/* <aside className="col-span-4 lg:col-span-3 border-r bg-sidebar border-border p-4">
 						<nav className="menu text-sm w-full">
 							<ul className="space-y-1">
 								<li>
@@ -147,11 +147,11 @@ export default function WidgetSettingsModal({
 								</li>
 							</ul>
 						</nav>
-					</aside>
+					</aside> */}
 
 					{/* Content */}
-					<section className="col-span-8 lg:col-span-9 p-5">
-						<div className="flex items-start justify-between gap-3 border-b border-border pb-4 mb-4">
+					<section className="w-full col-span-8 lg:col-span-9 p-5">
+						<div className="flex items-start justify-between gap-3 pb-4 mb-4">
 							<div>
 								<h2 id="widget-settings-title" className="font-medium">
 									Widgets
@@ -170,48 +170,68 @@ export default function WidgetSettingsModal({
 							</form>
 						</div>
 
-						<div className="space-y-2">
-							{ALL_WIDGETS.map(({ type, label, description, icon: Icon }) => {
-								const isComingSoon = COMING_SOON.includes(type);
-								const disabled =
-									isComingSoon ||
-									(isChecked(type) && activeWidgets.length === 1);
-								return (
-									<div
-										key={type}
-										className="flex items-center justify-between gap-3 border border-border rounded-box px-3 py-2"
-									>
-										<div className="flex items-start gap-3 min-h-10">
-											<Icon className="size-4 mt-0.5 text-base-content/70" />
-											<div className="flex flex-col gap-0.5">
-												<div className="flex items-center gap-2">
-													<span className="text-sm">{label}</span>
-													{isComingSoon && (
-														<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
-															<Lock className="size-3" /> Coming soon
-														</span>
-													)}
-												</div>
-												<span className="text-xs text-base-content/60">
-													{description}
-												</span>
-											</div>
-										</div>
-										<input
-											type="checkbox"
-											className="toggle toggle-sm"
-											checked={isChecked(type)}
-											onChange={() => toggleWidget(type)}
+						<div
+							className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-2"
+							role="list"
+						>
+							{ALL_WIDGETS.filter(({ type }) => type !== "timer").map(
+								({ type, label, description, icon: Icon }) => {
+									const isComingSoon = COMING_SOON.includes(type);
+									const disabled =
+										isComingSoon ||
+										(isChecked(type) && activeWidgets.length === 1);
+									const isActive = isChecked(type);
+									return (
+										<button
+											key={type}
+											type="button"
+											className={`flex flex-col gap-3 border rounded-box px-3 py-2 text-left transition-all duration-200 ${
+												isActive
+													? "border-primary bg-primary/5"
+													: "border-border hover:border-base-content/20"
+											} ${
+												disabled
+													? "opacity-60 cursor-not-allowed"
+													: "cursor-pointer hover:bg-base-content/5"
+											}`}
+											onClick={() => !disabled && toggleWidget(type)}
 											disabled={disabled}
-											aria-checked={isChecked(type)}
+											aria-pressed={isActive}
 											aria-label={`Toggle ${label}`}
-										/>
-									</div>
-								);
-							})}
+										>
+											<div className="flex flex-col items-start gap-3 min-h-10">
+												<Icon
+													className={`size-6 mt-0.5 ${
+														isActive ? "text-primary" : "text-base-content/70"
+													}`}
+												/>
+												<div className="flex flex-col gap-0.5">
+													<div className="flex items-center gap-2">
+														<span
+															className={`text-sm ${
+																isActive ? "text-primary" : ""
+															}`}
+														>
+															{label}
+														</span>
+														{isComingSoon && (
+															<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
+																<Lock className="size-3" /> Coming soon
+															</span>
+														)}
+													</div>
+													<span className="text-xs text-base-content/60">
+														{description}
+													</span>
+												</div>
+											</div>
+										</button>
+									);
+								}
+							)}
 						</div>
 
-						<div className="mt-4 flex justify-between gap-2">
+						{/* <div className="mt-4 flex justify-between gap-2">
 							<div className="flex gap-2">
 								<button
 									className="btn btn-ghost"
@@ -234,7 +254,7 @@ export default function WidgetSettingsModal({
 							<form method="dialog">
 								<button className="btn btn-secondary">Done</button>
 							</form>
-						</div>
+						</div> */}
 					</section>
 				</div>
 			</div>

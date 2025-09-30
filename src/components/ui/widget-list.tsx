@@ -126,14 +126,14 @@ export default function WidgetList() {
 			</div>
 
 			<div className="tooltip tooltip-bottom">
-				<div className="tooltip-content">Widgets Settings</div>
+				<div className="tooltip-content">Settings</div>
 				<button
 					ref={settingsBtnRef}
 					className="btn btn-sm btn-circle btn-ghost"
 					onClick={() => setIsSettingsOpen(true)}
 					aria-haspopup="dialog"
 					aria-expanded={isSettingsOpen}
-					aria-label="Open widgets settings"
+					aria-label="Open settings"
 				>
 					<Settings className="size-4 text-base-content/50" />
 				</button>

@@ -52,7 +52,7 @@ export default function WidgetsContainer() {
 				{widgetsToRender.map(({ Component }, index) => (
 					<div
 						key={`pane-${index}`}
-						className="overflow-auto max-w-2xl p-4 border-border border rounded-lg flex-1 min-w-0"
+						className="overflow-auto max-w-2xl p-4 border-border border-[0.5px] bg-card/20 rounded-lg flex-1 min-w-0"
 					>
 						<div className="h-full w-full justify-center flex">
 							<Component />

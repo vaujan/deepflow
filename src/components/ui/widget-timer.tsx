@@ -152,152 +152,152 @@ export default function WidgetTimer() {
 				</p>
 			</div>
 
-			<ScrollArea className="flex-1 min-h-0">
-				<div className="flex flex-col space-y-6 pr-2">
-					<div className="relative">
-						<textarea
-							ref={textareaRef}
-							id="goal"
-							placeholder=""
-							value={goal}
-							onChange={handleGoalChange}
-							maxLength={200}
-							className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
-								!isGoalValid && goal.length > 0 ? "textarea-error" : ""
-							} ${goal.length >= 200 ? "border-warning" : ""}`}
-							style={{
-								wordWrap: "break-word",
-								overflowWrap: "break-word",
-								whiteSpace: "pre-wrap",
-								lineHeight: "1.5",
-							}}
-							required
-						/>
-						{!goal && (
-							<div className="absolute inset-0 pointer-events-none flex items-start px-4 py-3">
-								<div className="h-6 overflow-hidden">
-									<div
-										className="text-base-content/40 transition-transform duration-500 ease-in-out"
-										style={{
-											transform: `translateY(-${
-												currentPlaceholderIndex * 1.5
-											}rem)`,
-										}}
-									>
-										{placeholders.map((placeholder, index) => (
-											<div key={index} className="h-6 flex items-center">
-												{placeholder}
-											</div>
-										))}
-									</div>
+			<div className="flex flex-col space-y-6 pr-2">
+				<div className="relative">
+					<textarea
+						ref={textareaRef}
+						id="goal"
+						placeholder=""
+						value={goal}
+						onChange={handleGoalChange}
+						maxLength={200}
+						className={`textarea rounded-box textarea-md bg-base-100/50 backdrop-blur-sm w-full h-24 resize-none transition-all duration-200 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 ${
+							!isGoalValid && goal.length > 0 ? "textarea-error" : ""
+						} ${goal.length >= 200 ? "border-warning" : ""}`}
+						style={{
+							wordWrap: "break-word",
+							overflowWrap: "break-word",
+							whiteSpace: "pre-wrap",
+							lineHeight: "1.5",
+						}}
+						required
+					/>
+					{!goal && (
+						<div className="absolute inset-0 pointer-events-none flex items-start px-4 py-3">
+							<div className="h-6 overflow-hidden">
+								<div
+									className="text-base-content/40 transition-transform duration-500 ease-in-out"
+									style={{
+										transform: `translateY(-${
+											currentPlaceholderIndex * 1.5
+										}rem)`,
+									}}
+								>
+									{placeholders.map((placeholder, index) => (
+										<div key={index} className="h-6 flex items-center">
+											{placeholder}
+										</div>
+									))}
 								</div>
 							</div>
-						)}
-					</div>
-					{!isGoalValid && goal.length > 0 && (
-						<p className="text-error text-sm">
-							Please enter your goal to continue
-						</p>
-					)}
-					{goal.trim().length > 0 && (
-						<div className="flex justify-start items-center text-xs">
-							<span
-								className={`${
-									goal.length >= 180
-										? goal.length >= 200
-											? "text-error"
-											: "text-warning"
-										: "text-base-content/60"
-								}`}
-							>
-								{goal.length}/200 characters
-							</span>
 						</div>
 					)}
 				</div>
+				{!isGoalValid && goal.length > 0 && (
+					<p className="text-error text-sm">
+						Please enter your goal to continue
+					</p>
+				)}
+				{goal.trim().length > 0 && (
+					<div className="flex justify-start items-center text-xs">
+						<span
+							className={`${
+								goal.length >= 180
+									? goal.length >= 200
+										? "text-error"
+										: "text-warning"
+									: "text-base-content/60"
+							}`}
+						>
+							{goal.length}/200 characters
+						</span>
+					</div>
+				)}
+			</div>
 
-				<div className="tabs my-4 tabs-border">
-					<label className="tab font-medium">
-						<input
-							type="radio"
-							name="session_tabs"
-							checked={activeTab === "time-boxed"}
-							onChange={() => handleTabChange("time-boxed")}
-						/>
-						<Clock className="size-4 me-2" />
-						Time-boxed
-					</label>
-					<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
-						<div className="space-y-4">
-							<div className="flex text-sm justify-between items-center">
-								<p className="font-medium">Duration: {formatTime(duration)}</p>
-								<span className="badge rounded-sm badge-accent badge-soft">
-									Time-boxed
-								</span>
+			<div className="tabs tabs-border">
+				<label className="tab font-medium">
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "time-boxed"}
+						onChange={() => handleTabChange("time-boxed")}
+					/>
+					<Clock className="size-4 me-2" />
+					Time-boxed
+				</label>
+				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
+					<div className="space-y-4">
+						<div className="flex text-sm justify-between items-center">
+							<p className="font-medium">Duration: {formatTime(duration)}</p>
+							<span className="badge rounded-sm badge-accent badge-soft">
+								Time-boxed
+							</span>
+						</div>
+						<div className="space-y-2">
+							<input
+								type="range"
+								min="5"
+								max="240"
+								step={5}
+								value={duration}
+								onChange={handleDurationChange}
+								className="range range-sm range-primary w-full"
+							/>
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>|</span>
+								<span>|</span>
+								<span>|</span>
 							</div>
-							<div className="space-y-2">
-								<input
-									type="range"
-									min="5"
-									max="240"
-									step={5}
-									value={duration}
-									onChange={handleDurationChange}
-									className="range range-sm range-primary w-full"
-								/>
-								<div className="flex justify-between text-xs text-base-content/60">
-									<span>|</span>
-									<span>|</span>
-									<span>|</span>
-								</div>
-								<div className="flex justify-between text-xs text-base-content/60">
-									<span>5 min</span>
-									<span>120 min</span>
-									<span>240 min</span>
-								</div>
+							<div className="flex justify-between text-xs text-base-content/60">
+								<span>5 min</span>
+								<span>120 min</span>
+								<span>240 min</span>
 							</div>
-							<p className="text-xs text-base-content/60">
-								Session will automatically end after {formatTime(duration)} at{" "}
-								<span className="font-semibold">{getEndTime(duration)}</span>
+						</div>
+						<p className="text-xs text-base-content/60">
+							Session will automatically end after {formatTime(duration)} at{" "}
+							<span className="font-semibold">{getEndTime(duration)}</span>
+						</p>
+					</div>
+				</div>
+				<label className="font-medium tab">
+					<input
+						type="radio"
+						name="session_tabs"
+						checked={activeTab === "open"}
+						onChange={() => handleTabChange("open")}
+					/>
+					<TimerIcon className="size-4 me-2" />
+					Open
+				</label>
+				<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
+					<div className="space-y-4">
+						<div className="flex text-sm justify-between items-center">
+							<p className="font-medium">Flow-based session</p>
+							<span className="badge rounded-sm badge-soft badge-secondary">
+								No time limit
+							</span>
+						</div>
+						<div className="bg-base-300 p-3 rounded-box text-center">
+							<p className="text-sm text-base-content/70">
+								Start when ready, end when you naturally done
 							</p>
 						</div>
+						<p className="text-xs text-base-content/60">
+							Timer will count up from zero until you manually stop
+						</p>
 					</div>
-					<label className="font-medium tab">
-						<input
-							type="radio"
-							name="session_tabs"
-							checked={activeTab === "open"}
-							onChange={() => handleTabChange("open")}
-						/>
-						<TimerIcon className="size-4 me-2" />
-						Open
-					</label>
-					<div className="tab-content rounded-box border border-border bg-base-200 dark:bg-base-100 p-6">
-						<div className="space-y-4">
-							<div className="flex text-sm justify-between items-center">
-								<p className="font-medium">Flow-based session</p>
-								<span className="badge rounded-sm badge-soft badge-secondary">
-									No time limit
-								</span>
-							</div>
-							<div className="bg-base-300 p-3 rounded-box text-center">
-								<p className="text-sm text-base-content/70">
-									Start when ready, end when you naturally done
-								</p>
-							</div>
-							<p className="text-xs text-base-content/60">
-								Timer will count up from zero until you manually stop
-							</p>
-						</div>
-					</div>
-					{/* Pomodoro scaffold (hidden in UI but keeps settings accessible) */}
-					{/* <label className="font-medium tab">
+				</div>
+				{/* Pomodoro scaffold (hidden in UI but keeps settings accessible) */}
+				{/* <label className="font-medium tab">
                     <input type="radio" name="session_tabs" checked={activeTab === "pomodoro"} onChange={() => handleTabChange("pomodoro")} />
                     <Apple className="size-4 me-2" />
                     Pomodoro
                 </label> */}
-				</div>
+			</div>
 
+			<div className="h-fit">
 				<div className="collapse border border-border bg-base-200 dark:bg-base-100">
 					<input type="checkbox" className="peer" />
 					<div className="collapse-title text-sm font-medium">
@@ -338,11 +338,11 @@ export default function WidgetTimer() {
 						</div>
 					</div>
 				</div>
-			</ScrollArea>
+			</div>
 
 			<div className="card-actions flex-shrink-0">
 				<button
-					className={`btn btn-block h-14 transition-all duration-200 ${
+					className={`btn btn-block mb-8 h-14 transition-all duration-200 ${
 						isGoalValid ? "btn-primary" : "btn-disabled"
 					}`}
 					disabled={!isGoalValid}
