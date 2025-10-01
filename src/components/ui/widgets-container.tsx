@@ -38,7 +38,7 @@ export default function WidgetsContainer() {
 	if (widgetsToRender.length === 1) {
 		const { Component } = widgetsToRender[0];
 		return (
-			<div className="w-full h-full max-w-full overflow-auto flex justify-center">
+			<div className="w-full h-fit max-w-full flex justify-center">
 				<div className="w-full max-w-2xl">
 					<Component />
 				</div>
@@ -47,13 +47,10 @@ export default function WidgetsContainer() {
 	}
 
 	return (
-		<div className="w-full h-full rounded-box py-4">
+		<div className="w-full h-fit rounded-box py-4">
 			<div className="flex gap-2 lg:gap-3 justify-center h-full">
 				{widgetsToRender.map(({ Component }, index) => (
-					<div
-						key={`pane-${index}`}
-						className="overflow-auto max-w-2xl p-4 border-border border-[0.5px] bg-card/20 rounded-lg flex-1 min-w-0"
-					>
+					<div key={`pane-${index}`} className="max-w-lg w-full">
 						<div className="h-full w-full justify-center flex">
 							<Component />
 						</div>

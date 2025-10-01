@@ -577,7 +577,23 @@ html:not([data-theme]) {
 
 /* Subtle dotted background utility for pages/containers */
 .bg-dots {
-	background-image: radial-gradient(hsl(var(--bc) / 0.08) 1px, transparent 1px);
-	background-size: 14px 14px;
+	/* Provide safe defaults that don't rely on DaisyUI vars */
+	background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+	background-size: 18px 18px;
 	background-position: 0 0;
+}
+
+/* Increase legibility in dark theme */
+[data-theme="dark"] .bg-dots,
+.dark .bg-dots,
+.dark-theme .bg-dots {
+	background-image: radial-gradient(
+		rgba(255, 255, 255, 0.1) 1px,
+		transparent 1px
+	);
+}
+
+/* Optional denser variant */
+.bg-dots-sm {
+	background-size: 12px 12px;
 }
