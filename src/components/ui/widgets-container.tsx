@@ -50,7 +50,7 @@ export default function WidgetsContainer() {
 		<div className="w-full h-fit rounded-box py-4">
 			<div className="flex gap-2 lg:gap-3 justify-center h-full">
 				{widgetsToRender.map(({ Component }, index) => (
-					<div key={`pane-${index}`} className="max-w-lg w-full">
+					<div key={`pane-${index}`} className="max-w-lg min-w-md w-full">
 						<div className="h-full w-full justify-center flex">
 							<Component />
 						</div>

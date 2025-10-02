@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -10,9 +10,12 @@ import {
 	SunMoon,
 	User as UserIcon,
 	ChevronDown,
+	LogIn,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { toast } from "sonner";
+import { supabase } from "../../lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 type IconType = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -29,57 +32,142 @@ type MenuItem =
 
 interface ProfileProps {
 	isCollapsed?: boolean;
-	name?: string;
-	email?: string;
-	avatarUrl?: string;
 	items?: MenuItem[];
 	onLogout?: () => void;
 }
 
 export default function Profile({
 	isCollapsed = false,
-	name = "Ahmad Fauzan",
-	email = "buildfrombed@gmail.com",
-	avatarUrl = "https://img.daisyui.com/images/profile/demo/gordon@192.webp",
 	items,
 	onLogout,
 }: ProfileProps) {
 	const router = useRouter();
 	const { toggleTheme, theme } = useTheme();
+	const [user, setUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [imageError, setImageError] = useState(false);
+
+	const displayName =
+		user?.user_metadata?.full_name ||
+		user?.user_metadata?.name ||
+		user?.email?.split("@")[0] ||
+		"User";
+
+	const avatarUrl =
+		user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+
+	const getInitials = (name?: string, email?: string) => {
+		const base =
+			(name && name.trim()) || (email ? email.split("@")[0] : "") || "User";
+		const parts = base.split(/\s+/).filter(Boolean);
+		const initials = (parts[0]?.[0] || "") + (parts[1]?.[0] || "");
+		return (initials || base[0] || "U").toUpperCase();
+	};
+
+	useEffect(() => {
+		// Reset image error when avatar URL changes
+		setImageError(false);
+	}, [avatarUrl]);
+
+	useEffect(() => {
+		// Get initial session
+		const getSession = async () => {
+			try {
+				const { getSupabaseBrowserClient } = await import(
+					"../../lib/supabase/client"
+				);
+				const supabase = getSupabaseBrowserClient();
+
+				const {
+					data: { session },
+				} = await supabase.auth.getSession();
+				setUser(session?.user ?? null);
+				setLoading(false);
+
+				// Listen for auth changes
+				const {
+					data: { subscription },
+				} = supabase.auth.onAuthStateChange((event, session) => {
+					setUser(session?.user ?? null);
+					setLoading(false);
+				});
+
+				return () => subscription.unsubscribe();
+			} catch (error) {
+				console.error("Failed to initialize Supabase client:", error);
+				setLoading(false);
+			}
+		};
+
+		getSession();
+	}, []);
 
 	const handleToggleTheme = () => {
 		toggleTheme();
 		toast.success(`Switched to ${theme === "dark" ? "light" : "dark"} theme`);
 	};
 
-	const handleLogout = () => {
+	const handleLogout = async () => {
 		if (onLogout) {
 			onLogout();
 			return;
 		}
-		// Placeholder logout action
-		toast.success("Logged out");
-		router.push("/");
+
+		try {
+			const { getSupabaseBrowserClient } = await import(
+				"../../lib/supabase/client"
+			);
+			const supabase = getSupabaseBrowserClient();
+
+			const { error } = await supabase.auth.signOut();
+			if (error) {
+				toast.error("Failed to log out");
+			} else {
+				toast.success("Logged out successfully");
+				router.push("/login");
+			}
+		} catch (err) {
+			toast.error("An unexpected error occurred");
+		}
 	};
 
-	const defaultItems: MenuItem[] = [
-		{ type: "link", label: "Stats", href: "/stats", icon: BarChart3 },
-		{
-			type: "action",
-			label: "Toggle theme",
-			onSelect: handleToggleTheme,
-			icon: SunMoon,
-		},
-		{ type: "link", label: "Profile", href: "/profile", icon: UserIcon },
-		{ type: "separator" },
-		{
-			type: "action",
-			label: "Log out",
-			onSelect: handleLogout,
-			icon: LogOut,
-			tone: "danger",
-		},
-	];
+	const handleLogin = () => {
+		router.push("/login");
+	};
+
+	const defaultItems: MenuItem[] = user
+		? [
+				{ type: "link", label: "Stats", href: "/stats", icon: BarChart3 },
+				{
+					type: "action",
+					label: "Toggle theme",
+					onSelect: handleToggleTheme,
+					icon: SunMoon,
+				},
+				// { type: "link", label: "Profile", href: "/profile", icon: UserIcon },
+				{ type: "separator" },
+				{
+					type: "action",
+					label: "Log out",
+					onSelect: handleLogout,
+					icon: LogOut,
+					tone: "danger",
+				},
+		  ]
+		: [
+				{
+					type: "action",
+					label: "Log in",
+					onSelect: handleLogin,
+					icon: LogIn,
+				},
+				{
+					type: "action",
+					label: "Toggle theme",
+					onSelect: handleToggleTheme,
+					icon: SunMoon,
+				},
+		  ];
 
 	const menuItems = items ?? defaultItems;
 
@@ -94,26 +182,42 @@ export default function Profile({
 					}`}
 					aria-label="Open profile menu"
 				>
-					<div className="avatar avatar-online">
+					<div className="avatar">
 						<div
 							className={`rounded-full ${
 								isCollapsed ? "w-8 h-8" : "w-10 h-10"
 							}`}
 						>
-							<img
-								src={avatarUrl}
-								alt="Profile"
-								className="w-full h-full object-cover"
-							/>
+							{avatarUrl && !imageError ? (
+								<img
+									src={avatarUrl}
+									alt={displayName}
+									className="w-full h-full object-cover"
+									onError={() => setImageError(true)}
+								/>
+							) : (
+								<div
+									className="w-full h-full flex items-center justify-center bg-base-200 text-base-content/80"
+									aria-label={`Avatar fallback for ${displayName}`}
+								>
+									<span
+										className={`${
+											isCollapsed ? "text-xs" : "text-sm"
+										} font-medium`}
+									>
+										{getInitials(displayName, user?.email || undefined)}
+									</span>
+								</div>
+							)}
 						</div>
 					</div>
 
 					{!isCollapsed && (
 						<div className="flex flex-col text-sm text-left">
 							<span className="font-medium text-base-content w-full">
-								{name}
+								{displayName}
 							</span>
-							<p className="text-base-content/50">{email}</p>
+							<p className="text-base-content/50">{user?.email || ""}</p>
 						</div>
 					)}
 
