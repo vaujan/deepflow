@@ -575,6 +575,21 @@ html:not([data-theme]) {
 	background-color: #9ca3af; /* gray-400 */
 }
 
+/* Visually hide native scrollbars but keep scrolling functional */
+.hide-native-scrollbar {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+.hide-native-scrollbar::-webkit-scrollbar {
+	display: none; /* Chrome, Safari */
+}
+
+/* Hide only the horizontal scrollbar (keep vertical visible where possible) */
+.hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
+	display: none; /* Chrome, Safari */
+}
+
 /* Subtle dotted background utility for pages/containers */
 .bg-dots {
 	/* Provide safe defaults that don't rely on DaisyUI vars */

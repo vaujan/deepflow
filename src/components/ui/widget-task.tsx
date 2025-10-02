@@ -10,11 +10,16 @@ import {
 	Edit3,
 } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
-import { ScrollArea } from "./scroll-area";
-import { mockTasks, type Task } from "../../data/mockTasks";
+import type { Task } from "../../data/mockTasks";
+import { toast } from "sonner";
 
 export default function WidgetTask() {
-	const [tasks, setTasks] = useState<Task[]>(mockTasks);
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [showNewDateMenu, setShowNewDateMenu] = useState(false);
+	const [showEditDateMenu, setShowEditDateMenu] = useState(false);
+	const [newMenuUp, setNewMenuUp] = useState(false);
+	const [editMenuUp, setEditMenuUp] = useState(false);
 
 	const [isAddingNew, setIsAddingNew] = useState(false);
 	const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
@@ -35,45 +40,105 @@ export default function WidgetTask() {
 		project: "Inbox",
 	});
 
-	const addTask = () => {
-		if (newTask.title.trim()) {
-			const task: Task = {
-				id: Date.now(),
-				title: newTask.title,
-				completed: false,
-				description: newTask.description,
-				dueDate: newTask.dueDate || undefined,
-				project: newTask.project,
-			};
-			setTasks([task, ...tasks]);
-			setNewTask({
-				title: "",
-				description: "",
-				dueDate: "",
-				project: "Inbox",
-			});
-			// Keep the form open and refocus on the title input
-			setTimeout(() => {
-				const titleInput = document.querySelector(
-					'input[placeholder="Task name"]'
-				) as HTMLInputElement;
-				if (titleInput) {
-					titleInput.focus();
-				}
-			}, 0);
+	// Helpers for date formatting and quick selects
+	const toYmd = (d: Date) => d.toISOString().split("T")[0];
+	const todayStr = toYmd(new Date());
+	const tomorrowStr = toYmd(new Date(Date.now() + 24 * 60 * 60 * 1000));
+	const nextWeekStr = toYmd(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+
+	const formatDateLabel = (yyyyMmDd?: string) => {
+		if (!yyyyMmDd) return "Date";
+		try {
+			const d = new Date(yyyyMmDd);
+			if (d.toDateString() === new Date().toDateString()) return "Today";
+			if (yyyyMmDd === tomorrowStr) return "Tomorrow";
+			return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+		} catch {
+			return "Date";
 		}
 	};
 
-	const toggleTask = (id: number) => {
-		setTasks(
-			tasks.map((task) =>
-				task.id === id ? { ...task, completed: !task.completed } : task
-			)
-		);
+	const addTask = async () => {
+		if (!newTask.title.trim()) return;
+		const optimistic = {
+			id: Date.now(),
+			title: newTask.title,
+			completed: false,
+			description: newTask.description,
+			dueDate: newTask.dueDate || undefined,
+			project: newTask.project,
+		} as Task;
+		setTasks([optimistic, ...tasks]);
+
+		try {
+			const res = await fetch("/api/tasks", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title: newTask.title,
+					description: newTask.description || null,
+					dueDate: newTask.dueDate || null,
+					project: newTask.project || null,
+				}),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Failed to add task");
+			// Replace optimistic with server row
+			setTasks((prev) => [
+				{ ...data, id: data.id } as Task,
+				...prev.filter((t) => t.id !== optimistic.id),
+			]);
+		} catch (e: any) {
+			toast.error(e.message || "Failed to add task");
+			setTasks((prev) => prev.filter((t) => t.id !== optimistic.id));
+		}
+
+		setNewTask({ title: "", description: "", dueDate: "", project: "Inbox" });
+		setTimeout(() => {
+			const titleInput = document.querySelector(
+				'input[placeholder="Task name"]'
+			) as HTMLInputElement;
+			if (titleInput) titleInput.focus();
+		}, 0);
 	};
 
-	const deleteTask = (id: number) => {
+	const toggleTask = async (id: number) => {
+		const target = tasks.find((t) => t.id === id);
+		if (!target) return;
+		const nextCompleted = !target.completed;
+		setTasks(
+			tasks.map((t) => (t.id === id ? { ...t, completed: nextCompleted } : t))
+		);
+		try {
+			const res = await fetch(`/api/tasks/${id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ completed: nextCompleted }),
+			});
+			if (!res.ok) {
+				throw new Error((await res.json()).error || "Failed to update task");
+			}
+		} catch (e: any) {
+			toast.error(e.message || "Failed to update task");
+			setTasks(
+				tasks.map((t) =>
+					t.id === id ? { ...t, completed: !nextCompleted } : t
+				)
+			);
+		}
+	};
+
+	const deleteTask = async (id: number) => {
+		const previous = tasks;
 		setTasks(tasks.filter((task) => task.id !== id));
+		try {
+			const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+			if (!res.ok)
+				throw new Error((await res.json()).error || "Failed to delete task");
+		} catch (e: any) {
+			toast.error(e.message || "Failed to delete task");
+			setTasks(previous);
+		}
 	};
 
 	const startAddingNew = () => {
@@ -106,28 +171,41 @@ export default function WidgetTask() {
 		});
 	};
 
-	const saveEditTask = () => {
-		if (editTask.title.trim() && editingTaskId) {
-			setTasks(
-				tasks.map((task) =>
-					task.id === editingTaskId
-						? {
-								...task,
-								title: editTask.title,
-								description: editTask.description,
-								dueDate: editTask.dueDate || undefined,
-								project: editTask.project,
-						  }
-						: task
-				)
-			);
-			setEditingTaskId(null);
-			setEditTask({
-				title: "",
-				description: "",
-				dueDate: "",
-				project: "Inbox",
+	const saveEditTask = async () => {
+		if (!editTask.title.trim() || !editingTaskId) return;
+		const id = editingTaskId;
+		const prev = tasks;
+		setTasks(
+			tasks.map((task) =>
+				task.id === id
+					? {
+							...task,
+							title: editTask.title,
+							description: editTask.description,
+							dueDate: editTask.dueDate || undefined,
+							project: editTask.project,
+					  }
+					: task
+			)
+		);
+		setEditingTaskId(null);
+		setEditTask({ title: "", description: "", dueDate: "", project: "Inbox" });
+		try {
+			const res = await fetch(`/api/tasks/${id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title: editTask.title,
+					description: editTask.description || null,
+					dueDate: editTask.dueDate || null,
+					project: editTask.project || null,
+				}),
 			});
+			if (!res.ok)
+				throw new Error((await res.json()).error || "Failed to save");
+		} catch (e: any) {
+			toast.error(e.message || "Failed to save changes");
+			setTasks(prev);
 		}
 	};
 
@@ -175,8 +253,25 @@ export default function WidgetTask() {
 		};
 	}, [isAddingNew, editingTaskId]);
 
+	// Initial fetch
+	useEffect(() => {
+		(async () => {
+			try {
+				const res = await fetch("/api/tasks");
+				if (!res.ok)
+					throw new Error((await res.json()).error || "Failed to load tasks");
+				const data = await res.json();
+				setTasks(data);
+			} catch (e: any) {
+				toast.error(e.message || "Failed to load tasks");
+			} finally {
+				setLoading(false);
+			}
+		})();
+	}, []);
+
 	return (
-		<div className="w-full h-full group flex flex-col overflow-hidden">
+		<div className="w-full h-full group flex flex-col">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
 				<span className="font-medium">
 					Tasks{" "}
@@ -243,16 +338,88 @@ export default function WidgetTask() {
 
 					{/* Bottom section - Project and actions */}
 					<div className="px-4 py-4 flex justify-between items-center">
-						<button
-							className="btn btn-sm"
-							onClick={() => {
-								const today = new Date().toISOString().split("T")[0];
-								setNewTask({ ...newTask, dueDate: today });
-							}}
+						<div
+							className={`dropdown ${
+								newMenuUp ? "dropdown-top" : "dropdown-bottom"
+							}`}
 						>
-							<Calendar className="size-4" />
-							Date
-						</button>
+							<button
+								className="btn btn-sm"
+								onClick={(e) => {
+									try {
+										const rect = (
+											e.currentTarget as HTMLButtonElement
+										).getBoundingClientRect();
+										const spaceBelow = window.innerHeight - rect.bottom;
+										const estimated = 360;
+										setNewMenuUp(spaceBelow < estimated);
+									} catch {}
+									setShowNewDateMenu((s) => !s);
+								}}
+								aria-haspopup="menu"
+								aria-expanded={showNewDateMenu}
+							>
+								<Calendar className="size-4" />
+								{formatDateLabel(newTask.dueDate)}
+							</button>
+							{showNewDateMenu && (
+								<div
+									className="dropdown-content z-10 mt-2 rounded-lg border border-base-300 bg-base-100 shadow-xl p-2 w-72"
+									role="menu"
+								>
+									<input
+										type="date"
+										className="input input-bordered input-sm w-full"
+										value={newTask.dueDate}
+										onChange={(e) => {
+											setNewTask({
+												...newTask,
+												dueDate: e.target.value || "",
+											});
+											setShowNewDateMenu(false);
+										}}
+									/>
+									<div className="flex gap-2 p-1">
+										<button
+											className="btn btn-ghost btn-xs"
+											onClick={() => {
+												setNewTask({ ...newTask, dueDate: todayStr });
+												setShowNewDateMenu(false);
+											}}
+										>
+											Today
+										</button>
+										<button
+											className="btn btn-ghost btn-xs"
+											onClick={() => {
+												setNewTask({ ...newTask, dueDate: tomorrowStr });
+												setShowNewDateMenu(false);
+											}}
+										>
+											Tomorrow
+										</button>
+										<button
+											className="btn btn-ghost btn-xs"
+											onClick={() => {
+												setNewTask({ ...newTask, dueDate: nextWeekStr });
+												setShowNewDateMenu(false);
+											}}
+										>
+											Next week
+										</button>
+										<button
+											className="btn btn-ghost btn-xs text-error ml-auto"
+											onClick={() => {
+												setNewTask({ ...newTask, dueDate: "" });
+												setShowNewDateMenu(false);
+											}}
+										>
+											Clear
+										</button>
+									</div>
+								</div>
+							)}
+						</div>
 
 						{/* Action buttons */}
 						<div className="flex gap-2">
@@ -277,9 +444,22 @@ export default function WidgetTask() {
 			)}
 
 			{/* Task list */}
-			<ScrollArea className="flex-1 min-h-0">
-				<div className="flex flex-col overflow-x-hidden pr-2">
-					{tasks.length === 0 && !isAddingNew ? (
+			<div>
+				<div className="flex flex-col pr-2">
+					{loading ? (
+						<div className="flex flex-col gap-3 py-4 ">
+							{Array.from({ length: 6 }).map((_, i) => (
+								<div key={i} className="flex items-start gap-3 py-3 px-0">
+									<div className="skeleton w-5 h-5 rounded-md" />
+									<div className="flex-1 min-w-0">
+										<div className="skeleton h-4 w-3/5 mb-2" />
+										<div className="skeleton h-3 w-2/5" />
+									</div>
+									<div className="skeleton w-16 h-6 rounded" />
+								</div>
+							))}
+						</div>
+					) : tasks.length === 0 && !isAddingNew ? (
 						// Empty state
 						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
 							<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
@@ -299,7 +479,7 @@ export default function WidgetTask() {
 						</div>
 					) : (
 						tasks.map((task, index) => (
-							<div key={task.id}>
+							<div key={task.id} className="h-full overflow-visible min-h-0">
 								{editingTaskId === task.id ? (
 									// Edit task form
 									<div
@@ -308,7 +488,7 @@ export default function WidgetTask() {
 												editTaskRefs.current[task.id] = el;
 											}
 										}}
-										className="w-full mt-2 bg-card border-border rounded-lg shadow-sm border mb-4"
+										className="w-full overflow-visible mt-2 bg-card border-border rounded-lg shadow-sm border mb-4"
 									>
 										{/* Top section - Task inputs */}
 										<div className="p-4">
@@ -358,16 +538,98 @@ export default function WidgetTask() {
 
 										{/* Bottom section - Project and actions */}
 										<div className="px-4 py-4 flex justify-between items-center">
-											<button
-												className="btn btn-sm"
-												onClick={() => {
-													const today = new Date().toISOString().split("T")[0];
-													setEditTask({ ...editTask, dueDate: today });
-												}}
+											<div
+												className={`dropdown ${
+													editMenuUp ? "dropdown-top" : "dropdown-bottom"
+												}`}
 											>
-												<Calendar className="size-4" />
-												Date
-											</button>
+												<button
+													className="btn btn-sm"
+													onClick={(e) => {
+														try {
+															const rect = (
+																e.currentTarget as HTMLButtonElement
+															).getBoundingClientRect();
+															const spaceBelow =
+																window.innerHeight - rect.bottom;
+															const estimated = 360;
+															setEditMenuUp(spaceBelow < estimated);
+														} catch {}
+														setShowEditDateMenu((s) => !s);
+													}}
+													aria-haspopup="menu"
+													aria-expanded={showEditDateMenu}
+												>
+													<Calendar className="size-4" />
+													{formatDateLabel(editTask.dueDate)}
+												</button>
+												{showEditDateMenu && (
+													<div
+														className="dropdown-content z-10 mt-2 rounded-lg border border-base-300 bg-base-100 shadow-xl p-2 w-72"
+														role="menu"
+													>
+														<input
+															type="date"
+															className="input input-bordered input-sm w-full"
+															value={editTask.dueDate}
+															onChange={(e) => {
+																setEditTask({
+																	...editTask,
+																	dueDate: e.target.value || "",
+																});
+																setShowEditDateMenu(false);
+															}}
+														/>
+														<div className="flex gap-2 p-1">
+															<button
+																className="btn btn-ghost btn-xs"
+																onClick={() => {
+																	setEditTask({
+																		...editTask,
+																		dueDate: todayStr,
+																	});
+																	setShowEditDateMenu(false);
+																}}
+															>
+																Today
+															</button>
+															<button
+																className="btn btn-ghost btn-xs"
+																onClick={() => {
+																	setEditTask({
+																		...editTask,
+																		dueDate: tomorrowStr,
+																	});
+																	setShowEditDateMenu(false);
+																}}
+															>
+																Tomorrow
+															</button>
+															<button
+																className="btn btn-ghost btn-xs"
+																onClick={() => {
+																	setEditTask({
+																		...editTask,
+																		dueDate: nextWeekStr,
+																	});
+																	setShowEditDateMenu(false);
+																}}
+															>
+																Next week
+															</button>
+															<button
+																className="btn btn-ghost btn-xs text-error ml-auto"
+																onClick={() => {
+																	setEditTask({ ...editTask, dueDate: "" });
+																	setShowEditDateMenu(false);
+																}}
+															>
+																Clear
+															</button>
+														</div>
+													</div>
+												)}
+											</div>
 
 											{/* Action buttons */}
 											<div className="flex gap-2">
@@ -494,7 +756,7 @@ export default function WidgetTask() {
 						))
 					)}
 				</div>
-			</ScrollArea>
+			</div>
 		</div>
 	);
 }
