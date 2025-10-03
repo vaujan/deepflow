@@ -13,55 +13,71 @@ export default function WidgetNotes() {
 	const [newNoteTitle, setNewNoteTitle] = useState("");
 	const [newNoteContent, setNewNoteContent] = useState("<p></p>");
 	const [originalNote, setOriginalNote] = useState<Note | null>(null);
+	const [addErrors, setAddErrors] = useState<{
+		title?: string;
+		content?: string;
+	}>({});
+	const [editErrors, setEditErrors] = useState<
+		Record<number, { title?: string; content?: string }>
+	>({});
 
-	// Refs for click-outside detection
+	// Refs for click-outside detection & focus management
 	const addNoteRef = useRef<HTMLDivElement>(null);
 	const editNoteRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+	const addTitleInputRef = useRef<HTMLInputElement>(null);
+	const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-	// Debounced update for smoother experience
-	const debouncedUpdate = useCallback(
-		(() => {
-			let timeoutId: NodeJS.Timeout;
-			return (id: number, updates: Partial<Note>) => {
-				clearTimeout(timeoutId);
-				timeoutId = setTimeout(() => {
-					setNotes(
-						notes.map((note) =>
-							note.id === id
-								? { ...note, ...updates, timestamp: "Just now" }
-								: note
-						)
-					);
-				}, 150);
-			};
-		})(),
-		[notes]
-	);
+	// Debounced update for smoother experience (functional to avoid stale closures)
+	const debouncedUpdate = useCallback((id: number, updates: Partial<Note>) => {
+		if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+		updateTimeoutRef.current = setTimeout(() => {
+			setNotes((prev) =>
+				prev.map((note) =>
+					note.id === id ? { ...note, ...updates, timestamp: "Just now" } : note
+				)
+			);
+		}, 150);
+	}, []);
 
 	const addNote = () => {
-		if (newNoteTitle.trim() && newNoteContent.trim() !== "<p></p>") {
-			const newNote: Note = {
-				id: Date.now(),
-				title: newNoteTitle,
-				content: newNoteContent,
-				timestamp: "Just now",
-			};
-			setNotes([newNote, ...notes]);
-			setIsAddingNew(false);
+		const titleValid = newNoteTitle.trim().length > 0;
+		const contentValid = newNoteContent.trim() !== "<p></p>";
+		if (!titleValid || !contentValid) {
+			setAddErrors({
+				title: titleValid ? undefined : "Title is required",
+				content: contentValid ? undefined : "Content is required",
+			});
+			// Focus first error
+			if (!titleValid) {
+				addTitleInputRef.current?.focus();
+			}
+			return;
 		}
+		const newNote: Note = {
+			id: Date.now(),
+			title: newNoteTitle,
+			content: newNoteContent,
+			timestamp: "Just now",
+		};
+		setNotes((prev) => [newNote, ...prev]);
+		setIsAddingNew(false);
+		setNewNoteTitle("");
+		setNewNoteContent("<p></p>");
+		setAddErrors({});
 	};
 
 	const deleteNote = (id: number) => {
-		setNotes(notes.filter((note) => note.id !== id));
+		setNotes((prev) => prev.filter((note) => note.id !== id));
 		if (editingNote === id) {
 			setEditingNote(null);
+			setOriginalNote(null);
 		}
 	};
 
 	const updateNote = (id: number, updates: Partial<Note>) => {
 		// Immediate update for UI responsiveness
-		setNotes(
-			notes.map((note) =>
+		setNotes((prev) =>
+			prev.map((note) =>
 				note.id === id ? { ...note, ...updates, timestamp: "Just now" } : note
 			)
 		);
@@ -84,11 +100,35 @@ export default function WidgetNotes() {
 		}
 	};
 
+	const saveEditing = (note: Note) => {
+		const titleValid = note.title.trim().length > 0;
+		const contentValid = note.content.trim() !== "<p></p>";
+		if (!titleValid || !contentValid) {
+			setEditErrors((prev) => ({
+				...prev,
+				[note.id]: {
+					title: titleValid ? undefined : "Title is required",
+					content: contentValid ? undefined : "Content is required",
+				},
+			}));
+			// Focus first invalid field inside the edit card
+			const container = editNoteRefs.current[note.id] ?? undefined;
+			if (container) {
+				const titleInput =
+					container.querySelector<HTMLInputElement>("input[type='text']");
+				if (!titleValid) titleInput?.focus();
+			}
+			return;
+		}
+		setEditErrors((prev) => ({ ...prev, [note.id]: {} }));
+		stopEditing();
+	};
+
 	const cancelEditing = () => {
 		if (editingNote && originalNote) {
 			// Revert the note to its original state
-			setNotes(
-				notes.map((note) => (note.id === editingNote ? originalNote : note))
+			setNotes((prev) =>
+				prev.map((note) => (note.id === editingNote ? originalNote : note))
 			);
 			setEditingNote(null);
 			setOriginalNote(null);
@@ -106,6 +146,7 @@ export default function WidgetNotes() {
 		setIsAddingNew(false);
 		setNewNoteTitle("");
 		setNewNoteContent("<p></p>");
+		setAddErrors({});
 	};
 
 	// Global escape key handler
@@ -131,6 +172,13 @@ export default function WidgetNotes() {
 			document.removeEventListener("keydown", handleGlobalKeyDown);
 		};
 	}, [isAddingNew, editingNote]);
+
+	// Autofocus the add title input when starting a new note (desktop-only behavior is fine here)
+	useEffect(() => {
+		if (isAddingNew) {
+			addTitleInputRef.current?.focus();
+		}
+	}, [isAddingNew]);
 
 	// Click outside handler
 	useEffect(() => {
@@ -182,7 +230,12 @@ export default function WidgetNotes() {
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
 					<span className="font-medium">Notes</span>
-					<button className="btn btn-xs btn-circle btn-ghost invisible group-hover:visible">
+					<button
+						className="btn btn-xs btn-circle btn-ghost invisible group-hover:visible"
+						type="button"
+						aria-label="More note actions"
+						title="More note actions"
+					>
 						<Ellipsis className="size-4" />
 					</button>
 				</div>
@@ -199,6 +252,8 @@ export default function WidgetNotes() {
 							? "Finish current note first"
 							: "Add new note"
 					}
+					type="button"
+					aria-label="Add new note"
 				>
 					<Plus className="size-3" />
 				</button>
@@ -216,7 +271,19 @@ export default function WidgetNotes() {
 								placeholder="Note title..."
 								className="border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
 								value={newNoteTitle}
-								onChange={(e) => setNewNoteTitle(e.target.value)}
+								onChange={(e) => {
+									setNewNoteTitle(e.target.value);
+									if (addErrors.title)
+										setAddErrors((prev) => ({ ...prev, title: undefined }));
+								}}
+								ref={addTitleInputRef}
+								name="note-title"
+								autoComplete="off"
+								aria-label="Note title"
+								aria-invalid={!!addErrors.title}
+								aria-describedby={
+									addErrors.title ? "add-title-error" : undefined
+								}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" && e.shiftKey) {
 										e.preventDefault();
@@ -232,9 +299,8 @@ export default function WidgetNotes() {
 							<button
 								className="btn btn-sm btn-ghost"
 								onClick={addNote}
-								disabled={
-									!newNoteTitle.trim() || newNoteContent.trim() === "<p></p>"
-								}
+								type="button"
+								aria-label="Add note"
 							>
 								Add
 								<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
@@ -243,15 +309,32 @@ export default function WidgetNotes() {
 							<button
 								className="btn btn-ghost btn-sm btn-circle"
 								onClick={cancelAddingNew}
+								type="button"
+								aria-label="Cancel adding note"
 							>
 								<X className="size-3" />
 							</button>
 						</div>
 					</div>
 
+					{(addErrors.title || addErrors.content) && (
+						<div
+							className="px-4 text-xs text-error"
+							role="status"
+							aria-live="polite"
+						>
+							{addErrors.title && <p id="add-title-error">{addErrors.title}</p>}
+							{addErrors.content && <p>{addErrors.content}</p>}
+						</div>
+					)}
+
 					<ContextMenuEditor
 						content={newNoteContent}
-						onChange={setNewNoteContent}
+						onChange={(val) => {
+							setNewNoteContent(val);
+							if (addErrors.content)
+								setAddErrors((prev) => ({ ...prev, content: undefined }));
+						}}
 						className="h-fit"
 						autoFocus={true}
 						onKeyDown={(e) => {
@@ -327,10 +410,19 @@ export default function WidgetNotes() {
 													onChange={(e) =>
 														updateNote(note.id, { title: e.target.value })
 													}
+													name={`note-title-${note.id}`}
+													autoComplete="off"
+													aria-label="Note title"
+													aria-invalid={!!editErrors[note.id]?.title}
+													aria-describedby={
+														editErrors[note.id]?.title
+															? `edit-title-error-${note.id}`
+															: undefined
+													}
 													onKeyDown={(e) => {
 														if (e.key === "Enter" && e.shiftKey) {
 															e.preventDefault();
-															stopEditing();
+															saveEditing(note);
 														} else if (e.key === "Escape") {
 															e.preventDefault();
 															cancelEditing();
@@ -341,11 +433,9 @@ export default function WidgetNotes() {
 											<div className="flex gap-2">
 												<button
 													className="btn btn-sm btn-ghost"
-													onClick={stopEditing}
-													disabled={
-														!note.title.trim() ||
-														note.content.trim() === "<p></p>"
-													}
+													onClick={() => saveEditing(note)}
+													type="button"
+													aria-label="Save note"
 												>
 													Save
 													<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
@@ -354,11 +444,31 @@ export default function WidgetNotes() {
 												<button
 													className="btn btn-ghost btn-sm btn-circle"
 													onClick={cancelEditing}
+													type="button"
+													aria-label="Cancel editing note"
 												>
 													<X className="size-3" />
 												</button>
 											</div>
 										</div>
+
+										{(editErrors[note.id]?.title ||
+											editErrors[note.id]?.content) && (
+											<div
+												className="-mt-2 mb-2 text-xs text-error"
+												role="status"
+												aria-live="polite"
+											>
+												{editErrors[note.id]?.title && (
+													<p id={`edit-title-error-${note.id}`}>
+														{editErrors[note.id]?.title}
+													</p>
+												)}
+												{editErrors[note.id]?.content && (
+													<p>{editErrors[note.id]?.content}</p>
+												)}
+											</div>
+										)}
 
 										<ContextMenuEditor
 											content={note.content}
@@ -368,7 +478,7 @@ export default function WidgetNotes() {
 											onKeyDown={(e) => {
 												if (e.key === "Enter" && e.shiftKey) {
 													e.preventDefault();
-													stopEditing();
+													saveEditing(note);
 												} else if (e.key === "Escape") {
 													e.preventDefault();
 													cancelEditing();
@@ -399,6 +509,8 @@ export default function WidgetNotes() {
 														startEditing(note.id);
 													}}
 													title="Edit note"
+													aria-label="Edit note"
+													type="button"
 												>
 													<Edit3 className="size-3" />
 												</button>
@@ -409,6 +521,8 @@ export default function WidgetNotes() {
 														deleteNote(note.id);
 													}}
 													title="Delete note"
+													aria-label="Delete note"
+													type="button"
 												>
 													<Trash2 className="size-3" />
 												</button>

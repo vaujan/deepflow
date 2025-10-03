@@ -19,29 +19,42 @@ const widgetRegistry: Record<Widgets, WidgetComponent> = {
 };
 
 export default function WidgetsContainer() {
-	const { visibleWidgets } = useWidgets();
+	const { activeWidgets, visibleWidgets } = useWidgets();
 
 	const widgetsToRender = useMemo(() => {
 		const order: Widgets[] = ["timer", "note", "tasks", "kanban", "journal"];
-		const sorted = [...visibleWidgets].sort(
+		const sorted = [...activeWidgets].sort(
 			(a, b) => order.indexOf(a) - order.indexOf(b)
 		);
 		return sorted.map((type) => ({
 			type,
 			Component: widgetRegistry[type],
 		}));
-	}, [visibleWidgets]);
+	}, [activeWidgets]);
 
 	if (widgetsToRender.length === 0) return null;
 
-	// Single widget: render without container border/padding
-	if (widgetsToRender.length === 1) {
-		const { Component } = widgetsToRender[0];
+	// If exactly one active widget is visible, center it and hide others
+	const visibleActiveCount = activeWidgets.filter((w) =>
+		visibleWidgets.includes(w)
+	).length;
+
+	if (visibleActiveCount === 1) {
+		const onlyVisible = widgetsToRender.find(({ type }) =>
+			visibleWidgets.includes(type)
+		);
 		return (
 			<div className="w-full h-fit max-w-full flex justify-center">
 				<div className="w-full max-w-2xl">
-					<Component />
+					{onlyVisible ? <onlyVisible.Component /> : null}
 				</div>
+				{widgetsToRender
+					.filter(({ type }) => !visibleWidgets.includes(type))
+					.map(({ type, Component }) => (
+						<div key={`hidden-${type}`} className="hidden" aria-hidden>
+							<Component />
+						</div>
+					))}
 			</div>
 		);
 	}
@@ -49,13 +62,22 @@ export default function WidgetsContainer() {
 	return (
 		<div className="w-full h-fit rounded-box py-4">
 			<div className="flex gap-2 lg:gap-3 justify-center h-full">
-				{widgetsToRender.map(({ Component }, index) => (
-					<div key={`pane-${index}`} className="max-w-lg min-w-md w-full">
-						<div className="h-full w-full justify-center flex">
-							<Component />
+				{widgetsToRender.map(({ type, Component }) => {
+					const isVisible = visibleWidgets.includes(type);
+					return (
+						<div
+							key={`pane-${type}`}
+							className={`max-w-lg min-w-md w-full ${
+								isVisible ? "" : "hidden"
+							}`}
+							aria-hidden={!isVisible}
+						>
+							<div className="h-full w-full justify-center flex">
+								<Component />
+							</div>
 						</div>
-					</div>
-				))}
+					);
+				})}
 			</div>
 		</div>
 	);
