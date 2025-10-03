@@ -289,6 +289,90 @@ html:not([data-theme]) {
 	--color-sidebar-border: var(--gray-4, #2a2a2a);
 }
 
+/* Cally calendar theming mapped to DaisyUI palette */
+.cally {
+	/* container spacing is provided by parent; only minor adjustments here */
+	display: block;
+	border-radius: var(--radius-box, 0.75rem);
+}
+
+.cally::part(heading) {
+	font-weight: 600;
+	color: hsl(var(--bc));
+}
+
+.cally::part(previous),
+.cally::part(next) {
+	inline-size: 2rem;
+	block-size: 2rem;
+	border-radius: var(--radius-field, 0.5rem);
+	display: inline-grid;
+	place-items: center;
+	color: hsl(var(--bc));
+}
+
+.cally::part(previous):hover,
+.cally::part(next):hover {
+	background: hsl(var(--b2));
+}
+
+.cally::part(previous):focus-visible,
+.cally::part(next):focus-visible {
+	outline: 2px solid hsl(var(--p));
+	outline-offset: 2px;
+}
+
+.cally::part(day) {
+	inline-size: 2.25rem;
+	block-size: 2.25rem;
+	border-radius: var(--radius-field, 0.5rem);
+	display: grid;
+	place-items: center;
+	font-variant-numeric: tabular-nums;
+	color: hsl(var(--bc) / 0.88);
+	/* Match DaisyUI button footprint so state changes don't shift layout */
+	border: 1px solid transparent;
+	transition: background-color 150ms ease, color 150ms ease,
+		border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.cally::part(day):hover {
+	background: hsl(var(--b2));
+}
+
+.cally::part(day)[aria-selected="true"] {
+	/* DaisyUI primary button look */
+	background: hsl(var(--p));
+	color: hsl(var(--pc));
+	border-color: hsl(var(--p));
+	box-shadow: 0 1px 0 hsl(var(--p) / 0.4) inset;
+}
+
+.cally::part(day)[aria-selected="true"]:hover {
+	filter: brightness(0.98);
+}
+
+.cally::part(day):focus-visible {
+	outline: 2px solid hsl(var(--p));
+	outline-offset: 2px;
+}
+
+.cally::part(day)[aria-current="date"] {
+	/* DaisyUI outline button look for Today */
+	border-color: hsl(var(--p) / 0.6);
+	color: hsl(var(--p));
+}
+
+.cally::part(day)[aria-disabled="true"] {
+	opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cally {
+		transition: none;
+	}
+}
+
 /* CSS-based light theme switching */
 /* Light theme - matches Radix Colors :root, .light, .light-theme selectors */
 :root:not(.dark):not(.dark-theme),

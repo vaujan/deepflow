@@ -1,21 +1,25 @@
 "use client";
 
-import {
-	Plus,
-	CheckCircle,
-	Circle,
-	Trash2,
-	ListTodo,
-	Calendar,
-	Edit3,
-} from "lucide-react";
+import { Plus, Trash2, ListTodo, Calendar, Edit3 } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import type { Task } from "../../data/mockTasks";
 import { toast } from "sonner";
+import DatePicker from "./date-picker";
 
 export default function WidgetTask() {
-	const [tasks, setTasks] = useState<Task[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [tasks, setTasks] = useState<Task[] | null>(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const cached = localStorage.getItem("tasks-cache");
+				if (cached) {
+					const parsed = JSON.parse(cached);
+					if (Array.isArray(parsed)) return parsed as Task[];
+				}
+			} catch {}
+		}
+		return null;
+	});
+	const [loading, setLoading] = useState(() => tasks === null);
 	const [showNewDateMenu, setShowNewDateMenu] = useState(false);
 	const [showEditDateMenu, setShowEditDateMenu] = useState(false);
 	const [newMenuUp, setNewMenuUp] = useState(false);
@@ -23,10 +27,16 @@ export default function WidgetTask() {
 
 	const [isAddingNew, setIsAddingNew] = useState(false);
 	const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+	const [isSubmittingNew, setIsSubmittingNew] = useState(false);
 
 	// Refs for click-outside detection
 	const addTaskRef = useRef<HTMLDivElement>(null);
 	const editTaskRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+
+	// Refs for Pikaday datepickers
+	const newDatePickerRef = useRef<HTMLInputElement>(null);
+	const editDatePickerRef = useRef<HTMLInputElement>(null);
+
 	const [newTask, setNewTask] = useState({
 		title: "",
 		description: "",
@@ -59,7 +69,8 @@ export default function WidgetTask() {
 	};
 
 	const addTask = async () => {
-		if (!newTask.title.trim()) return;
+		if (!newTask.title.trim() || isSubmittingNew) return;
+
 		const optimistic = {
 			id: Date.now(),
 			title: newTask.title,
@@ -68,17 +79,30 @@ export default function WidgetTask() {
 			dueDate: newTask.dueDate || undefined,
 			project: newTask.project,
 		} as Task;
-		setTasks([optimistic, ...tasks]);
+
+		// Optimistically add to list using functional update to avoid stale state
+		setTasks((prev) => [optimistic, ...(prev ?? [])]);
+
+		// Clear inputs immediately for snappy UX and mark as submitting
+		setIsSubmittingNew(true);
+		setNewTask({ title: "", description: "", dueDate: "", project: "Inbox" });
+
+		setTimeout(() => {
+			const titleInput = document.querySelector(
+				'input[placeholder="Task name"]'
+			) as HTMLInputElement;
+			if (titleInput) titleInput.focus();
+		}, 0);
 
 		try {
 			const res = await fetch("/api/tasks", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					title: newTask.title,
-					description: newTask.description || null,
-					dueDate: newTask.dueDate || null,
-					project: newTask.project || null,
+					title: optimistic.title,
+					description: optimistic.description || null,
+					dueDate: optimistic.dueDate || null,
+					project: optimistic.project || null,
 				}),
 			});
 			const data = await res.json();
@@ -86,28 +110,26 @@ export default function WidgetTask() {
 			// Replace optimistic with server row
 			setTasks((prev) => [
 				{ ...data, id: data.id } as Task,
-				...prev.filter((t) => t.id !== optimistic.id),
+				...(prev ?? []).filter((t) => t.id !== optimistic.id),
 			]);
 		} catch (e: any) {
 			toast.error(e.message || "Failed to add task");
-			setTasks((prev) => prev.filter((t) => t.id !== optimistic.id));
+			setTasks((prev) => (prev ?? []).filter((t) => t.id !== optimistic.id));
+		} finally {
+			setLoading(false);
+			setIsSubmittingNew(false);
 		}
-
-		setNewTask({ title: "", description: "", dueDate: "", project: "Inbox" });
-		setTimeout(() => {
-			const titleInput = document.querySelector(
-				'input[placeholder="Task name"]'
-			) as HTMLInputElement;
-			if (titleInput) titleInput.focus();
-		}, 0);
 	};
 
 	const toggleTask = async (id: number) => {
+		if (!tasks) return;
 		const target = tasks.find((t) => t.id === id);
 		if (!target) return;
 		const nextCompleted = !target.completed;
-		setTasks(
-			tasks.map((t) => (t.id === id ? { ...t, completed: nextCompleted } : t))
+		setTasks((prev) =>
+			(prev ?? []).map((t) =>
+				t.id === id ? { ...t, completed: nextCompleted } : t
+			)
 		);
 		try {
 			const res = await fetch(`/api/tasks/${id}`, {
@@ -120,8 +142,8 @@ export default function WidgetTask() {
 			}
 		} catch (e: any) {
 			toast.error(e.message || "Failed to update task");
-			setTasks(
-				tasks.map((t) =>
+			setTasks((prev) =>
+				(prev ?? []).map((t) =>
 					t.id === id ? { ...t, completed: !nextCompleted } : t
 				)
 			);
@@ -129,8 +151,9 @@ export default function WidgetTask() {
 	};
 
 	const deleteTask = async (id: number) => {
+		if (!tasks) return;
 		const previous = tasks;
-		setTasks(tasks.filter((task) => task.id !== id));
+		setTasks((prev) => (prev ?? []).filter((task) => task.id !== id));
 		try {
 			const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
 			if (!res.ok)
@@ -172,11 +195,11 @@ export default function WidgetTask() {
 	};
 
 	const saveEditTask = async () => {
-		if (!editTask.title.trim() || !editingTaskId) return;
+		if (!editTask.title.trim() || !editingTaskId || !tasks) return;
 		const id = editingTaskId;
 		const prev = tasks;
-		setTasks(
-			tasks.map((task) =>
+		setTasks((current) =>
+			(current ?? []).map((task) =>
 				task.id === id
 					? {
 							...task,
@@ -253,6 +276,17 @@ export default function WidgetTask() {
 		};
 	}, [isAddingNew, editingTaskId]);
 
+	// (Removed) Separate hydration effect; tasks are initialized from cache in state initializer
+
+	// Persist tasks to cache whenever they change (only when non-null)
+	useEffect(() => {
+		try {
+			if (tasks !== null) {
+				localStorage.setItem("tasks-cache", JSON.stringify(tasks));
+			}
+		} catch {}
+	}, [tasks]);
+
 	// Initial fetch
 	useEffect(() => {
 		(async () => {
@@ -271,12 +305,12 @@ export default function WidgetTask() {
 	}, []);
 
 	return (
-		<div className="w-full h-full group flex flex-col">
+		<div className="w-full h-full flex flex-col">
 			<div className="flex justify-between items-center text-base-content/80 mb-6">
 				<span className="font-medium">
 					Tasks{" "}
 					<span className="badge rounded-box badge-neutral badge-sm">
-						{tasks.length}
+						{tasks?.length ?? 0}
 					</span>
 				</span>
 				<button
@@ -364,20 +398,16 @@ export default function WidgetTask() {
 							</button>
 							{showNewDateMenu && (
 								<div
-									className="dropdown-content z-10 mt-2 rounded-lg border border-base-300 bg-base-100 shadow-xl p-2 w-72"
+									className="dropdown-content z-10 mt-2 rounded-lg border border-border bg-base-100 shadow-xl p-2"
 									role="menu"
 								>
-									<input
-										type="date"
-										className="input input-bordered input-sm w-full"
+									<DatePicker
 										value={newTask.dueDate}
-										onChange={(e) => {
-											setNewTask({
-												...newTask,
-												dueDate: e.target.value || "",
-											});
+										onChange={(value) => {
+											setNewTask({ ...newTask, dueDate: value });
 											setShowNewDateMenu(false);
 										}}
+										className="cally block"
 									/>
 									<div className="flex gap-2 p-1">
 										<button
@@ -446,7 +476,7 @@ export default function WidgetTask() {
 			{/* Task list */}
 			<div>
 				<div className="flex flex-col pr-2">
-					{loading ? (
+					{loading && tasks === null ? (
 						<div className="flex flex-col gap-3 py-4 ">
 							{Array.from({ length: 6 }).map((_, i) => (
 								<div key={i} className="flex items-start gap-3 py-3 px-0">
@@ -459,7 +489,7 @@ export default function WidgetTask() {
 								</div>
 							))}
 						</div>
-					) : tasks.length === 0 && !isAddingNew ? (
+					) : (tasks?.length ?? 0) === 0 && !isAddingNew ? (
 						// Empty state
 						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
 							<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
@@ -478,7 +508,7 @@ export default function WidgetTask() {
 							</button>
 						</div>
 					) : (
-						tasks.map((task, index) => (
+						(tasks ?? []).map((task, index) => (
 							<div key={task.id} className="h-full overflow-visible min-h-0">
 								{editingTaskId === task.id ? (
 									// Edit task form
@@ -565,20 +595,19 @@ export default function WidgetTask() {
 												</button>
 												{showEditDateMenu && (
 													<div
-														className="dropdown-content z-10 mt-2 rounded-lg border border-base-300 bg-base-100 shadow-xl p-2 w-72"
+														className="dropdown-content z-10 mt-2 rounded-lg border border-border bg-base-200 shadow-xl p-2"
 														role="menu"
 													>
-														<input
-															type="date"
-															className="input input-bordered input-sm w-full"
+														<DatePicker
 															value={editTask.dueDate}
-															onChange={(e) => {
+															onChange={(value) => {
 																setEditTask({
 																	...editTask,
-																	dueDate: e.target.value || "",
+																	dueDate: value,
 																});
 																setShowEditDateMenu(false);
 															}}
+															className="cally block"
 														/>
 														<div className="flex gap-2 p-1">
 															<button
@@ -659,7 +688,7 @@ export default function WidgetTask() {
 								) : (
 									// Regular task display
 									<div
-										className={`w-full py-4 px-0 border-b border-base-content/10 transition-all ease-out cursor-pointer hover:bg-base-50 ${
+										className={`group w-full py-4 px-0 border-b border-border transition-all ease-out cursor-pointer hover:bg-base-50 ${
 											task.completed ? "opacity-75" : ""
 										} ${index === 0 ? "border-t border-base-300" : ""}`}
 										onClick={() => toggleTask(task.id)}
