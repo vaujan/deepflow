@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from "../../../lib/supabase/server";
 
 // GET /api/tasks - list tasks for current user
 export async function GET() {
-	const supabase = getSupabaseServerClient();
+	const supabase = await getSupabaseServerClient();
 	const {
 		data: { user },
 		error: userError,
@@ -34,7 +34,7 @@ export async function GET() {
 
 // POST /api/tasks - create task
 export async function POST(request: Request) {
-	const supabase = getSupabaseServerClient();
+	const supabase = await getSupabaseServerClient();
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();

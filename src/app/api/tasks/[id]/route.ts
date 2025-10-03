@@ -4,9 +4,10 @@ import { getSupabaseServerClient } from "../../../../lib/supabase/server";
 // PATCH /api/tasks/:id - update task
 export async function PATCH(
 	request: Request,
-	{ params }: { params: { id: string } }
+	context: { params: Promise<{ id: string }> }
 ) {
-	const supabase = getSupabaseServerClient();
+	const supabase = await getSupabaseServerClient();
+	const { id } = await context.params;
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
@@ -24,7 +25,7 @@ export async function PATCH(
 	const { data, error } = await supabase
 		.from("tasks")
 		.update(update)
-		.eq("id", params.id)
+		.eq("id", id)
 		.select("id, title, description, completed, due_date, project")
 		.single();
 
@@ -44,16 +45,17 @@ export async function PATCH(
 // DELETE /api/tasks/:id - delete task
 export async function DELETE(
 	_request: Request,
-	{ params }: { params: { id: string } }
+	context: { params: Promise<{ id: string }> }
 ) {
-	const supabase = getSupabaseServerClient();
+	const supabase = await getSupabaseServerClient();
+	const { id } = await context.params;
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 	if (!user)
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-	const { error } = await supabase.from("tasks").delete().eq("id", params.id);
+	const { error } = await supabase.from("tasks").delete().eq("id", id);
 	if (error)
 		return NextResponse.json({ error: error.message }, { status: 500 });
 
