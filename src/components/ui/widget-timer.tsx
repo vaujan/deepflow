@@ -852,7 +852,7 @@ function SessionCompletionView({
 	};
 
 	return (
-		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
+		<div className="card bg-transparent w-full h-fit p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
 			<div className="flex flex-col text-center flex-shrink-0">
 				<h1 className="font-semibold">Session Complete</h1>
 				<p className="text-base-content/50">
@@ -1038,7 +1038,7 @@ function SessionCompletionView({
 				</div>
 			</ScrollArea>
 
-			<div className="card-actions justify-center flex-shrink-0">
+			<div className="card-actions justify-center flex-shrink-0 pt-2 pb-6">
 				<button
 					onClick={handleSaveSession}
 					className="btn btn-primary btn-block"
