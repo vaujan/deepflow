@@ -4,12 +4,25 @@ import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import ContextMenuEditor from "./context-menu-editor";
 import { ScrollArea } from "./scroll-area";
-import { mockNotes, type Note } from "../../data/mockNotes";
+import type { Note } from "../../data/mockNotes";
 
 export default function WidgetNotes() {
-	const [notes, setNotes] = useState<Note[]>(mockNotes);
+	const [notes, setNotes] = useState<Note[] | null>(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const cached = localStorage.getItem("notes-cache");
+				if (cached) {
+					const parsed = JSON.parse(cached);
+					if (Array.isArray(parsed)) return parsed as Note[];
+				}
+			} catch {}
+		}
+		return null;
+	});
+	const [loading, setLoading] = useState(() => notes === null);
 	const [editingNote, setEditingNote] = useState<number | null>(null);
 	const [isAddingNew, setIsAddingNew] = useState(false);
+	const [isSubmittingNew, setIsSubmittingNew] = useState(false);
 	const [newNoteTitle, setNewNoteTitle] = useState("");
 	const [newNoteContent, setNewNoteContent] = useState("<p></p>");
 	const [originalNote, setOriginalNote] = useState<Note | null>(null);
@@ -32,14 +45,14 @@ export default function WidgetNotes() {
 		if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
 		updateTimeoutRef.current = setTimeout(() => {
 			setNotes((prev) =>
-				prev.map((note) =>
+				(prev ?? []).map((note) =>
 					note.id === id ? { ...note, ...updates, timestamp: "Just now" } : note
 				)
 			);
 		}, 150);
 	}, []);
 
-	const addNote = () => {
+	const addNote = async () => {
 		const titleValid = newNoteTitle.trim().length > 0;
 		const contentValid = newNoteContent.trim() !== "<p></p>";
 		if (!titleValid || !contentValid) {
@@ -53,40 +66,83 @@ export default function WidgetNotes() {
 			}
 			return;
 		}
-		const newNote: Note = {
+		const optimistic: Note = {
 			id: Date.now(),
 			title: newNoteTitle,
 			content: newNoteContent,
 			timestamp: "Just now",
 		};
-		setNotes((prev) => [newNote, ...prev]);
+		setNotes((prev) => [optimistic, ...(prev ?? [])]);
 		setIsAddingNew(false);
+		setIsSubmittingNew(true);
 		setNewNoteTitle("");
 		setNewNoteContent("<p></p>");
 		setAddErrors({});
+
+		try {
+			const res = await fetch("/api/notes", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title: optimistic.title,
+					content: optimistic.content,
+				}),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Failed to add note");
+			setNotes((prev) => [
+				data as Note,
+				...(prev ?? []).filter((n) => n.id !== optimistic.id),
+			]);
+		} catch (e: any) {
+			// rollback
+			setNotes((prev) => (prev ?? []).filter((n) => n.id !== optimistic.id));
+		} finally {
+			setIsSubmittingNew(false);
+		}
 	};
 
-	const deleteNote = (id: number) => {
-		setNotes((prev) => prev.filter((note) => note.id !== id));
+	const deleteNote = async (id: number) => {
+		const previous = notes ?? [];
+		setNotes(previous.filter((note) => note.id !== id));
+		try {
+			const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+			if (!res.ok)
+				throw new Error((await res.json()).error || "Failed to delete note");
+		} catch (e) {
+			setNotes(previous);
+		}
 		if (editingNote === id) {
 			setEditingNote(null);
 			setOriginalNote(null);
 		}
 	};
 
-	const updateNote = (id: number, updates: Partial<Note>) => {
+	const updateNote = async (id: number, updates: Partial<Note>) => {
 		// Immediate update for UI responsiveness
-		setNotes((prev) =>
-			prev.map((note) =>
+		const prev = notes ?? [];
+		setNotes((current) =>
+			(current ?? []).map((note) =>
 				note.id === id ? { ...note, ...updates, timestamp: "Just now" } : note
 			)
 		);
-		// Debounced update for smoother experience
-		debouncedUpdate(id, updates);
+		// Persist remotely
+		try {
+			const res = await fetch(`/api/notes/${id}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(updates),
+			});
+			if (!res.ok)
+				throw new Error((await res.json()).error || "Failed to update note");
+		} catch (e) {
+			// rollback
+			setNotes(prev);
+		}
 	};
 
 	const startEditing = (id: number) => {
-		const noteToEdit = notes.find((note) => note.id === id);
+		const noteToEdit = (notes ?? []).find((note) => note.id === id);
 		if (noteToEdit) {
 			setOriginalNote({ ...noteToEdit });
 			setEditingNote(id);
@@ -128,7 +184,9 @@ export default function WidgetNotes() {
 		if (editingNote && originalNote) {
 			// Revert the note to its original state
 			setNotes((prev) =>
-				prev.map((note) => (note.id === editingNote ? originalNote : note))
+				(prev ?? []).map((note) =>
+					note.id === editingNote ? originalNote : note
+				)
 			);
 			setEditingNote(null);
 			setOriginalNote(null);
@@ -180,39 +238,33 @@ export default function WidgetNotes() {
 		}
 	}, [isAddingNew]);
 
-	// Click outside handler
+	// Removed: outside click handler to prevent accidental closures
+
+	// Initial fetch of notes
 	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as Node;
-
-			// Check if clicking outside add note form
-			if (
-				isAddingNew &&
-				addNoteRef.current &&
-				!addNoteRef.current.contains(target)
-			) {
-				cancelAddingNew();
+		(async () => {
+			try {
+				const res = await fetch("/api/notes");
+				if (!res.ok)
+					throw new Error((await res.json()).error || "Failed to load notes");
+				const data = await res.json();
+				setNotes(data);
+			} catch (_) {
+				setNotes((prev) => prev ?? []);
+			} finally {
+				setLoading(false);
 			}
+		})();
+	}, []);
 
-			// Check if clicking outside edit note form
-			if (
-				editingNote !== null &&
-				editNoteRefs.current[editingNote] &&
-				!editNoteRefs.current[editingNote]?.contains(target)
-			) {
-				cancelEditing();
+	// Persist notes to cache whenever they change (only when non-null)
+	useEffect(() => {
+		try {
+			if (notes !== null) {
+				localStorage.setItem("notes-cache", JSON.stringify(notes));
 			}
-		};
-
-		// Only add listener when we're in adding or editing mode
-		if (isAddingNew || editingNote !== null) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [isAddingNew, editingNote]);
+		} catch {}
+	}, [notes]);
 
 	const renderContent = (content: string) => {
 		return (
@@ -297,12 +349,15 @@ export default function WidgetNotes() {
 						</div>
 						<div className="flex gap-2">
 							<button
-								className="btn btn-sm btn-ghost"
+								className={`btn btn-sm ${
+									isSubmittingNew ? "btn-disabled" : "btn-ghost"
+								}`}
 								onClick={addNote}
 								type="button"
 								aria-label="Add note"
+								disabled={isSubmittingNew}
 							>
-								Add
+								{isSubmittingNew ? "Adding…" : "Add"}
 								<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
 								<kbd className="kbd kbd-xs">enter</kbd>
 							</button>
@@ -356,7 +411,20 @@ export default function WidgetNotes() {
 						editingNote !== null || isAddingNew ? "relative" : ""
 					}`}
 				>
-					{notes.length === 0 && !isAddingNew ? (
+					{loading && notes === null ? (
+						<div className="flex flex-col gap-3 py-4">
+							{Array.from({ length: 5 }).map((_, i) => (
+								<div
+									key={i}
+									className="flex flex-col gap-3 p-4 border border-base-200 rounded-lg"
+								>
+									<div className="skeleton h-4 w-2/5" />
+									<div className="skeleton h-3 w-4/5" />
+									<div className="skeleton h-3 w-3/5" />
+								</div>
+							))}
+						</div>
+					) : (notes?.length ?? 0) === 0 && !isAddingNew ? (
 						// Empty state
 						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
 							<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
@@ -375,7 +443,7 @@ export default function WidgetNotes() {
 							</button>
 						</div>
 					) : (
-						notes.map((note) => (
+						(notes ?? []).map((note) => (
 							<div
 								key={note.id}
 								ref={(el) => {

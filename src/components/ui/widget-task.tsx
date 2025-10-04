@@ -242,39 +242,7 @@ export default function WidgetTask() {
 		});
 	};
 
-	// Click outside handler
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as Node;
-
-			// Check if clicking outside add task form
-			if (
-				isAddingNew &&
-				addTaskRef.current &&
-				!addTaskRef.current.contains(target)
-			) {
-				cancelAddingNew();
-			}
-
-			// Check if clicking outside edit task form
-			if (
-				editingTaskId !== null &&
-				editTaskRefs.current[editingTaskId] &&
-				!editTaskRefs.current[editingTaskId]?.contains(target)
-			) {
-				cancelEditTask();
-			}
-		};
-
-		// Only add listener when we're in adding or editing mode
-		if (isAddingNew || editingTaskId !== null) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [isAddingNew, editingTaskId]);
+	// Removed: outside click handler to prevent accidental closures
 
 	// (Removed) Separate hydration effect; tasks are initialized from cache in state initializer
 
