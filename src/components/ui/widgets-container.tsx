@@ -34,40 +34,22 @@ export default function WidgetsContainer() {
 
 	if (widgetsToRender.length === 0) return null;
 
-	// If exactly one active widget is visible, center it and hide others
 	const visibleActiveCount = activeWidgets.filter((w) =>
 		visibleWidgets.includes(w)
 	).length;
-
-	if (visibleActiveCount === 1) {
-		const onlyVisible = widgetsToRender.find(({ type }) =>
-			visibleWidgets.includes(type)
-		);
-		return (
-			<div className="w-full h-fit max-w-full flex justify-center">
-				<div className="w-full max-w-2xl">
-					{onlyVisible ? <onlyVisible.Component /> : null}
-				</div>
-				{widgetsToRender
-					.filter(({ type }) => !visibleWidgets.includes(type))
-					.map(({ type, Component }) => (
-						<div key={`hidden-${type}`} className="hidden" aria-hidden>
-							<Component />
-						</div>
-					))}
-			</div>
-		);
-	}
+	const isSingleVisible = visibleActiveCount === 1;
 
 	return (
 		<div className="w-full h-fit rounded-box py-4">
-			<div className="flex gap-2 lg:gap-3 justify-center h-full">
+			<div className={`flex gap-2 lg:gap-3 justify-center h-full`}>
 				{widgetsToRender.map(({ type, Component }) => {
 					const isVisible = visibleWidgets.includes(type);
+					const paneWidthClass =
+						isSingleVisible && isVisible ? "max-w-2xl" : "max-w-lg min-w-md";
 					return (
 						<div
 							key={`pane-${type}`}
-							className={`max-w-lg min-w-md w-full ${
+							className={`${paneWidthClass} w-full ${
 								isVisible ? "" : "hidden"
 							}`}
 							aria-hidden={!isVisible}

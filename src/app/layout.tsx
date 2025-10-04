@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { ThemeLoadingWrapper } from "../components/ui/theme-loading-wrapper";
 import SonnerToaster from "../components/ui/sonner-toaster";
 import ElectronTitlebar from "../components/ui/electron-titlebar";
+import QueryProvider from "../components/query-provider";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -34,12 +35,14 @@ export default function RootLayout({
 						<FontProvider>
 							<SidebarProvider>
 								<ElectronTitlebar />
-								<WidgetProvider>
-									{children}
-									<SonnerToaster />
-									<SpeedInsights />
-									<Analytics />
-								</WidgetProvider>
+								<QueryProvider>
+									<WidgetProvider>
+										{children}
+										<SonnerToaster />
+										<SpeedInsights />
+										<Analytics />
+									</WidgetProvider>
+								</QueryProvider>
 							</SidebarProvider>
 						</FontProvider>
 					</ThemeLoadingWrapper>

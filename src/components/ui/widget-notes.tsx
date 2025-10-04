@@ -34,6 +34,15 @@ export default function WidgetNotes() {
 		Record<number, { title?: string; content?: string }>
 	>({});
 
+	// Idempotency key generator for safe retries
+	const generateIdempotencyKey = (prefix: string) => {
+		try {
+			return `${prefix}-${crypto.randomUUID()}`;
+		} catch {
+			return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+		}
+	};
+
 	// Refs for click-outside detection & focus management
 	const addNoteRef = useRef<HTMLDivElement>(null);
 	const editNoteRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -82,7 +91,10 @@ export default function WidgetNotes() {
 		try {
 			const res = await fetch("/api/notes", {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": generateIdempotencyKey("notes:create"),
+				},
 				body: JSON.stringify({
 					title: optimistic.title,
 					content: optimistic.content,
@@ -106,7 +118,12 @@ export default function WidgetNotes() {
 		const previous = notes ?? [];
 		setNotes(previous.filter((note) => note.id !== id));
 		try {
-			const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+			const res = await fetch(`/api/notes/${id}`, {
+				method: "DELETE",
+				headers: {
+					"Idempotency-Key": generateIdempotencyKey(`notes:delete:${id}`),
+				},
+			});
 			if (!res.ok)
 				throw new Error((await res.json()).error || "Failed to delete note");
 		} catch (e) {
@@ -130,7 +147,10 @@ export default function WidgetNotes() {
 		try {
 			const res = await fetch(`/api/notes/${id}`, {
 				method: "PATCH",
-				headers: { "Content-Type": "application/json" },
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": generateIdempotencyKey(`notes:update:${id}`),
+				},
 				body: JSON.stringify(updates),
 			});
 			if (!res.ok)
