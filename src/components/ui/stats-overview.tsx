@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import FocusTimeLineChart from "./highlighted-multiple-bar";
-import { useSessionsQuery } from "@/src/hooks/useSessionsQuery";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 
 interface StatCardProps {
 	title: string;
@@ -48,7 +48,15 @@ const calculateStats = (
 };
 
 export default function StatsOverview() {
-	const { data: sessions = [] } = useSessionsQuery();
+	// Use last 30 days as the typical window;
+	const fromIso = useMemo(() => {
+		const now = new Date();
+		const start = new Date(now);
+		start.setHours(0, 0, 0, 0);
+		start.setDate(start.getDate() - 29);
+		return start.toISOString();
+	}, []);
+	const { data: sessions = [] } = useStatsSessions({ from: fromIso });
 	const stats = useMemo(() => calculateStats(sessions), [sessions]);
 
 	return (

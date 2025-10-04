@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
 
 interface HeatMapDay {
@@ -20,11 +20,21 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const currentYear = new Date().getFullYear();
 
 	// Pre-bucket sessions by day for the current year to avoid repeated filtering
+	const jan1 = useMemo(() => {
+		const d = new Date(new Date().getFullYear(), 0, 1);
+		d.setHours(0, 0, 0, 0);
+		return d.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({
+		from: jan1,
+		limit: 10000,
+	});
+
 	const perDayBuckets = useMemo(() => {
 		const yearStart = new Date(currentYear, 0, 1);
 		const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 		const map = new Map<string, { sessions: number; totalMinutes: number }>();
-		for (const s of mockSessions) {
+		for (const s of savedSessions) {
 			if (s.startTime < yearStart || s.startTime > yearEnd) continue;
 			const key = s.startTime.toISOString().split("T")[0];
 			const prev = map.get(key) || { sessions: 0, totalMinutes: 0 };
@@ -34,7 +44,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			});
 		}
 		return map;
-	}, [currentYear]);
+	}, [currentYear, savedSessions]);
 
 	// Generate heat map data for the current month using the pre-bucketed map
 	const heatMapData = useMemo(() => {
