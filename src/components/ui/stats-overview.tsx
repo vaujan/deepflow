@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { mockSessions } from "../../data/mockSessions";
+import React, { useMemo } from "react";
 import FocusTimeLineChart from "./highlighted-multiple-bar";
+import { useSessionsQuery } from "@/src/hooks/useSessionsQuery";
 
 interface StatCardProps {
 	title: string;
@@ -16,43 +16,40 @@ interface StatCardProps {
 	chart?: React.ReactNode;
 }
 
-const calculateStats = () => {
-	const totalSessions = mockSessions.length;
-	const totalTime = mockSessions.reduce(
-		(acc, session) => acc + session.elapsedTime,
+const calculateStats = (
+	sessions: Array<{
+		elapsedTime: number;
+		deepWorkQuality?: number;
+		completionType?: string;
+	}>
+) => {
+	const totalSessions = sessions.length;
+	const totalTime = sessions.reduce((acc, s) => acc + (s.elapsedTime || 0), 0);
+	const sumQuality = sessions.reduce(
+		(acc, s) => acc + (s.deepWorkQuality || 0),
 		0
 	);
-	const avgQuality =
-		mockSessions.reduce(
-			(acc, session) => acc + (session.deepWorkQuality || 0),
-			0
-		) / totalSessions;
-	const completedSessions = mockSessions.filter(
+	const avgQuality = totalSessions > 0 ? sumQuality / totalSessions : 0;
+	const completedSessions = sessions.filter(
 		(s) => s.completionType === "completed"
 	).length;
-
-	// Calculate time in hours and minutes
 	const totalHours = Math.floor(totalTime / 3600);
 	const totalMinutes = Math.floor((totalTime % 3600) / 60);
-
-	// Calculate completion rate
 	const completionRate =
 		totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
-
-	// Calculate average session duration
-	const avgDuration = totalSessions > 0 ? totalTime / totalSessions / 60 : 0; // in minutes
-
+	const avgDuration = totalSessions > 0 ? totalTime / totalSessions / 60 : 0;
 	return {
 		totalSessions,
-		totalTime: `${totalHours}h ${totalMinutes}m`,
-		avgQuality: avgQuality.toFixed(1),
-		completionRate: completionRate.toFixed(1),
-		avgDuration: avgDuration.toFixed(0),
+		totalTimeText: `${totalHours}h ${totalMinutes}m`,
+		avgQualityText: avgQuality.toFixed(1),
+		completionRateText: completionRate.toFixed(1),
+		avgDurationText: avgDuration.toFixed(0),
 	};
 };
 
 export default function StatsOverview() {
-	const stats = calculateStats();
+	const { data: sessions = [] } = useSessionsQuery();
+	const stats = useMemo(() => calculateStats(sessions), [sessions]);
 
 	return (
 		<div className="w-full h-full">
@@ -68,7 +65,7 @@ export default function StatsOverview() {
 									Total Focus Time
 								</p>
 								<p className="text-2xl font-medium text-base-content font-mono">
-									{stats.totalTime}
+									{stats.totalTimeText}
 								</p>
 								<p className="text-xs text-base-content/50">Deep work hours</p>
 							</div>

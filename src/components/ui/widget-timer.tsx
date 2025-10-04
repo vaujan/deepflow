@@ -14,6 +14,7 @@ import {
 	ChevronDown,
 	ChevronUp,
 	AlertCircle,
+	Loader2,
 } from "lucide-react";
 import { ScrollArea } from "./scroll-area";
 import { useSession, type Session } from "../../hooks/useSession";
@@ -32,17 +33,23 @@ export default function WidgetTimer() {
 	const [activeTab, setActiveTab] = useState<
 		"time-boxed" | "open" | "pomodoro"
 	>("time-boxed");
-	const [completedSession, setCompletedSession] = useState<Session | null>(
-		null
-	);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const {
 		currentSession,
 		isActive,
+		isPaused,
+		elapsedTime,
+		remainingTime,
 		startSession,
+		pauseSession,
+		resumeSession,
+		completeSession,
+		saveCompletedSession,
+		dismissSession,
 		updateDeepWorkQuality,
 		updateSessionNotes,
+		hasPendingSave,
 	} = useSession();
 	const { settings, updateSettings } = usePomodoroSettings();
 
@@ -57,6 +64,7 @@ export default function WidgetTimer() {
 		"Practice piano for 30 minutes...",
 	];
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+	const [isStarting, setIsStarting] = useState(false);
 	useEffect(() => {
 		const interval = setInterval(() => {
 			setCurrentPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
@@ -99,7 +107,9 @@ export default function WidgetTimer() {
 		});
 	};
 
-	const handleStartSession = () => {
+	const handleStartSession = async () => {
+		if (isStarting || !isGoalValid) return;
+		setIsStarting(true);
 		const sessionConfig = {
 			goal: goal.trim(),
 			duration: activeTab !== "open" ? duration : undefined,
@@ -110,31 +120,40 @@ export default function WidgetTimer() {
 				.filter((t) => t.length > 0),
 			sessionType: activeTab as "time-boxed" | "open" | "pomodoro",
 		};
-		startSession(sessionConfig);
+		try {
+			await startSession(sessionConfig);
+		} catch (e: any) {
+			toast.error(e?.message || "Failed to start session");
+		} finally {
+			setIsStarting(false);
+		}
 	};
 
-	const handleSessionComplete = (session: Session) =>
-		setCompletedSession(session);
 	const handleQualityUpdate = (sessionId: string, quality: number) =>
 		updateDeepWorkQuality(sessionId, quality);
 	const handleNotesUpdate = (sessionId: string, notes: string) =>
 		updateSessionNotes(sessionId, notes);
 
-	if (completedSession) {
+	if (currentSession && currentSession.status === "completed") {
 		return (
 			<SessionCompletionView
-				session={completedSession}
+				session={currentSession}
 				onUpdateQuality={handleQualityUpdate}
 				onUpdateNotes={handleNotesUpdate}
+				onDismiss={dismissSession}
 			/>
 		);
 	}
 
-	if (isActive && currentSession) {
+	if ((isActive || isPaused) && currentSession) {
 		return (
 			<ActiveSessionView
 				session={currentSession}
-				onSessionComplete={handleSessionComplete}
+				isPaused={isPaused}
+				elapsedTime={elapsedTime}
+				remainingTime={remainingTime}
+				onPauseResume={() => (isPaused ? resumeSession() : pauseSession())}
+				onComplete={() => completeSession(currentSession.id)}
 			/>
 		);
 	}
@@ -345,12 +364,14 @@ export default function WidgetTimer() {
 					className={`btn btn-block mb-8 h-14 transition-all duration-200 ${
 						isGoalValid ? "btn-primary" : "btn-disabled"
 					}`}
-					disabled={!isGoalValid}
+					disabled={!isGoalValid || isStarting}
 					onClick={handleStartSession}
 					style={{ touchAction: "manipulation" }}
-					aria-disabled={!isGoalValid}
+					aria-disabled={!isGoalValid || isStarting}
+					aria-busy={isStarting}
 					aria-label="Start focus session"
 				>
+					{isStarting && <Loader2 className="size-4 animate-spin" />}
 					<Play className="size-4" />
 					<span>
 						Start {activeTab === "open" ? "Open" : formatTime(duration)} Session
@@ -365,123 +386,23 @@ export default function WidgetTimer() {
 
 function ActiveSessionView({
 	session,
-	onSessionComplete,
+	isPaused,
+	elapsedTime,
+	remainingTime,
+	onPauseResume,
+	onComplete,
 }: {
 	session: Session;
-	onSessionComplete: (s: Session) => void;
+	isPaused: boolean;
+	elapsedTime: number;
+	remainingTime: number | null;
+	onPauseResume: () => void;
+	onComplete: () => void;
 }) {
-	const [elapsedTime, setElapsedTime] = useState(0);
-	const [isPaused, setIsPaused] = useState(false);
-	const [remainingTime, setRemainingTime] = useState<number | null>(
-		session.duration ? session.duration * 60 : null
-	);
 	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
 	const [isTimeVisible, setIsTimeVisible] = useState(true);
 
-	const timerRef = useRef<NodeJS.Timeout | null>(null);
-	const startTimeRef = useRef<number>(session.startTime.getTime());
-	const pauseTimeRef = useRef<number | null>(null);
-	const totalPausedTimeRef = useRef(0);
-	const sessionRef = useRef(session);
-	const onSessionCompleteRef = useRef(onSessionComplete);
-	const hasInitializedRef = useRef(false);
-
-	useEffect(() => {
-		sessionRef.current = session;
-		onSessionCompleteRef.current = onSessionComplete;
-	}, [session, onSessionComplete]);
-
-	const startTimer = useCallback(() => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		timerRef.current = setInterval(() => {
-			const now = Date.now();
-			const newElapsed = Math.floor(
-				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-			);
-			setElapsedTime(newElapsed);
-			if (
-				sessionRef.current.duration &&
-				newElapsed >= sessionRef.current.duration * 60
-			) {
-				if (timerRef.current) {
-					clearInterval(timerRef.current);
-					timerRef.current = null;
-				}
-				playSound(800, 0.3, 0.5);
-				const endTime = new Date();
-				let completionType: "completed" | "premature" | "overtime" =
-					"completed";
-				if (sessionRef.current.duration && sessionRef.current.expectedEndTime) {
-					const expectedEnd = sessionRef.current.expectedEndTime.getTime();
-					const actualEnd = endTime.getTime();
-					const timeDiff = actualEnd - expectedEnd;
-					const toleranceMs = 60000;
-					if (timeDiff < -toleranceMs) completionType = "premature";
-					else if (timeDiff > toleranceMs) completionType = "overtime";
-				}
-				const completedSession = {
-					...sessionRef.current,
-					status: "completed" as const,
-					endTime,
-					elapsedTime: newElapsed,
-					completionType,
-				};
-				onSessionCompleteRef.current(completedSession);
-			}
-		}, 1000);
-	}, []);
-
-	useEffect(() => {
-		if (!isPaused && !hasInitializedRef.current) {
-			startTimer();
-			hasInitializedRef.current = true;
-		}
-	}, [isPaused, startTimer]);
-
-	useEffect(() => {
-		if (isPaused) {
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-		} else if (hasInitializedRef.current) {
-			startTimer();
-		}
-	}, [isPaused]);
-
-	useEffect(() => {
-		return () => {
-			if (timerRef.current) clearInterval(timerRef.current);
-		};
-	}, []);
-
-	const pauseSession = () => {
-		setIsPaused(true);
-		pauseTimeRef.current = Date.now();
-		playSound(400, 0.2, 0.3);
-		toast.warning("Session paused");
-	};
-	const resumeSession = () => {
-		setIsPaused(false);
-		if (pauseTimeRef.current) {
-			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
-			pauseTimeRef.current = null;
-		}
-		playSound(600, 0.2, 0.3);
-		toast.info("Session resumed");
-	};
-	const handlePauseResume = useCallback(
-		() => (isPaused ? resumeSession() : pauseSession()),
-		[isPaused]
-	);
-
-	useEffect(() => {
-		if (session.duration && !isPaused)
-			setRemainingTime(Math.max(0, session.duration * 60 - elapsedTime));
-	}, [elapsedTime, session.duration, isPaused]);
+	const handlePauseResume = useCallback(() => onPauseResume(), [onPauseResume]);
 
 	const formatTime = (seconds: number) => {
 		const hours = Math.floor(seconds / 3600);
@@ -527,31 +448,7 @@ function ActiveSessionView({
 	const truncateGoal = (goal: string, maxLength: number = 100) =>
 		goal.length <= maxLength ? goal : goal.substring(0, maxLength) + "...";
 
-	const confirmComplete = () => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		playSound(800, 0.3, 0.5);
-		const endTime = new Date();
-		let completionType: "completed" | "premature" | "overtime" = "completed";
-		if (session.duration && session.expectedEndTime) {
-			const expectedEnd = session.expectedEndTime.getTime();
-			const actualEnd = endTime.getTime();
-			const timeDiff = actualEnd - expectedEnd;
-			const toleranceMs = 60000;
-			if (timeDiff < -toleranceMs) completionType = "premature";
-			else if (timeDiff > toleranceMs) completionType = "overtime";
-		}
-		const completedSession = {
-			...session,
-			status: "completed" as const,
-			endTime,
-			elapsedTime,
-			completionType,
-		};
-		onSessionComplete(completedSession);
-	};
+	const confirmComplete = () => onComplete();
 
 	return (
 		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
@@ -759,10 +656,12 @@ function SessionCompletionView({
 	session,
 	onUpdateQuality,
 	onUpdateNotes,
+	onDismiss,
 }: {
 	session: Session;
 	onUpdateQuality?: (id: string, q: number) => void;
 	onUpdateNotes?: (id: string, n: string) => void;
+	onDismiss?: () => void;
 }) {
 	const router = useRouter();
 	const [deepWorkQuality, setDeepWorkQuality] = useState<number>(
@@ -838,7 +737,25 @@ function SessionCompletionView({
 		setNotes(newNotes);
 		onUpdateNotes?.(session.id, newNotes);
 	};
-	const handleSaveSession = () => router.push("/");
+	const [isSaving, setIsSaving] = useState(false);
+	const { saveCompletedSession, hasPendingSave } = useSession();
+	const handleSaveSession = async () => {
+		if (isSaving) return;
+		setIsSaving(true);
+		try {
+			await saveCompletedSession();
+			toast.success(
+				`Deep work logged — ${Math.round(
+					(session.elapsedTime ?? 0) / 60
+				)} minutes of focused progress. Nice work!`
+			);
+			onDismiss?.();
+		} catch (e: any) {
+			toast.error(e?.message || "Failed to save session");
+		} finally {
+			setIsSaving(false);
+		}
+	};
 
 	const formatTime = (seconds: number) => {
 		const hours = Math.floor(seconds / 3600);
@@ -1042,9 +959,17 @@ function SessionCompletionView({
 				<button
 					onClick={handleSaveSession}
 					className="btn btn-primary btn-block"
-					disabled={!hasRated}
+					disabled={!hasRated || isSaving}
 				>
-					{hasRated ? "Save Session" : "Rate Session to Continue"}
+					{isSaving ? (
+						<span className="inline-flex items-center gap-2">
+							<Loader2 className="size-4 animate-spin" /> Saving…
+						</span>
+					) : hasRated ? (
+						"Save Session"
+					) : (
+						"Rate Session to Continue"
+					)}
 				</button>
 			</div>
 		</div>

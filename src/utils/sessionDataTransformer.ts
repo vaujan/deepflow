@@ -18,7 +18,11 @@ export const transformSessionsToDataItems = (
 		const durationMinutes = Math.round(session.elapsedTime / 60);
 
 		// Format session date
-		const sessionDate = session.startTime.toISOString().split("T")[0];
+		const start =
+			typeof (session.startTime as any)?.toISOString === "function"
+				? (session.startTime as Date)
+				: new Date(session.startTime as any);
+		const sessionDate = start.toISOString().split("T")[0];
 
 		// Get quality rating (default to 5 if not set)
 		const quality = session.deepWorkQuality || 5;

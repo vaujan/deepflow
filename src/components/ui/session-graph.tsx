@@ -18,7 +18,7 @@ import {
 	AreaChart,
 	Area,
 } from "recharts";
-import { mockSessions } from "../../data/mockSessions";
+import { useSessionsQuery } from "@/src/hooks/useSessionsQuery";
 import { radixColorScales } from "../../utils/radixColorMapping";
 
 // Declare custom elements for TypeScript
@@ -45,6 +45,7 @@ const colors = {
 
 export default function SessionGraph() {
 	const [timeRange, setTimeRange] = useState<"week" | "month">("week");
+	const { data: sessions = [] } = useSessionsQuery();
 
 	// Load Cally web component
 	useEffect(() => {
@@ -75,10 +76,10 @@ export default function SessionGraph() {
 			const dayEnd = new Date(day);
 			dayEnd.setHours(23, 59, 59, 999);
 
-			const daySessions = mockSessions.filter(
-				(session) =>
-					session.startTime >= dayStart && session.startTime <= dayEnd
-			);
+			const daySessions = (sessions as any[]).filter((session) => {
+				const start = new Date(session.startTime);
+				return start >= dayStart && start <= dayEnd;
+			});
 
 			const totalTime = daySessions.reduce(
 				(acc, session) => acc + session.elapsedTime,
@@ -107,10 +108,10 @@ export default function SessionGraph() {
 			weekEnd.setDate(weekEnd.getDate() + 6);
 			weekEnd.setHours(23, 59, 59, 999);
 
-			const weekSessions = mockSessions.filter(
-				(session) =>
-					session.startTime >= weekStart && session.startTime <= weekEnd
-			);
+			const weekSessions = (sessions as any[]).filter((session) => {
+				const start = new Date(session.startTime);
+				return start >= weekStart && start <= weekEnd;
+			});
 
 			const totalTime = weekSessions.reduce(
 				(acc, session) => acc + session.elapsedTime,
