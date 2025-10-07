@@ -26,6 +26,7 @@ export function SessionEditModal({
 	const [formData, setFormData] = useState<Partial<DataItem>>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [statusMessage, setStatusMessage] = useState("");
 	const updateSession = useUpdateSession();
 
 	// Modal refs and state
@@ -153,9 +154,45 @@ export function SessionEditModal({
 		setIsSubmitting(true);
 		try {
 			await updateSession.mutateAsync({ id: session.id, payload });
-			toast.success("Session updated successfully!", {
+
+			// Build revert payload from original values for fields we changed
+			const revertPayload: Record<string, any> = {};
+			if ("goal" in payload) revertPayload.goal = session.goal;
+			if ("sessionType" in payload)
+				revertPayload.sessionType = session.sessionType;
+			if ("duration" in payload) revertPayload.duration = session.duration;
+			if ("focusLevel" in payload)
+				revertPayload.focusLevel = session.focusLevel;
+			if ("deepWorkQuality" in payload)
+				revertPayload.deepWorkQuality = session.quality;
+			if ("notes" in payload) revertPayload.notes = session.notes;
+			if ("tags" in payload) revertPayload.tags = session.tags;
+			if ("sessionDate" in payload)
+				revertPayload.sessionDate = session.sessionDate;
+
+			toast.success("Session updated", {
 				description: "Your changes have been saved",
+				action: {
+					label: "Undo",
+					onClick: async () => {
+						try {
+							await updateSession.mutateAsync({
+								id: session.id,
+								payload: revertPayload,
+							});
+							setStatusMessage("Changes reverted");
+							toast.success("Reverted", {
+								description: "Previous values restored",
+							});
+						} catch (err: any) {
+							toast.error("Failed to revert", {
+								description: err?.message || "Try again",
+							});
+						}
+					},
+				},
 			});
+			setStatusMessage("Saved");
 			onSuccess?.();
 			onClose();
 		} catch (error: any) {
@@ -184,6 +221,9 @@ export function SessionEditModal({
 			<div className="modal-box bg-base-300 border max-h-[700px] scrollbar-thin border-border p-0 w-full max-w-2xl">
 				<section className="w-full p-5 h-full">
 					<div className="flex items-start justify-between gap-3 pb-4 mb-4">
+						<p role="status" aria-live="polite" className="sr-only">
+							{statusMessage}
+						</p>
 						<div>
 							<h2 id="session-edit-title" className="font-medium">
 								Edit Session

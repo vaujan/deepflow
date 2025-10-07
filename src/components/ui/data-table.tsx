@@ -821,7 +821,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 
 				<div className="flex items-center gap-2">
 					<select
-						className="select select-sm"
+						className="select select-ghost select-sm"
 						value={table.getState().pagination.pageSize}
 						onChange={(e) => {
 							table.setPageSize(Number(e.target.value));
