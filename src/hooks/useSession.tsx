@@ -299,7 +299,7 @@ export const useSession = () => {
 			!currentSession ||
 			currentSession.status !== "completed"
 		)
-			return;
+			return null;
 		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
 			method: "PATCH",
 			headers: {
@@ -320,6 +320,7 @@ export const useSession = () => {
 		setElapsedTime(session.elapsedTime ?? elapsedTime);
 		setHasPendingSave(false);
 		clearSnapshot();
+		return session;
 	}, [currentSession, elapsedTime]);
 
 	const dismissSession = useCallback(() => {
@@ -405,7 +406,16 @@ export const useSession = () => {
 				const session = mapServerSession(data);
 				sessionIdRef.current = session.id;
 				setCurrentSession(session);
-				setElapsedTime(session.elapsedTime ?? 0);
+				// Fallback: compute elapsed from startTime if active
+				const computedFromStart = Math.max(
+					0,
+					Math.floor((Date.now() - session.startTime.getTime()) / 1000)
+				);
+				const effectiveElapsed =
+					session.status === "active"
+						? Math.max(session.elapsedTime ?? 0, computedFromStart)
+						: session.elapsedTime ?? 0;
+				setElapsedTime(effectiveElapsed);
 				setRemainingTime(session.duration ? session.duration * 60 : null);
 				if (session.status === "active") {
 					setIsActive(true);

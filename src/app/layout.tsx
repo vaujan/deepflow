@@ -11,6 +11,8 @@ import { ThemeLoadingWrapper } from "../components/ui/theme-loading-wrapper";
 import SonnerToaster from "../components/ui/sonner-toaster";
 import ElectronTitlebar from "../components/ui/electron-titlebar";
 import QueryProvider from "../components/query-provider";
+import FeedbackButton from "../components/ui/feedback-button";
+import SessionResumeBanner from "../components/ui/session-resume-banner";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -38,6 +40,8 @@ export default function RootLayout({
 								<QueryProvider>
 									<WidgetProvider>
 										{children}
+										<SessionResumeBanner />
+										<FeedbackButton />
 										<SonnerToaster />
 										<SpeedInsights />
 										<Analytics />

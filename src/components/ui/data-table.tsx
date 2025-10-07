@@ -29,8 +29,12 @@ import {
 	Timer,
 	Check,
 	X,
+	Edit3,
 } from "lucide-react";
 import { DataItem, mockDataTableData } from "../../data/mockDataTable";
+import { useUpdateSession } from "@/src/hooks/useSessionsQuery";
+import { SessionEditModal } from "./session-edit-modal";
+import { toast } from "sonner";
 
 // Custom filter function for duration
 const durationFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
@@ -78,7 +82,6 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 		goal: true,
 		sessionType: true,
 		duration: true,
-		focusLevel: false,
 		quality: false,
 		notes: true,
 		tags: true,
@@ -89,13 +92,43 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 		"sessionType",
 		"duration",
 		"sessionDate",
-		"focusLevel",
 		"quality",
 		"tags",
 		"notes",
+		"actions",
 	]);
 	const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 	const [tagsSearchTerm, setTagsSearchTerm] = useState("");
+	const [editingSession, setEditingSession] = useState<DataItem | null>(null);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const updateSession = useUpdateSession();
+
+	const isRowLocked = (row: any) => {
+		const status = (row.original as any)?.status as string | undefined;
+		return status === "active" || status === "paused";
+	};
+
+	const openEditModal = (session: DataItem) => {
+		const status = (session as any)?.status as string | undefined;
+		if (status === "active" || status === "paused") {
+			toast.warning("Cannot edit active session", {
+				description: "Please wait for the session to end before editing",
+			});
+			return;
+		}
+		setEditingSession(session);
+		setIsModalOpen(true);
+	};
+
+	const closeEditModal = () => {
+		setIsModalOpen(false);
+		setEditingSession(null);
+	};
+
+	const handleEditSuccess = () => {
+		// Success toast is handled in the modal
+		console.log("Session updated successfully");
+	};
 
 	// Minimum widths per column to keep layout readable
 	const columnMinWidth: Record<string, string> = {
@@ -103,7 +136,6 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 		sessionType: "min-w-[120px]",
 		duration: "min-w-[80px]",
 		sessionDate: "min-w-[100px]",
-		focusLevel: "min-w-[80px]",
 		quality: "min-w-[100px]",
 		tags: "min-w-[160px]",
 		notes: "min-w-[250px]",
@@ -195,6 +227,31 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 
 	const columns: ColumnDef<DataItem>[] = useMemo(
 		() => [
+			{
+				id: "actions",
+				header: () => null,
+				cell: ({ row }) => {
+					const locked = isRowLocked(row);
+					const session = row.original as DataItem;
+					return (
+						<div className="flex items-center justify-end gap-1">
+							<button
+								title={
+									locked
+										? "Editing available after session ends"
+										: "Edit session"
+								}
+								className={`btn btn-xs btn-ghost btn-square ${
+									locked ? "opacity-50" : ""
+								}`}
+								onClick={() => openEditModal(session)}
+							>
+								<Edit3 className="size-3" />
+							</button>
+						</div>
+					);
+				},
+			},
 			{
 				accessorKey: "goal",
 				header: () => <span className="text-xs">Goal</span>,
@@ -334,29 +391,8 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 				},
 			},
 			{
-				accessorKey: "focusLevel",
-				header: () => <span className="text-xs">Focus Level</span>,
-				cell: ({ row }) => {
-					const focus = row.getValue("focusLevel") as number | null;
-					if (focus === null || focus === undefined) {
-						return <span className="-content/40 text-sm">—</span>;
-					}
-					const color =
-						focus <= 3
-							? "badge-success"
-							: focus <= 7
-							? "badge-warning"
-							: "badge-error";
-					return (
-						<span className={`badge badge-sm badge-soft rounded-sm ${color}`}>
-							{focus}
-						</span>
-					);
-				},
-			},
-			{
 				accessorKey: "quality",
-				header: () => <span className="text-xs">Session Quality</span>,
+				header: () => <span className="text-xs">Quality</span>,
 				cell: ({ row }) => {
 					const quality = row.getValue("quality") as number;
 					const color =
@@ -629,7 +665,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 				</div>
 			</div>
 			{/* Table */}
-			<div className="overflow-y-auto w-full">
+			<div className="overflow-y-auto w-full" aria-live="polite">
 				<table className="table rounded-none w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -799,6 +835,14 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 					</select>
 				</div>
 			</div>
+
+			{/* Session Edit Modal */}
+			<SessionEditModal
+				isOpen={isModalOpen}
+				onClose={closeEditModal}
+				session={editingSession}
+				onSuccess={handleEditSuccess}
+			/>
 		</div>
 	);
 }

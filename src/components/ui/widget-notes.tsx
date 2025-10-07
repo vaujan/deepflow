@@ -302,14 +302,14 @@ export default function WidgetNotes() {
 			<div className="flex justify-between items-center text-base-content/80 group">
 				<div className="flex gap-2 items-center justify-center w-fit ">
 					<span className="font-medium">Notes</span>
-					<button
+					{/* <button
 						className="btn btn-xs btn-circle btn-ghost invisible group-hover:visible"
 						type="button"
 						aria-label="More note actions"
 						title="More note actions"
 					>
 						<Ellipsis className="size-4" />
-					</button>
+					</button> */}
 				</div>
 				<button
 					className={`btn btn-circle btn-sm ${
@@ -471,7 +471,7 @@ export default function WidgetNotes() {
 										editNoteRefs.current[note.id] = el;
 									}
 								}}
-								className={`w-full border-border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
+								className={`w-full border border-border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
 									editingNote === note.id
 										? "bg-card"
 										: editingNote !== null || isAddingNew

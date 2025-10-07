@@ -94,6 +94,10 @@ export default function Sidebar() {
 											isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
 										}`}
 										title={isCollapsed ? item.label : undefined}
+										target={item.href === "/stats" ? "_blank" : undefined}
+										rel={
+											item.href === "/stats" ? "noopener noreferrer" : undefined
+										}
 									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
 										{!isCollapsed && <span>{item.label}</span>}

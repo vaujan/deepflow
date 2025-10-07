@@ -4,7 +4,6 @@ import React from "react";
 
 import Header from "../components/ui/header";
 import WidgetsContainer from "../components/ui/widgets-container";
-import TopScrollContainer from "../components/ui/top-scroll-container";
 export default function Page() {
 	return (
 		<div className="flex flex-col bg-gray-2 h-screen">
@@ -14,7 +13,7 @@ export default function Page() {
 			>
 				<Header />
 				<div className="w-full px-2 pb-2 flex-1 min-h-0">
-					<div className="rounded-xl border border-border bg-dots overflow-auto h-full">
+					<div className="rounded-xl border border-border bg-dots scrollbar-thin overflow-auto h-full">
 						{/* Workspace background/div */}
 						<div
 							className={`flex flex-col lg:flex-row w-full min-h-full items-start gap-8 `}
@@ -26,8 +25,6 @@ export default function Page() {
 						</div>
 					</div>
 				</div>
-
-				{/* <Dock /> */}
 			</main>
 		</div>
 	);

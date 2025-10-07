@@ -35,8 +35,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 		const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 		const map = new Map<string, { sessions: number; totalMinutes: number }>();
 		for (const s of savedSessions) {
-			if (s.startTime < yearStart || s.startTime > yearEnd) continue;
-			const key = s.startTime.toISOString().split("T")[0];
+			const start =
+				typeof (s.startTime as any)?.toISOString === "function"
+					? (s.startTime as Date)
+					: new Date(s.startTime as any);
+			if (!Number.isFinite(start.getTime())) continue;
+			if (start < yearStart || start > yearEnd) continue;
+			const key = start.toISOString().split("T")[0];
 			const prev = map.get(key) || { sessions: 0, totalMinutes: 0 };
 			map.set(key, {
 				sessions: prev.sessions + 1,
@@ -63,7 +68,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			date.setDate(startDate.getDate() + i);
 			const isCurrentMonth = date.getMonth() === month;
 			if (isCurrentMonth) {
-				const key = date.toISOString().split("T")[0];
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
 				const agg = perDayBuckets.get(key);
 				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;
@@ -294,7 +305,13 @@ const YearlyHeatMap: React.FC<{
 			date.setDate(firstMonday.getDate() + i);
 			const isCurrentYear = date.getFullYear() === currentYear;
 			if (isCurrentYear) {
-				const key = date.toISOString().split("T")[0];
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
 				const agg = perDay.get(key);
 				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;

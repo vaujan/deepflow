@@ -8,11 +8,9 @@ export const transformSessionsToDataItems = (
 	sessions: Session[]
 ): DataItem[] => {
 	return sessions.map((session) => {
-		// Convert session type from "planned" | "open" to "planned session" | "open session"
-		const sessionType: "time-boxed session" | "open session" =
-			session.sessionType === "time-boxed"
-				? "time-boxed session"
-				: "open session";
+		// Normalize to data-table display values: "planned session" | "open session"
+		const sessionType: "planned session" | "open session" =
+			session.sessionType === "time-boxed" ? "planned session" : "open session";
 
 		// Convert duration from seconds to minutes
 		const durationMinutes = Math.round(session.elapsedTime / 60);
@@ -43,6 +41,7 @@ export const transformSessionsToDataItems = (
 			notes,
 			tags: session.tags || [],
 			sessionDate,
+			status: session.status as any,
 		};
 	});
 };

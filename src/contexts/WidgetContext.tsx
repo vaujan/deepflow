@@ -37,12 +37,18 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 					return JSON.parse(savedVisible) as Widgets[];
 				}
 				const savedActive = localStorage.getItem("activeWidgets");
-				return (savedActive ? JSON.parse(savedActive) : []) as Widgets[];
+				const initial = (
+					savedActive ? JSON.parse(savedActive) : []
+				) as Widgets[];
+				// Ensure timer is visible on first load when there is no saved visibility
+				return initial.includes("timer")
+					? initial
+					: (["timer", ...initial] as Widgets[]);
 			} catch {
-				return [];
+				return ["timer"] as Widgets[];
 			}
 		}
-		return [];
+		return ["timer"] as Widgets[];
 	});
 
 	const toggleWidget = (widget: Widgets) => {

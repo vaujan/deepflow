@@ -129,6 +129,47 @@ export default function WidgetTimer() {
 		}
 	};
 
+	// Update browser tab title with live timer when a session is running
+	const formatSecondsForTitle = useCallback((seconds: number) => {
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
+		const secs = Math.floor(seconds % 60);
+		if (hours > 0)
+			return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+				.toString()
+				.padStart(2, "0")}`;
+		return `${minutes}:${secs.toString().padStart(2, "0")}`;
+	}, []);
+
+	useEffect(() => {
+		if (typeof document === "undefined") return;
+		const baseTitle = "Deepflow";
+		if (currentSession && (isActive || isPaused)) {
+			const isPlanned = currentSession.sessionType !== "open";
+			const seconds = isPlanned
+				? Math.max(0, remainingTime ?? 0)
+				: Math.max(0, elapsedTime ?? 0);
+			const timeText = formatSecondsForTitle(seconds);
+			const prefix = isPaused ? "⏸" : "⏱";
+			const goalText = currentSession.goal?.trim()
+				? ` • ${currentSession.goal.trim()}`
+				: "";
+			document.title = `${prefix} ${timeText}${goalText} — ${baseTitle}`;
+			return () => {
+				document.title = baseTitle;
+			};
+		} else {
+			document.title = baseTitle;
+		}
+	}, [
+		currentSession,
+		isActive,
+		isPaused,
+		elapsedTime,
+		remainingTime,
+		formatSecondsForTitle,
+	]);
+
 	const handleQualityUpdate = (sessionId: string, quality: number) =>
 		updateDeepWorkQuality(sessionId, quality);
 	const handleNotesUpdate = (sessionId: string, notes: string) =>
@@ -161,8 +202,10 @@ export default function WidgetTimer() {
 	return (
 		<div
 			className={`card border-border ${
-				visibleWidgets.length === 1 ? "md:bg-card" : "md:bg-transparent"
-			} shadow-xs w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col`}
+				visibleWidgets.length === 1
+					? "md:bg-card shadow-xs borderas"
+					: "md:bg-transparent"
+			} w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col`}
 		>
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
@@ -743,12 +786,20 @@ function SessionCompletionView({
 		if (isSaving) return;
 		setIsSaving(true);
 		try {
-			await saveCompletedSession();
-			toast.success(
-				`Deep work logged — ${Math.round(
-					(session.elapsedTime ?? 0) / 60
-				)} minutes of focused progress. Nice work!`
+			const saved = await saveCompletedSession();
+			const minutes = Math.round(
+				((saved?.elapsedTime ?? session.elapsedTime ?? 0) as number) / 60
 			);
+			if (
+				(saved?.status === "completed" || saved?.status === "stopped") &&
+				(saved?.elapsedTime ?? session.elapsedTime ?? 0) < 300
+			) {
+				toast.info("Session under 5 minutes was discarded and not counted.");
+			} else {
+				toast.success(
+					`Deep work logged — ${minutes} minutes of focused progress. Nice work!`
+				);
+			}
 			onDismiss?.();
 		} catch (e: any) {
 			toast.error(e?.message || "Failed to save session");

@@ -36,7 +36,8 @@ export async function PATCH(
 		| "resume"
 		| "complete"
 		| "stop"
-		| "updateMeta";
+		| "updateMeta"
+		| "edit";
 
 	// Load current row to compute elapsed/expectedEndType on server time
 	const { data: current, error: loadErr } = await supabase
@@ -111,6 +112,87 @@ export async function PATCH(
 			if (Array.isArray(body.tags)) update.tags = body.tags;
 			break;
 		}
+		case "edit": {
+			// Disallow edits while active or paused
+			if (current.status === "active" || current.status === "paused") {
+				return NextResponse.json(
+					{ error: "Cannot edit an active or paused session" },
+					{ status: 409 }
+				);
+			}
+
+			// Map editable fields
+			if (typeof body.goal === "string") update.goal = body.goal;
+			if (typeof body.sessionType === "string") {
+				// UI maps: planned session -> time-boxed, open session -> open
+				const mapped =
+					body.sessionType === "planned session"
+						? "time-boxed"
+						: body.sessionType === "open session"
+						? "open"
+						: body.sessionType; // allow API-native values too
+				update.session_type = mapped;
+			}
+			if (Number.isFinite(Number(body.focusLevel))) {
+				const fl = Number(body.focusLevel);
+				if (fl >= 1 && fl <= 10) update.focus_level = fl;
+			}
+			if (Number.isFinite(Number(body.deepWorkQuality))) {
+				const q = Number(body.deepWorkQuality);
+				if (q >= 1 && q <= 10) update.deep_work_quality = q;
+			}
+			if (Array.isArray(body.tags)) update.tags = body.tags;
+			if (typeof body.notes === "string") update.notes = body.notes;
+
+			// Duration (minutes) -> elapsed_seconds; recompute end_time if present
+			if (Number.isFinite(Number(body.duration))) {
+				const minutes = Math.max(0, Number(body.duration));
+				update.elapsed_seconds = Math.floor(minutes * 60);
+			}
+
+			// Session date (YYYY-MM-DD) -> adjust date part of start_time, preserve time
+			if (typeof body.sessionDate === "string") {
+				const prevStart = new Date(current.start_time as string);
+				const [yyyy, mm, dd] = body.sessionDate.split("-").map(Number);
+				if (
+					Number.isFinite(yyyy) &&
+					Number.isFinite(mm) &&
+					Number.isFinite(dd)
+				) {
+					const adjusted = new Date(prevStart);
+					adjusted.setFullYear(yyyy);
+					adjusted.setMonth((mm as number) - 1);
+					adjusted.setDate(dd as number);
+					update.start_time = adjusted.toISOString();
+				}
+			}
+
+			// If we changed elapsed_seconds or start_time and there is an end_time, recompute end_time and completion_type
+			const willChangeElapsed = Object.prototype.hasOwnProperty.call(
+				update,
+				"elapsed_seconds"
+			);
+			const willChangeStart = Object.prototype.hasOwnProperty.call(
+				update,
+				"start_time"
+			);
+			if ((willChangeElapsed || willChangeStart) && current.end_time) {
+				const newStartIso =
+					(update.start_time as string) ?? (current.start_time as string);
+				const newElapsed =
+					(update.elapsed_seconds as number | undefined) ??
+					Number(current.elapsed_seconds ?? 0);
+				const newEndMs = new Date(newStartIso).getTime() + newElapsed * 1000;
+				const newEndIso = new Date(newEndMs).toISOString();
+				update.end_time = newEndIso;
+				update.completion_type = computeCompletionType(
+					current.expected_end_time as string | null,
+					newEndIso
+				);
+			}
+
+			break;
+		}
 		default:
 			return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 	}
@@ -169,6 +251,17 @@ export async function GET(
 	if (error)
 		return NextResponse.json({ error: error.message }, { status: 404 });
 
+	// Compute effective elapsed for active sessions using server time
+	const startTimeIso = data!.start_time as string | null;
+	const isActive = data!.status === "active";
+	const computedElapsed =
+		isActive && startTimeIso
+			? Math.max(
+					0,
+					Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000)
+			  )
+			: Number(data!.elapsed_seconds ?? 0);
+
 	return NextResponse.json({
 		id: data!.id,
 		goal: data!.goal,
@@ -180,7 +273,7 @@ export async function GET(
 		startTime: data!.start_time,
 		expectedEndTime: data!.expected_end_time,
 		endTime: data!.end_time,
-		elapsedTime: data!.elapsed_seconds ?? 0,
+		elapsedTime: computedElapsed,
 		status: data!.status,
 		completionType: data!.completion_type ?? null,
 		deepWorkQuality: data!.deep_work_quality ?? null,

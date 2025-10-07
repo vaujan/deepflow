@@ -170,10 +170,7 @@ export default function WidgetSettingsModal({
 							</form>
 						</div>
 
-						<div
-							className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-2"
-							role="list"
-						>
+						<div className="flex gap-4" role="list">
 							{ALL_WIDGETS.filter(({ type }) => type !== "timer").map(
 								({ type, label, description, icon: Icon }) => {
 									const isComingSoon = COMING_SOON.includes(type);
@@ -185,9 +182,9 @@ export default function WidgetSettingsModal({
 										<button
 											key={type}
 											type="button"
-											className={`flex flex-col gap-3 border rounded-box px-3 py-2 text-left transition-all duration-200 ${
+											className={`flex flex-col min-h-48 justify-between gap-3 border rounded-box px-3 py-2 text-left transition-all duration-200 ${
 												isActive
-													? "border-primary bg-primary/5"
+													? "border-primary bg-primary/10"
 													: "border-border hover:border-base-content/20"
 											} ${
 												disabled
@@ -199,31 +196,30 @@ export default function WidgetSettingsModal({
 											aria-pressed={isActive}
 											aria-label={`Toggle ${label}`}
 										>
-											<div className="flex flex-col items-start gap-3 min-h-10">
-												<Icon
-													className={`size-6 mt-0.5 ${
-														isActive ? "text-primary" : "text-base-content/70"
-													}`}
-												/>
-												<div className="flex flex-col gap-0.5">
-													<div className="flex items-center gap-2">
-														<span
-															className={`text-sm ${
-																isActive ? "text-primary" : ""
-															}`}
-														>
-															{label}
+											<Icon
+												className={`size-6 mt-0.5 ${
+													isActive ? "text-primary" : "text-base-content/70"
+												}`}
+											/>
+											<div className="flex flex-col gap-0.5">
+												<div className="flex flex-col gap-2">
+													{isComingSoon && (
+														<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
+															<Lock className="size-3" /> Coming soon
 														</span>
-														{isComingSoon && (
-															<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
-																<Lock className="size-3" /> Coming soon
-															</span>
-														)}
-													</div>
-													<span className="text-xs text-base-content/60">
-														{description}
+													)}
+
+													<span
+														className={`text-base ${
+															isActive ? "text-primary" : ""
+														}`}
+													>
+														{label}
 													</span>
 												</div>
+												<span className="text-sm text-base-content/60">
+													{description}
+												</span>
 											</div>
 										</button>
 									);

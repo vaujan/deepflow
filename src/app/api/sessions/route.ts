@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
 			"id, goal, session_type, focus_level, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
 		)
 		.eq("user_id", user.id)
+		// Exclude ended sessions shorter than 5 minutes (discarded)
+		// Keep active/paused (end_time is null) so timers can resume
+		.or("end_time.is.null,elapsed_seconds.gte.300")
 		.order("start_time", { ascending: false })
 		.range(offset, offset + limit - 1);
 
@@ -46,7 +49,16 @@ export async function GET(request: NextRequest) {
 			startTime: s.start_time,
 			expectedEndTime: s.expected_end_time,
 			endTime: s.end_time,
-			elapsedTime: s.elapsed_seconds ?? 0,
+			// Compute effective elapsed for active sessions using server time
+			elapsedTime:
+				s.status === "active" && s.start_time
+					? Math.max(
+							0,
+							Math.floor(
+								(Date.now() - new Date(s.start_time as string).getTime()) / 1000
+							)
+					  )
+					: Number(s.elapsed_seconds ?? 0),
 			status: s.status,
 			completionType: s.completion_type ?? null,
 			deepWorkQuality: s.deep_work_quality ?? null,

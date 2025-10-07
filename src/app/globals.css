@@ -232,7 +232,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -279,7 +279,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -412,7 +412,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -459,7 +459,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -695,4 +695,26 @@ html:not([data-theme]) {
 /* Optional denser variant */
 .bg-dots-sm {
 	background-size: 12px 12px;
+}
+
+/* Fix: date input calendar icon contrast in modals (DaisyUI) */
+.modal input[type="date"]::-webkit-calendar-picker-indicator {
+	opacity: 0.85;
+}
+
+[data-theme="dark"]
+	.modal
+	input[type="date"]::-webkit-calendar-picker-indicator,
+.dark .modal input[type="date"]::-webkit-calendar-picker-indicator,
+.dark-theme .modal input[type="date"]::-webkit-calendar-picker-indicator {
+	/* Invert to keep icon visible on dark backgrounds */
+	filter: invert(1) grayscale(100%);
+}
+
+[data-theme="light"]
+	.modal
+	input[type="date"]::-webkit-calendar-picker-indicator,
+.light .modal input[type="date"]::-webkit-calendar-picker-indicator,
+.light-theme .modal input[type="date"]::-webkit-calendar-picker-indicator {
+	filter: none;
 }
