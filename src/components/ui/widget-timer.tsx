@@ -338,7 +338,7 @@ export default function WidgetTimer() {
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
 							<span className="badge rounded-sm badge-soft badge-secondary">
-								No time limit
+								Max 4 hours
 							</span>
 						</div>
 						<div className="bg-base-300 p-3 rounded-box text-center">
@@ -347,7 +347,7 @@ export default function WidgetTimer() {
 							</p>
 						</div>
 						<p className="text-xs text-base-content/60">
-							Timer will count up from zero until you manually stop
+							Timer counts up to 4 hours, then stops automatically
 						</p>
 					</div>
 				</div>
@@ -961,9 +961,9 @@ function SessionCompletionView({
 							{hasRated && (
 								<div className="text-center pt-2 border-t border-base-300">
 									<p className="text-xs text-base-content/70 mt-mp1">
-										Current rating:
+										Current rating:{" "}
 										<button
-											className={`font-medium badge badge-sm badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
+											className={`font-medium badge badge-sm px-2 badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
 											onClick={() => handleQualityRating(0)}
 											title="Reset Rating"
 										>
@@ -989,7 +989,7 @@ function SessionCompletionView({
 							<div className="space-y-4 pt-2">
 								<div className="form-control">
 									<textarea
-										className="textarea w-full min-h-[100px] resize-none"
+										className="textarea border-0 shadow-none w-full min-h-[100px] resize-none"
 										placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
 										value={notes}
 										onChange={(e) => handleNotesChange(e.target.value)}

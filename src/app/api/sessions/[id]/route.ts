@@ -43,7 +43,7 @@ export async function PATCH(
 	const { data: current, error: loadErr } = await supabase
 		.from("sessions")
 		.select(
-			"id, start_time, expected_end_time, elapsed_seconds, status, planned_duration_minutes"
+			"id, start_time, expected_end_time, elapsed_seconds, status, planned_duration_minutes, session_type"
 		)
 		.eq("id", id)
 		.single();
@@ -60,142 +60,184 @@ export async function PATCH(
 	const startMs = new Date(current.start_time as string).getTime();
 	const already = Number(current.elapsed_seconds ?? 0);
 	const nowMs = Date.now();
-	const computedElapsed = Math.max(0, Math.floor((nowMs - startMs) / 1000));
+	let computedElapsed = Math.max(0, Math.floor((nowMs - startMs) / 1000));
 
-	switch (action) {
-		case "pause": {
-			update.status = "paused";
-			update.elapsed_seconds = computedElapsed;
-			break;
-		}
-		case "resume": {
-			update.status = "active";
-			// Preserve elapsed as of pause and shift start_time forward so future
-			// elapsed calculations exclude paused duration.
-			// This keeps elapsed_time monotonic without jumps on resume.
-			update.elapsed_seconds = already;
-			const adjustedStartMs = nowMs - already * 1000;
-			update.start_time = new Date(adjustedStartMs).toISOString();
-			break;
-		}
-		case "complete": {
-			update.status = "completed";
-			update.end_time = nowIso;
-			update.elapsed_seconds = computedElapsed;
-			// Allow completing with metadata in a single request
-			if ("notes" in body)
-				update.notes = typeof body.notes === "string" ? body.notes : null;
-			if ("deepWorkQuality" in body)
-				update.deep_work_quality = Number(body.deepWorkQuality);
-			if (Array.isArray(body.tags)) update.tags = body.tags;
-			update.completion_type = computeCompletionType(
-				current.expected_end_time as string | null,
-				nowIso
-			);
-			break;
-		}
-		case "stop": {
-			update.status = "stopped";
-			update.end_time = nowIso;
-			update.elapsed_seconds = computedElapsed;
-			update.completion_type = computeCompletionType(
-				current.expected_end_time as string | null,
-				nowIso
-			);
-			break;
-		}
-		case "updateMeta": {
-			if ("notes" in body)
-				update.notes = typeof body.notes === "string" ? body.notes : null;
-			if ("deepWorkQuality" in body)
-				update.deep_work_quality = Number(body.deepWorkQuality);
-			if (Array.isArray(body.tags)) update.tags = body.tags;
-			break;
-		}
-		case "edit": {
-			// Disallow edits while active or paused
-			if (current.status === "active" || current.status === "paused") {
-				return NextResponse.json(
-					{ error: "Cannot edit an active or paused session" },
-					{ status: 409 }
-				);
-			}
+	// Enforce caps
+	const isOpen = (current.session_type as string) === "open";
+	const plannedMinutes = Number(current.planned_duration_minutes ?? 0) || null;
+	const MAX_OPEN_SECONDS = 240 * 60; // 4 hours
+	if (isOpen) {
+		computedElapsed = Math.min(computedElapsed, MAX_OPEN_SECONDS);
+	} else if (
+		Number.isFinite(plannedMinutes) &&
+		plannedMinutes &&
+		plannedMinutes > 0
+	) {
+		computedElapsed = Math.min(
+			computedElapsed,
+			Math.floor(plannedMinutes * 60)
+		);
+	}
 
-			// Map editable fields
-			if (typeof body.goal === "string") update.goal = body.goal;
-			if (typeof body.sessionType === "string") {
-				// UI maps: planned session -> time-boxed, open session -> open
-				const mapped =
-					body.sessionType === "planned session"
-						? "time-boxed"
-						: body.sessionType === "open session"
-						? "open"
-						: body.sessionType; // allow API-native values too
-				update.session_type = mapped;
-			}
-			if (Number.isFinite(Number(body.focusLevel))) {
-				const fl = Number(body.focusLevel);
-				if (fl >= 1 && fl <= 10) update.focus_level = fl;
-			}
-			if (Number.isFinite(Number(body.deepWorkQuality))) {
-				const q = Number(body.deepWorkQuality);
-				if (q >= 1 && q <= 10) update.deep_work_quality = q;
-			}
-			if (Array.isArray(body.tags)) update.tags = body.tags;
-			if (typeof body.notes === "string") update.notes = body.notes;
+	// If limits reached, auto-close regardless of requested action
+	const reachedOpenLimit = isOpen && computedElapsed >= MAX_OPEN_SECONDS;
+	const plannedSeconds = plannedMinutes
+		? Math.floor(plannedMinutes * 60)
+		: null;
+	const reachedPlannedLimit =
+		!isOpen && plannedSeconds !== null && computedElapsed >= plannedSeconds;
 
-			// Duration (minutes) -> elapsed_seconds; recompute end_time if present
-			if (Number.isFinite(Number(body.duration))) {
-				const minutes = Math.max(0, Number(body.duration));
-				update.elapsed_seconds = Math.floor(minutes * 60);
+	if (reachedOpenLimit) {
+		update.status = "stopped";
+		update.end_time = nowIso;
+		update.elapsed_seconds = computedElapsed;
+		update.completion_type = computeCompletionType(
+			current.expected_end_time as string | null,
+			nowIso
+		);
+	} else if (reachedPlannedLimit) {
+		update.status = "completed";
+		update.end_time = nowIso;
+		update.elapsed_seconds = computedElapsed;
+		update.completion_type = computeCompletionType(
+			current.expected_end_time as string | null,
+			nowIso
+		);
+	} else
+		switch (action) {
+			case "pause": {
+				update.status = "paused";
+				update.elapsed_seconds = computedElapsed;
+				break;
 			}
-
-			// Session date (YYYY-MM-DD) -> adjust date part of start_time, preserve time
-			if (typeof body.sessionDate === "string") {
-				const prevStart = new Date(current.start_time as string);
-				const [yyyy, mm, dd] = body.sessionDate.split("-").map(Number);
-				if (
-					Number.isFinite(yyyy) &&
-					Number.isFinite(mm) &&
-					Number.isFinite(dd)
-				) {
-					const adjusted = new Date(prevStart);
-					adjusted.setFullYear(yyyy);
-					adjusted.setMonth((mm as number) - 1);
-					adjusted.setDate(dd as number);
-					update.start_time = adjusted.toISOString();
-				}
+			case "resume": {
+				update.status = "active";
+				// Preserve elapsed as of pause and shift start_time forward so future
+				// elapsed calculations exclude paused duration.
+				// This keeps elapsed_time monotonic without jumps on resume.
+				update.elapsed_seconds = already;
+				const adjustedStartMs = nowMs - already * 1000;
+				update.start_time = new Date(adjustedStartMs).toISOString();
+				break;
 			}
-
-			// If we changed elapsed_seconds or start_time and there is an end_time, recompute end_time and completion_type
-			const willChangeElapsed = Object.prototype.hasOwnProperty.call(
-				update,
-				"elapsed_seconds"
-			);
-			const willChangeStart = Object.prototype.hasOwnProperty.call(
-				update,
-				"start_time"
-			);
-			if ((willChangeElapsed || willChangeStart) && current.end_time) {
-				const newStartIso =
-					(update.start_time as string) ?? (current.start_time as string);
-				const newElapsed =
-					(update.elapsed_seconds as number | undefined) ??
-					Number(current.elapsed_seconds ?? 0);
-				const newEndMs = new Date(newStartIso).getTime() + newElapsed * 1000;
-				const newEndIso = new Date(newEndMs).toISOString();
-				update.end_time = newEndIso;
+			case "complete": {
+				update.status = "completed";
+				update.end_time = nowIso;
+				update.elapsed_seconds = computedElapsed;
+				// Allow completing with metadata in a single request
+				if ("notes" in body)
+					update.notes = typeof body.notes === "string" ? body.notes : null;
+				if ("deepWorkQuality" in body)
+					update.deep_work_quality = Number(body.deepWorkQuality);
+				if (Array.isArray(body.tags)) update.tags = body.tags;
 				update.completion_type = computeCompletionType(
 					current.expected_end_time as string | null,
-					newEndIso
+					nowIso
 				);
+				break;
 			}
+			case "stop": {
+				update.status = "stopped";
+				update.end_time = nowIso;
+				update.elapsed_seconds = computedElapsed;
+				update.completion_type = computeCompletionType(
+					current.expected_end_time as string | null,
+					nowIso
+				);
+				break;
+			}
+			case "updateMeta": {
+				if ("notes" in body)
+					update.notes = typeof body.notes === "string" ? body.notes : null;
+				if ("deepWorkQuality" in body)
+					update.deep_work_quality = Number(body.deepWorkQuality);
+				if (Array.isArray(body.tags)) update.tags = body.tags;
+				break;
+			}
+			case "edit": {
+				// Disallow edits while active or paused
+				if (current.status === "active" || current.status === "paused") {
+					return NextResponse.json(
+						{ error: "Cannot edit an active or paused session" },
+						{ status: 409 }
+					);
+				}
 
-			break;
+				// Map editable fields
+				if (typeof body.goal === "string") update.goal = body.goal;
+				if (typeof body.sessionType === "string") {
+					// UI maps: planned session -> time-boxed, open session -> open
+					const mapped =
+						body.sessionType === "planned session"
+							? "time-boxed"
+							: body.sessionType === "open session"
+							? "open"
+							: body.sessionType; // allow API-native values too
+					update.session_type = mapped;
+				}
+				if (Number.isFinite(Number(body.focusLevel))) {
+					const fl = Number(body.focusLevel);
+					if (fl >= 1 && fl <= 10) update.focus_level = fl;
+				}
+				if (Number.isFinite(Number(body.deepWorkQuality))) {
+					const q = Number(body.deepWorkQuality);
+					if (q >= 1 && q <= 10) update.deep_work_quality = q;
+				}
+				if (Array.isArray(body.tags)) update.tags = body.tags;
+				if (typeof body.notes === "string") update.notes = body.notes;
+
+				// Duration (minutes) -> elapsed_seconds; recompute end_time if present
+				if (Number.isFinite(Number(body.duration))) {
+					const minutes = Math.max(0, Number(body.duration));
+					update.elapsed_seconds = Math.floor(minutes * 60);
+				}
+
+				// Session date (YYYY-MM-DD) -> adjust date part of start_time, preserve time
+				if (typeof body.sessionDate === "string") {
+					const prevStart = new Date(current.start_time as string);
+					const [yyyy, mm, dd] = body.sessionDate.split("-").map(Number);
+					if (
+						Number.isFinite(yyyy) &&
+						Number.isFinite(mm) &&
+						Number.isFinite(dd)
+					) {
+						const adjusted = new Date(prevStart);
+						adjusted.setFullYear(yyyy);
+						adjusted.setMonth((mm as number) - 1);
+						adjusted.setDate(dd as number);
+						update.start_time = adjusted.toISOString();
+					}
+				}
+
+				// If we changed elapsed_seconds or start_time and there is an end_time, recompute end_time and completion_type
+				const willChangeElapsed = Object.prototype.hasOwnProperty.call(
+					update,
+					"elapsed_seconds"
+				);
+				const willChangeStart = Object.prototype.hasOwnProperty.call(
+					update,
+					"start_time"
+				);
+				if ((willChangeElapsed || willChangeStart) && current.end_time) {
+					const newStartIso =
+						(update.start_time as string) ?? (current.start_time as string);
+					const newElapsed =
+						(update.elapsed_seconds as number | undefined) ??
+						Number(current.elapsed_seconds ?? 0);
+					const newEndMs = new Date(newStartIso).getTime() + newElapsed * 1000;
+					const newEndIso = new Date(newEndMs).toISOString();
+					update.end_time = newEndIso;
+					update.completion_type = computeCompletionType(
+						current.expected_end_time as string | null,
+						newEndIso
+					);
+				}
+
+				break;
+			}
+			default:
+				return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 		}
-		default:
-			return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-	}
 
 	const { data, error } = await supabase
 		.from("sessions")

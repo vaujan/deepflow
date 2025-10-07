@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
 	if (error)
 		return NextResponse.json({ error: error.message }, { status: 500 });
 
+	const MAX_OPEN_SECONDS = 240 * 60; // 4 hours
+
 	return NextResponse.json(
 		(data || []).map((s: any) => ({
 			id: s.id,
@@ -50,15 +52,28 @@ export async function GET(request: NextRequest) {
 			expectedEndTime: s.expected_end_time,
 			endTime: s.end_time,
 			// Compute effective elapsed for active sessions using server time
-			elapsedTime:
-				s.status === "active" && s.start_time
-					? Math.max(
-							0,
-							Math.floor(
-								(Date.now() - new Date(s.start_time as string).getTime()) / 1000
-							)
-					  )
-					: Number(s.elapsed_seconds ?? 0),
+			elapsedTime: (() => {
+				const effective =
+					s.status === "active" && s.start_time
+						? Math.max(
+								0,
+								Math.floor(
+									(Date.now() - new Date(s.start_time as string).getTime()) /
+										1000
+								)
+						  )
+						: Number(s.elapsed_seconds ?? 0);
+				if (s.session_type === "open") {
+					return Math.min(effective, MAX_OPEN_SECONDS);
+				}
+				if (
+					Number.isFinite(Number(s.planned_duration_minutes)) &&
+					s.planned_duration_minutes
+				) {
+					return Math.min(effective, Number(s.planned_duration_minutes) * 60);
+				}
+				return effective;
+			})(),
 			status: s.status,
 			completionType: s.completion_type ?? null,
 			deepWorkQuality: s.deep_work_quality ?? null,

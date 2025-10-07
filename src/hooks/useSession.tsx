@@ -107,24 +107,107 @@ export const useSession = () => {
 		} catch {}
 	};
 
-	const beginTimer = useCallback((plannedDuration?: number) => {
+	const stopSession = useCallback(async () => {
+		if (!sessionIdRef.current) return;
+		// Optimistic UI: stop immediately
+		setIsActive(false);
+		setIsPaused(false);
 		if (timerRef.current) {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 		}
-		timerRef.current = setInterval(() => {
-			setElapsedTime((prev) => {
-				const next = prev + 1;
-				if (plannedDuration && next >= plannedDuration * 60) {
-					if (sessionIdRef.current) {
-						completeSession(sessionIdRef.current);
+		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+				"Idempotency-Key": toIdempotencyKey("sessions:stop"),
+			},
+			body: JSON.stringify({ action: "stop" }),
+		});
+		const data = await res.json();
+		if (!res.ok) throw new Error(data?.error || "Failed to stop");
+		const session = mapServerSession(data);
+		setCurrentSession(session);
+		setElapsedTime(session.elapsedTime ?? 0);
+		setRemainingTime(null);
+		clearSnapshot();
+	}, []);
+
+	const completeSession = useCallback(
+		async (_sessionId: string) => {
+			if (!sessionIdRef.current) return;
+			// Mark completed locally; defer server save until user confirms
+			setIsActive(false);
+			setIsPaused(false);
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+			const end = new Date();
+			setCurrentSession((prev) =>
+				prev
+					? {
+							...prev,
+							status: "completed",
+							endTime: end,
+							elapsedTime,
+					  }
+					: prev
+			);
+			setHasPendingSave(true);
+			saveSnapshot({
+				id: sessionIdRef.current,
+				status: "completed",
+				startTime:
+					startTimeRef.current?.toISOString() ?? new Date().toISOString(),
+				expectedEndTime: currentSession?.expectedEndTime?.toISOString(),
+				needsSave: true,
+				elapsedTime,
+				endTime: end.toISOString(),
+				notes: currentSession?.notes ?? null,
+				deepWorkQuality: currentSession?.deepWorkQuality ?? null,
+				tags: currentSession?.tags ?? [],
+			});
+		},
+		[elapsedTime, currentSession]
+	);
+
+	const beginTimer = useCallback(
+		(plannedDuration?: number) => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+			timerRef.current = setInterval(() => {
+				setElapsedTime((prev) => {
+					const isOpen =
+						currentSession?.sessionType === "open" ||
+						(!plannedDuration && currentSession?.sessionType === "open");
+					const MAX_OPEN_SECONDS = 240 * 60;
+					const hardCap = isOpen
+						? MAX_OPEN_SECONDS
+						: plannedDuration
+						? Math.floor(plannedDuration * 60)
+						: undefined;
+					const next = hardCap ? Math.min(prev + 1, hardCap) : prev + 1;
+					if (hardCap && next >= hardCap) {
+						if (sessionIdRef.current) {
+							if (isOpen) {
+								// Auto-stop open session at 4h
+								stopSession();
+							} else {
+								// Auto-complete timeboxed/pomodoro at planned duration
+								completeSession(sessionIdRef.current);
+							}
+						}
+						return next;
 					}
 					return next;
-				}
-				return next;
-			});
-		}, 1000);
-	}, []);
+				});
+			}, 1000);
+		},
+		[currentSession?.sessionType, completeSession, stopSession]
+	);
 
 	const startSession = useCallback(
 		async (config: SessionConfig) => {
@@ -227,71 +310,6 @@ export const useSession = () => {
 		});
 		beginTimer(session.duration);
 	}, [isActive, isPaused, beginTimer]);
-
-	const stopSession = useCallback(async () => {
-		if (!sessionIdRef.current) return;
-		// Optimistic UI: stop immediately
-		setIsActive(false);
-		setIsPaused(false);
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:stop"),
-			},
-			body: JSON.stringify({ action: "stop" }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to stop");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? 0);
-		setRemainingTime(null);
-		clearSnapshot();
-	}, []);
-
-	const completeSession = useCallback(
-		async (_sessionId: string) => {
-			if (!sessionIdRef.current) return;
-			// Mark completed locally; defer server save until user confirms
-			setIsActive(false);
-			setIsPaused(false);
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-			const end = new Date();
-			setCurrentSession((prev) =>
-				prev
-					? {
-							...prev,
-							status: "completed",
-							endTime: end,
-							elapsedTime,
-					  }
-					: prev
-			);
-			setHasPendingSave(true);
-			saveSnapshot({
-				id: sessionIdRef.current,
-				status: "completed",
-				startTime:
-					startTimeRef.current?.toISOString() ?? new Date().toISOString(),
-				expectedEndTime: currentSession?.expectedEndTime?.toISOString(),
-				needsSave: true,
-				elapsedTime,
-				endTime: end.toISOString(),
-				notes: currentSession?.notes ?? null,
-				deepWorkQuality: currentSession?.deepWorkQuality ?? null,
-				tags: currentSession?.tags ?? [],
-			});
-		},
-		[elapsedTime, currentSession]
-	);
 
 	const saveCompletedSession = useCallback(async () => {
 		if (
