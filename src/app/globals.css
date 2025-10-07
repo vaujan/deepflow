@@ -28,6 +28,9 @@
 @import "@radix-ui/colors/olive-dark.css";
 @import "@radix-ui/colors/sand.css";
 @import "@radix-ui/colors/sand-dark.css";
+@import "@milkdown/prose/view/style/prosemirror.css";
+@import "@milkdown/prose/gapcursor/style/gapcursor.css";
+@import "@milkdown/prose/tables/style/tables.css";
 
 /* Custom font configuration */
 :root {
@@ -572,6 +575,7 @@ html:not([data-theme]) {
 /* Use Tailwind Typography prose styling for TipTap editor */
 .ProseMirror {
 	@apply prose max-w-none prose-h1:text-2xl prose-h2:text-xl prose-headings:text-lg;
+	min-height: 8rem; /* Ensure editor has visible height */
 }
 
 /* Custom prose styling for dark theme */

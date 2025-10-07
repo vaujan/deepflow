@@ -2,7 +2,12 @@
 
 import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import ContextMenuEditor from "./context-menu-editor";
+import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+const MilkdownEditor = dynamic(() => import("./milkdown-editor"), {
+	ssr: false,
+});
 import { ScrollArea } from "./scroll-area";
 import type { Note } from "../../data/mockNotes";
 import { useUnsavedChanges } from "@/src/contexts/UnsavedChangesContext";
@@ -11,7 +16,7 @@ export default function WidgetNotes() {
 	const [notes, setNotes] = useState<Note[] | null>(() => {
 		if (typeof window !== "undefined") {
 			try {
-				const cached = localStorage.getItem("notes-cache");
+				const cached = localStorage.getItem("notes-cache-md");
 				if (cached) {
 					const parsed = JSON.parse(cached);
 					if (Array.isArray(parsed)) return parsed as Note[];
@@ -25,7 +30,7 @@ export default function WidgetNotes() {
 	const [isAddingNew, setIsAddingNew] = useState(false);
 	const [isSubmittingNew, setIsSubmittingNew] = useState(false);
 	const [newNoteTitle, setNewNoteTitle] = useState("");
-	const [newNoteContent, setNewNoteContent] = useState("<p></p>");
+	const [newNoteContent, setNewNoteContent] = useState("");
 	const [originalNote, setOriginalNote] = useState<Note | null>(null);
 	const [addErrors, setAddErrors] = useState<{
 		title?: string;
@@ -66,7 +71,7 @@ export default function WidgetNotes() {
 
 	const addNote = async () => {
 		const titleValid = newNoteTitle.trim().length > 0;
-		const contentValid = newNoteContent.trim() !== "<p></p>";
+		const contentValid = newNoteContent.trim().length > 0;
 		if (!titleValid || !contentValid) {
 			setAddErrors({
 				title: titleValid ? undefined : "Title is required",
@@ -88,7 +93,7 @@ export default function WidgetNotes() {
 		setIsAddingNew(false);
 		setIsSubmittingNew(true);
 		setNewNoteTitle("");
-		setNewNoteContent("<p></p>");
+		setNewNoteContent("");
 		setAddErrors({});
 		setDirty(DIRTY_ID, false);
 
@@ -182,7 +187,7 @@ export default function WidgetNotes() {
 
 	const saveEditing = (note: Note) => {
 		const titleValid = note.title.trim().length > 0;
-		const contentValid = note.content.trim() !== "<p></p>";
+		const contentValid = note.content.trim().length > 0;
 		if (!titleValid || !contentValid) {
 			setEditErrors((prev) => ({
 				...prev,
@@ -222,14 +227,14 @@ export default function WidgetNotes() {
 		setIsAddingNew(true);
 		setEditingNote(null);
 		setNewNoteTitle("Untitled");
-		setNewNoteContent("<p></p>");
+		setNewNoteContent("");
 		setDirty(DIRTY_ID, true);
 	};
 
 	const cancelAddingNew = () => {
 		setIsAddingNew(false);
 		setNewNoteTitle("");
-		setNewNoteContent("<p></p>");
+		setNewNoteContent("");
 		setAddErrors({});
 		setDirty(DIRTY_ID, false);
 	};
@@ -288,19 +293,16 @@ export default function WidgetNotes() {
 	useEffect(() => {
 		try {
 			if (notes !== null) {
-				localStorage.setItem("notes-cache", JSON.stringify(notes));
+				localStorage.setItem("notes-cache-md", JSON.stringify(notes));
 			}
 		} catch {}
 	}, [notes]);
 
 	const renderContent = (content: string) => {
 		return (
-			<ContextMenuEditor
-				content={content}
-				onChange={() => {}} // No-op for read mode
-				editable={false}
-				className="h-fit -m-4"
-			/>
+			<div className="prose max-w-none -m-4 p-4">
+				<ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+			</div>
 		);
 	};
 
@@ -411,7 +413,7 @@ export default function WidgetNotes() {
 						</div>
 					)}
 
-					<ContextMenuEditor
+					<MilkdownEditor
 						content={newNoteContent}
 						onChange={(val) => {
 							setNewNoteContent(val);
@@ -419,14 +421,15 @@ export default function WidgetNotes() {
 							if (addErrors.content)
 								setAddErrors((prev) => ({ ...prev, content: undefined }));
 						}}
-						className="h-fit"
-						autoFocus={true}
+						className="min-h-32 p-4"
+						editable={true}
 						onKeyDown={(e) => {
-							if (e.key === "Enter" && e.shiftKey) {
-								e.preventDefault();
+							if (
+								(e as KeyboardEvent).key === "Enter" &&
+								(e as KeyboardEvent).shiftKey
+							) {
 								addNote();
-							} else if (e.key === "Escape") {
-								e.preventDefault();
+							} else if ((e as KeyboardEvent).key === "Escape") {
 								cancelAddingNew();
 							}
 						}}
@@ -568,20 +571,19 @@ export default function WidgetNotes() {
 											</div>
 										)}
 
-										<ContextMenuEditor
+										<MilkdownEditor
 											content={note.content}
 											onChange={(content) => {
 												updateNote(note.id, { content });
 												setDirty(DIRTY_ID, true);
 											}}
-											className="h-fit -m-4"
-											autoFocus={true}
+											className="min-h-32 -m-4 p-4"
+											editable={true}
 											onKeyDown={(e) => {
-												if (e.key === "Enter" && e.shiftKey) {
-													e.preventDefault();
+												const ev = e as KeyboardEvent;
+												if (ev.key === "Enter" && ev.shiftKey) {
 													saveEditing(note);
-												} else if (e.key === "Escape") {
-													e.preventDefault();
+												} else if (ev.key === "Escape") {
 													cancelEditing();
 												}
 											}}
