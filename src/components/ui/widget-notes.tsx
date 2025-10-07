@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import ContextMenuEditor from "./context-menu-editor";
 import { ScrollArea } from "./scroll-area";
 import type { Note } from "../../data/mockNotes";
+import { useUnsavedChanges } from "@/src/contexts/UnsavedChangesContext";
 
 export default function WidgetNotes() {
 	const [notes, setNotes] = useState<Note[] | null>(() => {
@@ -33,6 +34,8 @@ export default function WidgetNotes() {
 	const [editErrors, setEditErrors] = useState<
 		Record<number, { title?: string; content?: string }>
 	>({});
+	const { setDirty } = useUnsavedChanges();
+	const DIRTY_ID = "widget-notes";
 
 	// Idempotency key generator for safe retries
 	const generateIdempotencyKey = (prefix: string) => {
@@ -87,6 +90,7 @@ export default function WidgetNotes() {
 		setNewNoteTitle("");
 		setNewNoteContent("<p></p>");
 		setAddErrors({});
+		setDirty(DIRTY_ID, false);
 
 		try {
 			const res = await fetch("/api/notes", {
@@ -197,6 +201,7 @@ export default function WidgetNotes() {
 			return;
 		}
 		setEditErrors((prev) => ({ ...prev, [note.id]: {} }));
+		setDirty(DIRTY_ID, false);
 		stopEditing();
 	};
 
@@ -218,6 +223,7 @@ export default function WidgetNotes() {
 		setEditingNote(null);
 		setNewNoteTitle("Untitled");
 		setNewNoteContent("<p></p>");
+		setDirty(DIRTY_ID, true);
 	};
 
 	const cancelAddingNew = () => {
@@ -225,6 +231,7 @@ export default function WidgetNotes() {
 		setNewNoteTitle("");
 		setNewNoteContent("<p></p>");
 		setAddErrors({});
+		setDirty(DIRTY_ID, false);
 	};
 
 	// Global escape key handler
@@ -345,6 +352,7 @@ export default function WidgetNotes() {
 								value={newNoteTitle}
 								onChange={(e) => {
 									setNewNoteTitle(e.target.value);
+									setDirty(DIRTY_ID, true);
 									if (addErrors.title)
 										setAddErrors((prev) => ({ ...prev, title: undefined }));
 								}}
@@ -407,6 +415,7 @@ export default function WidgetNotes() {
 						content={newNoteContent}
 						onChange={(val) => {
 							setNewNoteContent(val);
+							setDirty(DIRTY_ID, true);
 							if (addErrors.content)
 								setAddErrors((prev) => ({ ...prev, content: undefined }));
 						}}
@@ -495,9 +504,10 @@ export default function WidgetNotes() {
 													placeholder="Note title..."
 													className="border-b-1  border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
 													value={note.title}
-													onChange={(e) =>
-														updateNote(note.id, { title: e.target.value })
-													}
+													onChange={(e) => {
+														updateNote(note.id, { title: e.target.value });
+														setDirty(DIRTY_ID, true);
+													}}
 													name={`note-title-${note.id}`}
 													autoComplete="off"
 													aria-label="Note title"
@@ -560,7 +570,10 @@ export default function WidgetNotes() {
 
 										<ContextMenuEditor
 											content={note.content}
-											onChange={(content) => updateNote(note.id, { content })}
+											onChange={(content) => {
+												updateNote(note.id, { content });
+												setDirty(DIRTY_ID, true);
+											}}
 											className="h-fit -m-4"
 											autoFocus={true}
 											onKeyDown={(e) => {

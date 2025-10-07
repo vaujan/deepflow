@@ -5,6 +5,7 @@ import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DataItem } from "../../data/mockDataTable";
 import { useUpdateSession } from "@/src/hooks/useSessionsQuery";
+import { useUnsavedChanges } from "@/src/contexts/UnsavedChangesContext";
 
 interface SessionEditModalProps {
 	isOpen: boolean;
@@ -28,6 +29,8 @@ export function SessionEditModal({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [statusMessage, setStatusMessage] = useState("");
 	const updateSession = useUpdateSession();
+	const { setDirty } = useUnsavedChanges();
+	const DIRTY_ID = "session-edit";
 
 	// Modal refs and state
 	const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -48,6 +51,7 @@ export function SessionEditModal({
 				sessionDate: session.sessionDate,
 			});
 			setErrors({});
+			setDirty(DIRTY_ID, false);
 		}
 	}, [session]);
 
@@ -77,6 +81,7 @@ export function SessionEditModal({
 		const dialog = dialogRef.current;
 		if (!dialog) return;
 		const handleClose = () => {
+			setDirty(DIRTY_ID, false);
 			onClose();
 		};
 		dialog.addEventListener("close", handleClose);
@@ -147,6 +152,7 @@ export function SessionEditModal({
 			payload.sessionDate = formData.sessionDate;
 
 		if (Object.keys(payload).length === 0) {
+			setDirty(DIRTY_ID, false);
 			onClose();
 			return;
 		}
@@ -193,6 +199,7 @@ export function SessionEditModal({
 				},
 			});
 			setStatusMessage("Saved");
+			setDirty(DIRTY_ID, false);
 			onSuccess?.();
 			onClose();
 		} catch (error: any) {
@@ -210,6 +217,15 @@ export function SessionEditModal({
 		if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
 			handleSubmit(e);
 		}
+	};
+
+	// Mark dirty on any field change
+	const onFieldChange = <K extends keyof DataItem>(
+		key: K,
+		value: DataItem[K]
+	) => {
+		setFormData((prev) => ({ ...prev, [key]: value }));
+		setDirty(DIRTY_ID, true);
 	};
 
 	return (
@@ -255,9 +271,7 @@ export function SessionEditModal({
 									errors.goal ? "input-error" : ""
 								}`}
 								value={formData.goal || ""}
-								onChange={(e) =>
-									setFormData((prev) => ({ ...prev, goal: e.target.value }))
-								}
+								onChange={(e) => onFieldChange("goal", e.target.value as any)}
 								placeholder="What did you work on?"
 								aria-invalid={!!errors.goal}
 								aria-describedby={errors.goal ? "goal-error" : undefined}
@@ -286,12 +300,7 @@ export function SessionEditModal({
 									className="select w-full border-0 shadow-none"
 									value={formData.sessionType || "planned session"}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											sessionType: e.target.value as
-												| "planned session"
-												| "open session",
-										}))
+										onFieldChange("sessionType" as any, e.target.value as any)
 									}
 								>
 									<option value="planned session">Planned Session</option>
@@ -314,10 +323,10 @@ export function SessionEditModal({
 									}`}
 									value={formData.duration || 0}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											duration: Number(e.target.value) || 0,
-										}))
+										onFieldChange(
+											"duration",
+											(Number(e.target.value) || 0) as any
+										)
 									}
 									aria-invalid={!!errors.duration}
 									aria-describedby={
@@ -347,10 +356,7 @@ export function SessionEditModal({
 									className="input w-full border-0 shadow-none"
 									value={formData.sessionDate || ""}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											sessionDate: e.target.value,
-										}))
+										onFieldChange("sessionDate" as any, e.target.value as any)
 									}
 								/>
 							</div>
@@ -371,10 +377,10 @@ export function SessionEditModal({
 									}`}
 									value={formData.focusLevel || 5}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											focusLevel: Number(e.target.value),
-										}))
+										onFieldChange(
+											"focusLevel" as any,
+											Number(e.target.value) as any
+										)
 									}
 									aria-invalid={!!errors.focusLevel}
 									aria-describedby={
@@ -408,10 +414,10 @@ export function SessionEditModal({
 									}`}
 									value={formData.quality || 5}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											quality: Number(e.target.value),
-										}))
+										onFieldChange(
+											"quality" as any,
+											Number(e.target.value) as any
+										)
 									}
 									aria-invalid={!!errors.quality}
 									aria-describedby={
@@ -441,13 +447,13 @@ export function SessionEditModal({
 								placeholder="tag1, tag2, tag3"
 								value={(formData.tags || []).join(", ")}
 								onChange={(e) =>
-									setFormData((prev) => ({
-										...prev,
-										tags: e.target.value
+									onFieldChange(
+										"tags" as any,
+										e.target.value
 											.split(",")
 											.map((t) => t.trim())
-											.filter(Boolean),
-									}))
+											.filter(Boolean) as any
+									)
 								}
 							/>
 							<label className="label">
@@ -467,7 +473,7 @@ export function SessionEditModal({
 								placeholder="Any additional notes about this session..."
 								value={formData.notes || ""}
 								onChange={(e) =>
-									setFormData((prev) => ({ ...prev, notes: e.target.value }))
+									onFieldChange("notes" as any, e.target.value as any)
 								}
 								onKeyDown={onTextAreaKeyDown}
 							/>

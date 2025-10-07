@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useUnsavedChanges } from "@/src/contexts/UnsavedChangesContext";
 import {
 	Bug,
 	Lightbulb,
@@ -30,6 +31,8 @@ export default function FeedbackModal({
 	const dialogRef = useRef<HTMLDialogElement | null>(null);
 	const firstFieldRef = useRef<HTMLTextAreaElement | null>(null);
 	const wasOpenRef = useRef<boolean>(false);
+	const { setDirty } = useUnsavedChanges();
+	const DIRTY_ID = "feedback-modal";
 
 	const [category, setCategory] = useState<FeedbackCategory>("idea");
 	const [message, setMessage] = useState("");
@@ -46,6 +49,7 @@ export default function FeedbackModal({
 		if (!dialog) return;
 		if (isOpen) {
 			if (!dialog.open) dialog.showModal();
+			setDirty(DIRTY_ID, false);
 		} else {
 			if (dialog.open) dialog.close();
 		}
@@ -66,6 +70,7 @@ export default function FeedbackModal({
 		const dialog = dialogRef.current;
 		if (!dialog) return;
 		const handleClose = () => {
+			setDirty(DIRTY_ID, false);
 			onClose();
 		};
 		dialog.addEventListener("close", handleClose);
@@ -142,6 +147,7 @@ export default function FeedbackModal({
 			setRating(undefined);
 			setCategory("idea");
 			setMood(undefined);
+			setDirty(DIRTY_ID, false);
 			onClose();
 		} catch (err: any) {
 			toast.error(err?.message || "Could not send feedback");
@@ -236,7 +242,10 @@ export default function FeedbackModal({
 										: "Tell us what’s on your mind…"
 								}
 								value={message}
-								onChange={(e) => setMessage(e.target.value)}
+								onChange={(e) => {
+									setMessage(e.target.value);
+									setDirty(DIRTY_ID, e.target.value.trim().length > 0);
+								}}
 								onKeyDown={onTextAreaKeyDown}
 								maxLength={4000}
 								spellCheck={true}
