@@ -472,21 +472,6 @@ html:not([data-theme]) {
 	--color-sidebar-border: var(--gray-4, #e8e8e8);
 }
 
-/* Stronger selection styles (appended last to win cascade) */
-.ProseMirror::selection,
-.ProseMirror ::selection,
-.ProseMirror *::selection {
-	background: rgba(59, 130, 246, 0.45) !important; /* blue-500 @ 45% */
-	color: #ffffff !important;
-}
-
-.ProseMirror::-moz-selection,
-.ProseMirror ::-moz-selection,
-.ProseMirror *::-moz-selection {
-	background: rgba(59, 130, 246, 0.45) !important;
-	color: #ffffff !important;
-}
-
 /* Global selection styles for the whole UI */
 ::selection,
 *::selection {
@@ -572,75 +557,6 @@ html:not([data-theme]) {
 	hyphens: auto;
 }
 
-/* Use Tailwind Typography prose styling for TipTap editor */
-.ProseMirror {
-	@apply prose max-w-none prose-h1:text-2xl prose-h2:text-xl prose-headings:text-lg;
-	min-height: 8rem; /* Ensure editor has visible height */
-}
-
-/* Custom prose styling for dark theme */
-.prose {
-	--tw-prose-body: hsl(var(--bc));
-	--tw-prose-headings: hsl(var(--bc));
-	--tw-prose-lead: hsl(var(--bc) / 0.8);
-	--tw-prose-links: hsl(var(--p));
-	--tw-prose-bold: hsl(var(--bc));
-	--tw-prose-counters: hsl(var(--bc) / 0.6);
-	--tw-prose-bullets: hsl(var(--bc) / 0.6);
-	--tw-prose-hr: hsl(var(--bc) / 0.2);
-	--tw-prose-quotes: hsl(var(--bc) / 0.8);
-	--tw-prose-quote-borders: hsl(var(--bc) / 0.2);
-	--tw-prose-captions: hsl(var(--bc) / 0.6);
-	--tw-prose-code: hsl(var(--bc));
-	--tw-prose-pre-code: hsl(var(--bc));
-	--tw-prose-pre-bg: hsl(var(--b2));
-	--tw-prose-th-borders: hsl(var(--bc) / 0.2);
-	--tw-prose-td-borders: hsl(var(--bc) / 0.1);
-}
-
-/* Consistent line height for all paragraph types */
-.ProseMirror p {
-	line-height: 1.5 !important;
-	margin-top: 0 !important;
-	margin-bottom: 0.75em !important;
-}
-
-/* Line breaks (Shift+Enter) should have same line height as paragraphs */
-.ProseMirror br {
-	line-height: 1.5 !important;
-}
-
-.ProseMirror br + * {
-	line-height: 1.5 !important;
-}
-
-/* Ensure hard breaks have consistent spacing */
-.ProseMirror .hard-break {
-	line-height: 1.5 !important;
-	display: block;
-	margin: 0;
-	padding: 0;
-}
-
-/* Ensure consistent spacing for lists */
-.ProseMirror ul,
-.ProseMirror ol {
-	line-height: 1.5 !important;
-	margin: 0.75em 0 !important;
-	padding-left: 1.5em !important;
-}
-
-.ProseMirror li {
-	line-height: 1.5 !important;
-	margin-bottom: 0.25em !important;
-	display: list-item !important;
-}
-
-.ProseMirror li p {
-	margin: 0 !important;
-	line-height: 1.5 !important;
-}
-
 /* Custom Scrollbar Styles */
 .scrollbar-thin {
 	scrollbar-width: thin;
@@ -661,21 +577,6 @@ html:not([data-theme]) {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
 	background-color: #9ca3af; /* gray-400 */
-}
-
-/* Visually hide native scrollbars but keep scrolling functional */
-.hide-native-scrollbar {
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
-}
-
-.hide-native-scrollbar::-webkit-scrollbar {
-	display: none; /* Chrome, Safari */
-}
-
-/* Hide only the horizontal scrollbar (keep vertical visible where possible) */
-.hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
-	display: none; /* Chrome, Safari */
 }
 
 /* Subtle dotted background utility for pages/containers */

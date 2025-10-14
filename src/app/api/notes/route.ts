@@ -24,7 +24,7 @@ export async function GET() {
 		(data || []).map((n: any) => ({
 			id: n.id,
 			title: n.title ?? "",
-			content: n.content ?? "<p></p>",
+			content: n.content ?? "",
 			timestamp:
 				n.updated_at || n.created_at
 					? new Date(n.updated_at || n.created_at).toLocaleDateString("en-US", {
@@ -49,8 +49,11 @@ export async function POST(request: Request) {
 	const { title, content } = body ?? {};
 	if (typeof title !== "string" || title.length < 1)
 		return NextResponse.json({ error: "Title is required" }, { status: 400 });
-	if (typeof content !== "string" || content.length < 1)
-		return NextResponse.json({ error: "Content is required" }, { status: 400 });
+	if (typeof content !== "string")
+		return NextResponse.json(
+			{ error: "Content must be a string" },
+			{ status: 400 }
+		);
 
 	const { data, error } = await supabase
 		.from("notes")
@@ -64,7 +67,7 @@ export async function POST(request: Request) {
 	return NextResponse.json({
 		id: data!.id,
 		title: data!.title ?? "",
-		content: data!.content ?? "<p></p>",
+		content: data!.content ?? "",
 		timestamp:
 			data!.updated_at || data!.created_at
 				? new Date(data!.updated_at || data!.created_at).toLocaleDateString(

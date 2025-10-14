@@ -241,7 +241,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 										? "Editing available after session ends"
 										: "Edit session"
 								}
-								className={`btn btn-xs btn-ghost btn-square ${
+								className={`btn btn-sm btn-ghost btn-square ${
 									locked ? "opacity-50" : ""
 								}`}
 								onClick={() => openEditModal(session)}

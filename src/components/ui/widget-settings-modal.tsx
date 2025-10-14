@@ -39,12 +39,12 @@ const ALL_WIDGETS: WidgetMeta[] = [
 		description: "Manage to‑dos with simple checklists and priorities.",
 		icon: CheckSquare,
 	},
-	{
+	/* {
 		type: "kanban",
 		label: "Kanban",
 		description: "Track work visually across columns for clear flow.",
 		icon: Kanban,
-	},
+	}, */
 	{
 		type: "journal",
 		label: "Journal",
@@ -182,7 +182,7 @@ export default function WidgetSettingsModal({
 										<button
 											key={type}
 											type="button"
-											className={`flex flex-col min-h-48 justify-between gap-3 border rounded-box px-3 py-2 text-left transition-all duration-200 ${
+											className={`flex flex-col flex-1 min-h-48 justify-between gap-3 border rounded-box px-3 py-2 text-left transition-all duration-200 ${
 												isActive
 													? "border-primary bg-primary/10"
 													: "border-border hover:border-base-content/20"
@@ -196,19 +196,20 @@ export default function WidgetSettingsModal({
 											aria-pressed={isActive}
 											aria-label={`Toggle ${label}`}
 										>
-											<Icon
-												className={`size-6 mt-0.5 ${
-													isActive ? "text-primary" : "text-base-content/70"
-												}`}
-											/>
+											<div className="flex w-full items-center justify-between">
+												<Icon
+													className={`size-6 mt-0.5 ${
+														isActive ? "text-primary" : "text-base-content/70"
+													}`}
+												/>
+												{isComingSoon && (
+													<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
+														<Lock className="size-3" /> Coming soon
+													</span>
+												)}
+											</div>
 											<div className="flex flex-col gap-0.5">
 												<div className="flex flex-col gap-2">
-													{isComingSoon && (
-														<span className="badge badge-ghost badge-sm rounded-sm flex items-center gap-1">
-															<Lock className="size-3" /> Coming soon
-														</span>
-													)}
-
 													<span
 														className={`text-base ${
 															isActive ? "text-primary" : ""

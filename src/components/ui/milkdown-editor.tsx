@@ -1,71 +1,113 @@
 "use client";
 
-import React from "react";
-import { MilkdownProvider, Milkdown, useEditor } from "@milkdown/react";
-import { Editor, rootCtx, defaultValueCtx } from "@milkdown/core";
-import { commonmark } from "@milkdown/preset-commonmark";
-import { listener, listenerCtx } from "@milkdown/plugin-listener";
+import React, { useEffect, useRef } from "react";
+import { createEditor } from "@/src/lib/milkdown-helpers";
 
 interface MilkdownEditorProps {
 	content: string;
 	onChange: (markdown: string) => void;
-	placeholder?: string; // reserved for future use
-	editable?: boolean;
 	className?: string;
-	onKeyDown?: (event: KeyboardEvent) => void;
-	autoFocus?: boolean; // reserved for future use
+	autoFocus?: boolean;
+	placeholder?: string;
 }
 
-function MilkdownEditorInner({
+export default function MilkdownEditor({
 	content,
 	onChange,
-	placeholder,
-	editable = true,
 	className = "",
-	onKeyDown,
-	autoFocus,
+	autoFocus = false,
+	placeholder,
 }: MilkdownEditorProps) {
-	const onChangeRef = React.useRef(onChange);
-	const onKeyDownRef = React.useRef(onKeyDown);
-	React.useEffect(() => {
+	const editorRef = useRef<HTMLDivElement>(null);
+	const editorInstanceRef = useRef<any>(null);
+	const onChangeRef = useRef(onChange);
+
+	// Keep onChange ref up to date
+	useEffect(() => {
 		onChangeRef.current = onChange;
-		onKeyDownRef.current = onKeyDown;
-	}, [onChange, onKeyDown]);
+	}, [onChange]);
 
-	useEditor(
-		(root) =>
-			Editor.make()
-				.config((ctx) => {
-					ctx.set(rootCtx, root);
-					ctx.set(defaultValueCtx, content ?? "\n");
-				})
-				.use(commonmark)
-				.use(listener)
-				.config((ctx) => {
-					const l = ctx.get(listenerCtx);
-					l.markdownUpdated((_, md) => onChangeRef.current?.(md));
-				}),
-		[]
-	);
-	return (
-		<div
-			className={className}
-			data-milkdown-wrapper
-			onKeyDown={(e) => {
-				if ((e.key === "Enter" && e.shiftKey) || e.key === "Escape") {
-					onKeyDownRef.current?.(e.nativeEvent as unknown as KeyboardEvent);
+	useEffect(() => {
+		if (!editorRef.current) return;
+
+		let isActive = true;
+
+		// Ensure container is empty before creating a new editor
+		editorRef.current.innerHTML = "";
+
+		// Clean up existing editor if it exists
+		if (editorInstanceRef.current) {
+			try {
+				editorInstanceRef.current.destroy();
+			} catch (e) {
+				console.warn("Error destroying editor:", e);
+			}
+			editorInstanceRef.current = null;
+		}
+
+		// Create editor instance
+		const initEditor = async () => {
+			try {
+				const instance = await createEditor({
+					root: editorRef.current!,
+					defaultValue: content,
+					onChange: (markdown: string) => {
+						console.log("📝 Milkdown onChange called with:", markdown);
+						onChangeRef.current(markdown);
+					},
+					placeholder,
+				});
+
+				// If effect has been cleaned up, immediately destroy stray instance
+				if (!isActive) {
+					try {
+						instance.destroy();
+					} catch (e) {
+						console.warn("Error destroying stray instance:", e);
+					}
+					return;
 				}
-			}}
-		>
-			<Milkdown />
-		</div>
-	);
-}
 
-export default function MilkdownEditor(props: MilkdownEditorProps) {
-	return (
-		<MilkdownProvider>
-			<MilkdownEditorInner {...props} />
-		</MilkdownProvider>
-	);
+				editorInstanceRef.current = instance;
+
+				// Auto-focus if requested
+				if (autoFocus) {
+					setTimeout(() => {
+						if (!isActive) return;
+						const editorElement = editorRef.current?.querySelector(
+							'[contenteditable="true"]'
+						) as HTMLElement;
+						if (editorElement) {
+							editorElement.focus();
+						}
+					}, 100);
+				}
+			} catch (error) {
+				console.error("Failed to create Milkdown editor:", error);
+			}
+		};
+
+		initEditor();
+
+		// Cleanup on unmount
+		return () => {
+			isActive = false;
+			if (editorInstanceRef.current) {
+				try {
+					editorInstanceRef.current.destroy();
+				} catch (e) {
+					console.warn("Error during cleanup:", e);
+				}
+				editorInstanceRef.current = null;
+			}
+			if (editorRef.current) {
+				editorRef.current.innerHTML = "";
+			}
+		};
+	}, []); // Only run once on mount
+
+	// Note: Content updates are handled by recreating the editor instance
+	// This ensures the editor always reflects the current note content
+
+	return <div ref={editorRef} className={className} />;
 }
