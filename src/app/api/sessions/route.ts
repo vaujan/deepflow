@@ -21,12 +21,12 @@ export async function GET(request: NextRequest) {
 	let query = supabase
 		.from("sessions")
 		.select(
-			"id, goal, session_type, focus_level, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
+			"id, goal, session_type, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
 		)
 		.eq("user_id", user.id)
-		// Exclude ended sessions shorter than 5 minutes (discarded)
+		// TEMPORARILY DISABLED: Exclude ended sessions shorter than 5 minutes (discarded)
 		// Keep active/paused (end_time is null) so timers can resume
-		.or("end_time.is.null,elapsed_seconds.gte.300")
+		// .or("end_time.is.null,elapsed_seconds.gte.300")
 		.order("start_time", { ascending: false })
 		.range(offset, offset + limit - 1);
 
@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
 			id: s.id,
 			goal: s.goal,
 			sessionType: s.session_type,
-			focusLevel: s.focus_level,
 			tags: Array.isArray(s.tags) ? s.tags : [],
 			notes: s.notes ?? "",
 			duration: s.planned_duration_minutes ?? null,
@@ -87,19 +86,21 @@ export async function POST(request: Request) {
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
-	if (!user)
+	if (!user) {
+		console.log("[API POST /sessions] Unauthorized - no user");
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
 
 	const body = await request.json();
-	const { goal, sessionType, focusLevel, tags, notes, duration } = body ?? {};
+	console.log("[API POST /sessions] Creating session with body:", body);
+	console.log("[API POST /sessions] User ID:", user.id);
+
+	const { goal, sessionType, tags, notes, duration } = body ?? {};
 
 	if (!goal || typeof goal !== "string")
 		return NextResponse.json({ error: "Invalid goal" }, { status: 400 });
 	if (!sessionType || !["time-boxed", "open", "pomodoro"].includes(sessionType))
 		return NextResponse.json({ error: "Invalid sessionType" }, { status: 400 });
-	const parsedFocus = Number(focusLevel);
-	if (!Number.isFinite(parsedFocus) || parsedFocus < 1 || parsedFocus > 10)
-		return NextResponse.json({ error: "Invalid focusLevel" }, { status: 400 });
 
 	let expectedEndTime: string | null = null;
 	const plannedMinutes = typeof duration === "number" ? duration : null;
@@ -108,33 +109,39 @@ export async function POST(request: Request) {
 		expectedEndTime = end.toISOString();
 	}
 
+	const insertData = {
+		user_id: user.id,
+		goal,
+		session_type: sessionType,
+		tags: Array.isArray(tags) ? tags : [],
+		notes: typeof notes === "string" ? notes : null,
+		planned_duration_minutes: plannedMinutes,
+		expected_end_time: expectedEndTime,
+		status: "active",
+		elapsed_seconds: 0,
+	};
+
+	console.log("[API POST /sessions] Inserting session data:", insertData);
+
 	const { data, error } = await supabase
 		.from("sessions")
-		.insert({
-			user_id: user.id,
-			goal,
-			session_type: sessionType,
-			focus_level: parsedFocus,
-			tags: Array.isArray(tags) ? tags : [],
-			notes: typeof notes === "string" ? notes : null,
-			planned_duration_minutes: plannedMinutes,
-			expected_end_time: expectedEndTime,
-			status: "active",
-			elapsed_seconds: 0,
-		})
+		.insert(insertData)
 		.select(
-			"id, goal, session_type, focus_level, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
+			"id, goal, session_type, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
 		)
 		.single();
 
-	if (error)
+	console.log("[API POST /sessions] Supabase insert result:", { data, error });
+
+	if (error) {
+		console.log("[API POST /sessions] Insert failed:", error.message);
 		return NextResponse.json({ error: error.message }, { status: 500 });
+	}
 
 	return NextResponse.json({
 		id: data!.id,
 		goal: data!.goal,
 		sessionType: data!.session_type,
-		focusLevel: data!.focus_level,
 		tags: Array.isArray(data!.tags) ? data!.tags : [],
 		notes: data!.notes ?? "",
 		duration: data!.planned_duration_minutes ?? null,

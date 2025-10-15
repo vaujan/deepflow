@@ -27,7 +27,6 @@ import { useWidgets } from "@/src/contexts/WidgetContext";
 
 export default function WidgetTimer() {
 	const [duration, setDuration] = useState(25);
-	const [focusLevel, setFocusLevel] = useState("5");
 	const [goal, setGoal] = useState("");
 	const [tags, setTags] = useState("");
 	const [activeTab, setActiveTab] = useState<
@@ -113,7 +112,6 @@ export default function WidgetTimer() {
 		const sessionConfig = {
 			goal: goal.trim(),
 			duration: activeTab !== "open" ? duration : undefined,
-			focusLevel: parseInt(focusLevel),
 			tags: tags
 				.trim()
 				.split(/\s+/)
@@ -790,16 +788,17 @@ function SessionCompletionView({
 			const minutes = Math.round(
 				((saved?.elapsedTime ?? session.elapsedTime ?? 0) as number) / 60
 			);
-			if (
-				(saved?.status === "completed" || saved?.status === "stopped") &&
-				(saved?.elapsedTime ?? session.elapsedTime ?? 0) < 300
-			) {
-				toast.info("Session under 5 minutes was discarded and not counted.");
-			} else {
-				toast.success(
-					`Deep work logged — ${minutes} minutes of focused progress. Nice work!`
-				);
-			}
+			// TEMPORARILY DISABLED: 5-minute minimum check
+			// if (
+			// 	(saved?.status === "completed" || saved?.status === "stopped") &&
+			// 	(saved?.elapsedTime ?? session.elapsedTime ?? 0) < 300
+			// ) {
+			// 	toast.info("Session under 5 minutes was discarded and not counted.");
+			// } else {
+			toast.success(
+				`Deep work logged — ${minutes} minutes of focused progress. Nice work!`
+			);
+			// }
 			onDismiss?.();
 		} catch (e: any) {
 			toast.error(e?.message || "Failed to save session");

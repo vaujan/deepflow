@@ -32,7 +32,7 @@ export function useStatsSessions(opts?: {
 			query.refetch();
 		}, 15000);
 		return () => clearInterval(id);
-	}, [isActive, hasPendingSave, query.refetch]);
+	}, [isActive, hasPendingSave]);
 
 	return { ...query, data } as typeof query & { data: typeof data };
 }

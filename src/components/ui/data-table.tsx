@@ -645,9 +645,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 											}}
 										/>
 										<span className="capitalize">
-											{columnId === "focusLevel"
-												? "Focus Level"
-												: columnId === "sessionType"
+											{columnId === "sessionType"
 												? "Session Type"
 												: columnId === "sessionDate"
 												? "Session Date"

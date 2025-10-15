@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "./useSession";
 
 function reviveSession(row: any): Session {
-	return {
+	console.log(
+		"[reviveSession] Input row.notes:",
+		row.notes,
+		"type:",
+		typeof row.notes
+	);
+
+	const session = {
 		id: row.id,
 		goal: row.goal,
 		startTime: new Date(row.startTime ?? row.start_time),
@@ -14,7 +21,6 @@ function reviveSession(row: any): Session {
 				: typeof row.planned_duration_minutes === "number"
 				? row.planned_duration_minutes
 				: undefined,
-		focusLevel: row.focusLevel ?? row.focus_level,
 		tags: Array.isArray(row.tags) ? row.tags : [],
 		notes: row.notes ?? undefined,
 		status: row.status,
@@ -33,6 +39,9 @@ function reviveSession(row: any): Session {
 			: undefined,
 		completionType: row.completionType ?? row.completion_type ?? undefined,
 	};
+
+	console.log("[reviveSession] Output session.notes:", session.notes);
+	return session;
 }
 
 export function useSessionsQuery(params?: {
@@ -78,7 +87,6 @@ export function useUpdateSession() {
 			payload: Partial<{
 				goal: string;
 				sessionType: "planned session" | "open session" | "time-boxed" | "open";
-				focusLevel: number;
 				deepWorkQuality: number;
 				tags: string[];
 				notes: string;
@@ -86,44 +94,112 @@ export function useUpdateSession() {
 				sessionDate: string; // YYYY-MM-DD
 			}>;
 		}) => {
+			console.log("[useUpdateSession] Sending PATCH request:", {
+				id: params.id,
+				payload: params.payload,
+			});
+
+			const requestBody = { action: "edit", ...params.payload };
+			console.log("[useUpdateSession] Request body:", requestBody);
+
 			const res = await fetch(`/api/sessions/${params.id}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ action: "edit", ...params.payload }),
+				body: JSON.stringify(requestBody),
 			});
 			const data = await res.json();
+
+			console.log("[useUpdateSession] API response:", {
+				ok: res.ok,
+				status: res.status,
+				data,
+			});
+
+			console.log("[useUpdateSession] Raw response data fields:", {
+				notes: data.notes,
+				tags: data.tags,
+				goal: data.goal,
+				deepWorkQuality: data.deepWorkQuality,
+			});
+
 			if (!res.ok) throw new Error(data?.error || "Failed to update session");
-			return reviveSession(data);
+			const revivedSession = reviveSession(data);
+			console.log("[useUpdateSession] Revived session:", revivedSession);
+			return revivedSession;
 		},
-		onMutate: async (newSession) => {
-			// Cancel any outgoing refetches
+		onMutate: async (vars) => {
+			// Cancel all outgoing sessions queries
 			await queryClient.cancelQueries({ queryKey: ["sessions"] });
 
-			// Snapshot the previous value
-			const previousSessions = queryClient.getQueryData<Session[]>([
-				"sessions",
-			]);
+			// Snapshot all current sessions queries
+			const previousQueries = queryClient.getQueriesData<Session[]>({
+				queryKey: ["sessions"],
+			});
 
-			// Optimistically update to the new value
-			queryClient.setQueryData<Session[]>(
-				["sessions"],
-				(old) =>
-					old?.map((session) =>
-						session.id === newSession.id
-							? { ...session, ...newSession.payload }
-							: session
-					) || []
+			// Transform payload to Session format for optimistic update
+			const sessionUpdate: Partial<Session> = {};
+
+			if (vars.payload.goal !== undefined)
+				sessionUpdate.goal = vars.payload.goal;
+			if (vars.payload.deepWorkQuality !== undefined)
+				sessionUpdate.deepWorkQuality = vars.payload.deepWorkQuality;
+			if (vars.payload.tags !== undefined)
+				sessionUpdate.tags = vars.payload.tags;
+			if (vars.payload.notes !== undefined)
+				sessionUpdate.notes = vars.payload.notes;
+
+			// Map UI sessionType to DB sessionType
+			if (vars.payload.sessionType !== undefined) {
+				sessionUpdate.sessionType =
+					vars.payload.sessionType === "planned session"
+						? "time-boxed"
+						: vars.payload.sessionType === "open session"
+						? "open"
+						: (vars.payload.sessionType as "time-boxed" | "open");
+			}
+
+			// Convert duration (minutes) to elapsedTime (seconds)
+			if (vars.payload.duration !== undefined) {
+				sessionUpdate.elapsedTime = Math.floor(vars.payload.duration * 60);
+			}
+
+			// Update startTime date if sessionDate provided
+			if (vars.payload.sessionDate !== undefined) {
+				// This is complex, skip for optimistic update - let server handle it
+				// The invalidation will fetch the correct value
+			}
+
+			// Optimistically update ALL sessions queries
+			queryClient.setQueriesData<Session[]>(
+				{ queryKey: ["sessions"] },
+				(old) => {
+					if (!old) return old;
+					return old.map((session) =>
+						session.id === vars.id ? { ...session, ...sessionUpdate } : session
+					);
+				}
 			);
 
-			// Return a context object with the snapshotted value
-			return { previousSessions };
+			return { previousQueries };
 		},
-		onError: (err, newSession, context) => {
-			// If the mutation fails, use the context returned from onMutate to roll back
-			queryClient.setQueryData(["sessions"], context?.previousSessions);
+		onError: (err, vars, context) => {
+			// Rollback all affected queries
+			if (context?.previousQueries) {
+				context.previousQueries.forEach(([queryKey, data]) => {
+					queryClient.setQueryData(queryKey, data);
+				});
+			}
 		},
-		onSettled: () => {
-			// Always refetch after error or success to ensure server state
+		onSettled: (data, error, variables, context) => {
+			console.log(
+				"[useUpdateSession] onSettled - Invalidating queries. Mutation result:",
+				{
+					success: !error,
+					error: error?.message,
+					returnedData: data,
+				}
+			);
+			// Refetch all sessions queries to sync with server
 			queryClient.invalidateQueries({ queryKey: ["sessions"] });
 		},
 	});

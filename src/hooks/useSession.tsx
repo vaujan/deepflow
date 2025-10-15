@@ -5,7 +5,6 @@ export interface Session {
 	goal: string;
 	startTime: Date;
 	duration?: number; // undefined for open sessions
-	focusLevel: number;
 	tags: string[];
 	notes?: string;
 	status: "active" | "paused" | "completed" | "stopped";
@@ -20,7 +19,6 @@ export interface Session {
 export interface SessionConfig {
 	goal: string;
 	duration?: number;
-	focusLevel: number;
 	tags: string[];
 	notes?: string;
 	sessionType: "time-boxed" | "open" | "pomodoro";
@@ -39,6 +37,8 @@ export const useSession = () => {
 	const pauseTimeRef = useRef<Date | null>(null);
 	const totalPausedTimeRef = useRef(0);
 	const sessionIdRef = useRef<string | null>(null);
+	// Track latest notes value to avoid stale reads during completion/save
+	const notesRef = useRef<string | null>(null);
 
 	const STORAGE_KEY = "df:current-session";
 
@@ -61,7 +61,6 @@ export const useSession = () => {
 					: typeof row.planned_duration_minutes === "number"
 					? row.planned_duration_minutes
 					: undefined,
-			focusLevel: row.focusLevel ?? row.focus_level,
 			tags: Array.isArray(row.tags) ? row.tags : [],
 			notes: row.notes ?? undefined,
 			status: row.status,
@@ -106,6 +105,11 @@ export const useSession = () => {
 			localStorage.removeItem(STORAGE_KEY);
 		} catch {}
 	};
+
+	// Keep notesRef synchronized with currentSession.notes
+	useEffect(() => {
+		notesRef.current = currentSession?.notes ?? null;
+	}, [currentSession?.notes]);
 
 	const stopSession = useCallback(async () => {
 		if (!sessionIdRef.current) return;
@@ -164,7 +168,7 @@ export const useSession = () => {
 				needsSave: true,
 				elapsedTime,
 				endTime: end.toISOString(),
-				notes: currentSession?.notes ?? null,
+				notes: notesRef.current,
 				deepWorkQuality: currentSession?.deepWorkQuality ?? null,
 				tags: currentSession?.tags ?? [],
 			});
@@ -180,9 +184,7 @@ export const useSession = () => {
 			}
 			timerRef.current = setInterval(() => {
 				setElapsedTime((prev) => {
-					const isOpen =
-						currentSession?.sessionType === "open" ||
-						(!plannedDuration && currentSession?.sessionType === "open");
+					const isOpen = currentSession?.sessionType === "open";
 					const MAX_OPEN_SECONDS = 240 * 60;
 					const hardCap = isOpen
 						? MAX_OPEN_SECONDS
@@ -212,22 +214,32 @@ export const useSession = () => {
 	const startSession = useCallback(
 		async (config: SessionConfig) => {
 			// Create on server
+			const payload = {
+				goal: config.goal,
+				sessionType: config.sessionType,
+				tags: config.tags,
+				notes: config.notes ?? null,
+				duration: config.duration ?? null,
+			};
+
+			console.log("[startSession] Creating session with payload:", payload);
+
 			const res = await fetch("/api/sessions", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 					"Idempotency-Key": toIdempotencyKey("sessions:create"),
 				},
-				body: JSON.stringify({
-					goal: config.goal,
-					sessionType: config.sessionType,
-					focusLevel: config.focusLevel,
-					tags: config.tags,
-					notes: config.notes ?? null,
-					duration: config.duration ?? null,
-				}),
+				body: JSON.stringify(payload),
 			});
 			const data = await res.json();
+
+			console.log("[startSession] Session creation response:", {
+				ok: res.ok,
+				status: res.status,
+				data,
+			});
+
 			if (!res.ok) throw new Error(data?.error || "Failed to start session");
 
 			const session = mapServerSession(data);
@@ -318,18 +330,32 @@ export const useSession = () => {
 			currentSession.status !== "completed"
 		)
 			return null;
+
+		const payload = {
+			action: "complete",
+			notes: notesRef.current,
+			deepWorkQuality: currentSession.deepWorkQuality ?? null,
+			tags: currentSession.tags ?? [],
+		};
+
+		console.log("[saveCompletedSession] Saving session with payload:", payload);
+		console.log(
+			"[saveCompletedSession] Current session notes:",
+			currentSession.notes
+		);
+		console.log("[saveCompletedSession] notesRef.current:", notesRef.current);
+		console.log(
+			"[saveCompletedSession] Current session object:",
+			currentSession
+		);
+
 		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
 				"Idempotency-Key": toIdempotencyKey("sessions:complete"),
 			},
-			body: JSON.stringify({
-				action: "complete",
-				notes: currentSession.notes ?? null,
-				deepWorkQuality: currentSession.deepWorkQuality ?? null,
-				tags: currentSession.tags ?? [],
-			}),
+			body: JSON.stringify(payload),
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data?.error || "Failed to save session");
@@ -396,7 +422,6 @@ export const useSession = () => {
 					goal: "",
 					startTime: new Date(snap.startTime),
 					duration: undefined,
-					focusLevel: 0,
 					tags: Array.isArray(snap.tags) ? snap.tags : [],
 					notes: snap.notes ?? undefined,
 					status: "completed",
@@ -418,9 +443,29 @@ export const useSession = () => {
 				return;
 			}
 			(async () => {
-				const res = await fetch(`/api/sessions/${snap.id}`);
+				const url = `/api/sessions/${snap.id}`.replace(/\/$/, ""); // Remove trailing slash
+				console.log("[useSession] Fetching session from:", url);
+				console.log("[useSession] Session snapshot:", snap);
+				const res = await fetch(url);
 				const data = await res.json();
-				if (!res.ok) return;
+				console.log("[useSession] Session fetch response:", {
+					ok: res.ok,
+					status: res.status,
+					data,
+				});
+				if (!res.ok) {
+					console.log(
+						"[useSession] Session not found on server, clearing localStorage"
+					);
+					localStorage.removeItem(STORAGE_KEY);
+					// Clear any current session state
+					setCurrentSession(null);
+					sessionIdRef.current = null;
+					setIsActive(false);
+					setIsPaused(false);
+					setHasPendingSave(false);
+					return;
+				}
 				const session = mapServerSession(data);
 				sessionIdRef.current = session.id;
 				setCurrentSession(session);
@@ -499,22 +544,40 @@ export const useSession = () => {
 	const updateSessionNotes = useCallback(
 		async (_sessionId: string, notes: string) => {
 			if (!sessionIdRef.current) return;
+			console.log("[updateSessionNotes] Updating notes to:", notes);
 			setCurrentSession((prev) => (prev ? { ...prev, notes } : prev));
-			if (
-				hasPendingSave ||
-				(currentSession && currentSession.status === "completed")
-			)
+
+			// Always update the ref immediately, regardless of pending save state
+			notesRef.current = notes;
+			console.log("[updateSessionNotes] Updated notesRef to:", notes);
+
+			// Always save notes to server, even for completed sessions
+			// The only time we skip is if there's already a pending save operation
+			if (hasPendingSave) {
+				console.log(
+					"[updateSessionNotes] Skipping server update - pending save"
+				);
 				return;
-			await fetch(`/api/sessions/${sessionIdRef.current}`, {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-					"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
-				},
-				body: JSON.stringify({ action: "updateMeta", notes }),
-			});
+			}
+
+			const payload = { action: "updateMeta", notes };
+			console.log("[updateSessionNotes] Sending payload:", payload);
+
+			try {
+				await fetch(`/api/sessions/${sessionIdRef.current}`, {
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+						"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
+					},
+					body: JSON.stringify(payload),
+				});
+				console.log("[updateSessionNotes] Notes saved successfully");
+			} catch (error) {
+				console.error("[updateSessionNotes] Failed to save notes:", error);
+			}
 		},
-		[hasPendingSave, currentSession]
+		[hasPendingSave]
 	);
 
 	return {

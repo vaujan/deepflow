@@ -25,9 +25,6 @@ export const transformSessionsToDataItems = (
 		// Get quality rating (default to 5 if not set)
 		const quality = session.deepWorkQuality || 5;
 
-		// Get focus level (default to null if not set)
-		const focusLevel = session.focusLevel || null;
-
 		// Get notes (default to empty string if not set)
 		const notes = session.notes || "";
 
@@ -36,7 +33,6 @@ export const transformSessionsToDataItems = (
 			goal: session.goal,
 			sessionType,
 			duration: durationMinutes,
-			focusLevel,
 			quality,
 			notes,
 			tags: session.tags || [],

@@ -28,6 +28,7 @@ export function SessionEditModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [statusMessage, setStatusMessage] = useState("");
+	const [tagsInput, setTagsInput] = useState("");
 	const updateSession = useUpdateSession();
 	const { setDirty } = useUnsavedChanges();
 	const DIRTY_ID = "session-edit";
@@ -44,12 +45,12 @@ export function SessionEditModal({
 				goal: session.goal,
 				sessionType: session.sessionType,
 				duration: session.duration,
-				focusLevel: session.focusLevel ?? undefined,
 				quality: session.quality,
 				notes: session.notes,
 				tags: session.tags,
 				sessionDate: session.sessionDate,
 			});
+			setTagsInput((session.tags || []).join(", "));
 			setErrors({});
 			setDirty(DIRTY_ID, false);
 		}
@@ -108,13 +109,6 @@ export function SessionEditModal({
 		}
 
 		if (
-			typeof formData.focusLevel === "number" &&
-			(formData.focusLevel < 1 || formData.focusLevel > 10)
-		) {
-			newErrors.focusLevel = "Focus level must be between 1 and 10";
-		}
-
-		if (
 			typeof formData.quality === "number" &&
 			(formData.quality < 1 || formData.quality > 10)
 		) {
@@ -134,6 +128,12 @@ export function SessionEditModal({
 			return;
 		}
 
+		// Convert tags input to array
+		const tagsArray = tagsInput
+			.split(",")
+			.map((t) => t.trim())
+			.filter(Boolean);
+
 		// Map form data to API payload
 		const payload: Record<string, any> = {};
 		if (formData.goal !== session.goal) payload.goal = formData.goal;
@@ -141,17 +141,20 @@ export function SessionEditModal({
 			payload.sessionType = formData.sessionType;
 		if (formData.duration !== session.duration)
 			payload.duration = formData.duration;
-		if (formData.focusLevel !== session.focusLevel)
-			payload.focusLevel = formData.focusLevel;
 		if (formData.quality !== session.quality)
 			payload.deepWorkQuality = formData.quality;
 		if (formData.notes !== session.notes) payload.notes = formData.notes;
-		if (JSON.stringify(formData.tags) !== JSON.stringify(session.tags))
-			payload.tags = formData.tags;
+		if (JSON.stringify(tagsArray) !== JSON.stringify(session.tags))
+			payload.tags = tagsArray;
 		if (formData.sessionDate !== session.sessionDate)
 			payload.sessionDate = formData.sessionDate;
 
+		console.log("[SessionEditModal] Form data:", formData);
+		console.log("[SessionEditModal] Original session:", session);
+		console.log("[SessionEditModal] Payload to send:", payload);
+
 		if (Object.keys(payload).length === 0) {
+			console.log("[SessionEditModal] No changes detected, closing modal");
 			setDirty(DIRTY_ID, false);
 			onClose();
 			return;
@@ -167,8 +170,6 @@ export function SessionEditModal({
 			if ("sessionType" in payload)
 				revertPayload.sessionType = session.sessionType;
 			if ("duration" in payload) revertPayload.duration = session.duration;
-			if ("focusLevel" in payload)
-				revertPayload.focusLevel = session.focusLevel;
 			if ("deepWorkQuality" in payload)
 				revertPayload.deepWorkQuality = session.quality;
 			if ("notes" in payload) revertPayload.notes = session.notes;
@@ -361,43 +362,6 @@ export function SessionEditModal({
 								/>
 							</div>
 
-							{/* Focus Level */}
-							<div className="form-control">
-								<label className="label">
-									<span className="label-text text-sm font-medium">
-										Focus Level (1-10)
-									</span>
-								</label>
-								<input
-									type="number"
-									min="1"
-									max="10"
-									className={`input w-full border-0 shadow-none ${
-										errors.focusLevel ? "input-error" : ""
-									}`}
-									value={formData.focusLevel || 5}
-									onChange={(e) =>
-										onFieldChange(
-											"focusLevel" as any,
-											Number(e.target.value) as any
-										)
-									}
-									aria-invalid={!!errors.focusLevel}
-									aria-describedby={
-										errors.focusLevel ? "focus-error" : undefined
-									}
-								/>
-								{errors.focusLevel && (
-									<div
-										id="focus-error"
-										className="text-xs text-error mt-1"
-										role="alert"
-									>
-										{errors.focusLevel}
-									</div>
-								)}
-							</div>
-
 							{/* Quality */}
 							<div className="form-control">
 								<label className="label">
@@ -445,16 +409,11 @@ export function SessionEditModal({
 								type="text"
 								className="input w-full border-0 shadow-none"
 								placeholder="tag1, tag2, tag3"
-								value={(formData.tags || []).join(", ")}
-								onChange={(e) =>
-									onFieldChange(
-										"tags" as any,
-										e.target.value
-											.split(",")
-											.map((t) => t.trim())
-											.filter(Boolean) as any
-									)
-								}
+								value={tagsInput}
+								onChange={(e) => {
+									setTagsInput(e.target.value);
+									setDirty(DIRTY_ID, true);
+								}}
 							/>
 							<label className="label">
 								<p className="text-xs text-base-content/70">

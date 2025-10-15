@@ -1,4 +1,3 @@
-import { AreaChartIcon } from "lucide-react";
 import Profile from "./profile";
 import WidgetList from "./widget-list";
 
@@ -11,7 +10,6 @@ export default function Header() {
 					<WidgetList />
 					<div className="flex gap-4 items-center">
 						<Profile />
-						{/*  window control for when it opened in electron. minim */}
 					</div>
 				</div>
 			</div>
