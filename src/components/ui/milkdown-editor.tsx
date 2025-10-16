@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { createEditor } from "@/src/lib/milkdown-helpers";
+import { logger } from "../../lib/logger";
 
 interface MilkdownEditorProps {
 	content: string;
@@ -40,7 +41,7 @@ export default function MilkdownEditor({
 			try {
 				editorInstanceRef.current.destroy();
 			} catch (e) {
-				console.warn("Error destroying editor:", e);
+				logger.warn("MilkdownEditor - Error destroying editor", { error: e });
 			}
 			editorInstanceRef.current = null;
 		}
@@ -52,7 +53,9 @@ export default function MilkdownEditor({
 					root: editorRef.current!,
 					defaultValue: content,
 					onChange: (markdown: string) => {
-						console.log("📝 Milkdown onChange called with:", markdown);
+						logger.debug("MilkdownEditor - Content changed", {
+							contentLength: markdown.length,
+						});
 						onChangeRef.current(markdown);
 					},
 					placeholder,
@@ -63,7 +66,9 @@ export default function MilkdownEditor({
 					try {
 						instance.destroy();
 					} catch (e) {
-						console.warn("Error destroying stray instance:", e);
+						logger.warn("MilkdownEditor - Error destroying stray instance", {
+							error: e,
+						});
 					}
 					return;
 				}
@@ -83,7 +88,10 @@ export default function MilkdownEditor({
 					}, 100);
 				}
 			} catch (error) {
-				console.error("Failed to create Milkdown editor:", error);
+				logger.error(
+					"MilkdownEditor - Failed to create editor",
+					error as Error
+				);
 			}
 		};
 

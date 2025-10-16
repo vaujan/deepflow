@@ -2,14 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "./useSession";
+import { logger } from "../lib/logger";
 
-function reviveSession(row: any): Session {
-	console.log(
-		"[reviveSession] Input row.notes:",
-		row.notes,
-		"type:",
-		typeof row.notes
-	);
+function reviveSession(row: Record<string, unknown>): Session {
+	logger.debug("reviveSession - Processing session data", {
+		notes: row.notes,
+		notesType: typeof row.notes,
+		sessionId: row.id,
+	});
 
 	const session = {
 		id: row.id,
@@ -40,7 +40,10 @@ function reviveSession(row: any): Session {
 		completionType: row.completionType ?? row.completion_type ?? undefined,
 	};
 
-	console.log("[reviveSession] Output session.notes:", session.notes);
+	logger.debug("reviveSession - Session processed", {
+		sessionId: session.id,
+		notes: session.notes,
+	});
 	return session;
 }
 
@@ -73,7 +76,7 @@ export function useSessionsQuery(params?: {
 			const res = await fetch(url);
 			const data = await res.json();
 			if (!res.ok) throw new Error(data?.error || "Failed to load sessions");
-			return (data as any[]).map(reviveSession);
+			return (data as Record<string, unknown>[]).map(reviveSession);
 		},
 	});
 }

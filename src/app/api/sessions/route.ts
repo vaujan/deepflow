@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../lib/supabase/server";
+import { logger } from "../../../lib/logger";
 
 // GET /api/sessions - list sessions for current user
 export async function GET(request: NextRequest) {
@@ -24,9 +25,9 @@ export async function GET(request: NextRequest) {
 			"id, goal, session_type, tags, notes, planned_duration_minutes, start_time, expected_end_time, end_time, elapsed_seconds, status, completion_type, deep_work_quality"
 		)
 		.eq("user_id", user.id)
-		// TEMPORARILY DISABLED: Exclude ended sessions shorter than 5 minutes (discarded)
+		// Exclude ended sessions shorter than 5 minutes (discarded)
 		// Keep active/paused (end_time is null) so timers can resume
-		// .or("end_time.is.null,elapsed_seconds.gte.300")
+		.or("end_time.is.null,elapsed_seconds.gte.300")
 		.order("start_time", { ascending: false })
 		.range(offset, offset + limit - 1);
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 	const MAX_OPEN_SECONDS = 240 * 60; // 4 hours
 
 	return NextResponse.json(
-		(data || []).map((s: any) => ({
+		(data || []).map((s: Record<string, unknown>) => ({
 			id: s.id,
 			goal: s.goal,
 			sessionType: s.session_type,
@@ -87,13 +88,15 @@ export async function POST(request: Request) {
 		data: { user },
 	} = await supabase.auth.getUser();
 	if (!user) {
-		console.log("[API POST /sessions] Unauthorized - no user");
+		logger.warn("API POST /sessions - Unauthorized - no user");
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const body = await request.json();
-	console.log("[API POST /sessions] Creating session with body:", body);
-	console.log("[API POST /sessions] User ID:", user.id);
+	logger.debug("API POST /sessions - Creating session", {
+		body,
+		userId: user.id,
+	});
 
 	const { goal, sessionType, tags, notes, duration } = body ?? {};
 
@@ -121,7 +124,7 @@ export async function POST(request: Request) {
 		elapsed_seconds: 0,
 	};
 
-	console.log("[API POST /sessions] Inserting session data:", insertData);
+	logger.debug("API POST /sessions - Inserting session data", { insertData });
 
 	const { data, error } = await supabase
 		.from("sessions")
@@ -131,12 +134,14 @@ export async function POST(request: Request) {
 		)
 		.single();
 
-	console.log("[API POST /sessions] Supabase insert result:", { data, error });
-
 	if (error) {
-		console.log("[API POST /sessions] Insert failed:", error.message);
+		logger.error("API POST /sessions - Insert failed", error, { insertData });
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
+
+	logger.info("API POST /sessions - Session created successfully", {
+		sessionId: data?.id,
+	});
 
 	return NextResponse.json({
 		id: data!.id,

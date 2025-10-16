@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { logger } from "../lib/logger";
 
 export interface Session {
 	id: string;
@@ -32,6 +33,10 @@ export const useSession = () => {
 	const [remainingTime, setRemainingTime] = useState<number | null>(null);
 	const [hasPendingSave, setHasPendingSave] = useState(false);
 
+	// Modal states for early stop handling
+	const [showEarlyStopModal, setShowEarlyStopModal] = useState(false);
+	const [showCompleteFormModal, setShowCompleteFormModal] = useState(false);
+
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const startTimeRef = useRef<Date | null>(null);
 	const pauseTimeRef = useRef<Date | null>(null);
@@ -50,7 +55,7 @@ export const useSession = () => {
 		}
 	};
 
-	const mapServerSession = (row: any): Session => {
+	const mapServerSession = (row: Record<string, unknown>): Session => {
 		return {
 			id: row.id,
 			goal: row.goal,
@@ -108,6 +113,13 @@ export const useSession = () => {
 
 	const stopSession = useCallback(async () => {
 		if (!sessionIdRef.current) return;
+
+		// Check if session is shorter than 5 minutes
+		if (elapsedTime < 300) {
+			setShowEarlyStopModal(true);
+			return;
+		}
+
 		// Optimistic UI: stop immediately
 		setIsActive(false);
 		setIsPaused(false);
@@ -130,7 +142,7 @@ export const useSession = () => {
 		setElapsedTime(session.elapsedTime ?? 0);
 		setRemainingTime(null);
 		clearSnapshot();
-	}, []);
+	}, [elapsedTime]);
 
 	const completeSession = useCallback(
 		async (_sessionId: string) => {
@@ -217,7 +229,7 @@ export const useSession = () => {
 				duration: config.duration ?? null,
 			};
 
-			console.log("[startSession] Creating session with payload:", payload);
+			logger.debug("startSession - Creating session", { payload });
 
 			const res = await fetch("/api/sessions", {
 				method: "POST",
@@ -229,11 +241,20 @@ export const useSession = () => {
 			});
 			const data = await res.json();
 
-			console.log("[startSession] Session creation response:", {
-				ok: res.ok,
-				status: res.status,
-				data,
-			});
+			if (!res.ok) {
+				logger.error(
+					"startSession - Session creation failed",
+					new Error(data?.error || "Unknown error"),
+					{
+						status: res.status,
+						data,
+					}
+				);
+			} else {
+				logger.info("startSession - Session created successfully", {
+					sessionId: data?.id,
+				});
+			}
 
 			if (!res.ok) throw new Error(data?.error || "Failed to start session");
 
@@ -336,16 +357,12 @@ export const useSession = () => {
 			tags: currentSession.tags ?? [],
 		};
 
-		console.log("[saveCompletedSession] Saving session with payload:", payload);
-		console.log(
-			"[saveCompletedSession] Current session notes:",
-			currentSession.notes
-		);
-		console.log("[saveCompletedSession] notesRef.current:", notesRef.current);
-		console.log(
-			"[saveCompletedSession] Current session object:",
-			currentSession
-		);
+		logger.debug("saveCompletedSession - Saving session", {
+			payload,
+			currentNotes: currentSession.notes,
+			notesRef: notesRef.current,
+			sessionId: currentSession.id,
+		});
 
 		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
 			method: "PATCH",
@@ -444,18 +461,20 @@ export const useSession = () => {
 			}
 			(async () => {
 				const url = `/api/sessions/${snap.id}`.replace(/\/$/, ""); // Remove trailing slash
-				console.log("[useSession] Fetching session from:", url);
-				console.log("[useSession] Session snapshot:", snap);
+				logger.debug("useSession - Fetching session", {
+					url,
+					sessionId: snap.id,
+				});
 				const res = await fetch(url);
 				const data = await res.json();
-				console.log("[useSession] Session fetch response:", {
-					ok: res.ok,
-					status: res.status,
-					data,
-				});
+
 				if (!res.ok) {
-					console.log(
-						"[useSession] Session not found on server, clearing localStorage"
+					logger.warn(
+						"useSession - Session not found on server, clearing localStorage",
+						{
+							status: res.status,
+							sessionId: snap.id,
+						}
 					);
 					localStorage.removeItem(STORAGE_KEY);
 					// Clear any current session state
@@ -545,24 +564,26 @@ export const useSession = () => {
 	const updateSessionNotes = useCallback(
 		async (_sessionId: string, notes: string) => {
 			if (!sessionIdRef.current) return;
-			console.log("[updateSessionNotes] Updating notes to:", notes);
+			logger.debug("updateSessionNotes - Updating notes", {
+				notes,
+				sessionId: sessionIdRef.current,
+			});
 			setCurrentSession((prev) => (prev ? { ...prev, notes } : prev));
 
 			// Always update the ref immediately, regardless of pending save state
 			notesRef.current = notes;
-			console.log("[updateSessionNotes] Updated notesRef to:", notes);
 
 			// Always save notes to server, even for completed sessions
 			// The only time we skip is if there's already a pending save operation
 			if (hasPendingSave) {
-				console.log(
-					"[updateSessionNotes] Skipping server update - pending save"
+				logger.debug(
+					"updateSessionNotes - Skipping server update - pending save",
+					{ sessionId: sessionIdRef.current }
 				);
 				return;
 			}
 
 			const payload = { action: "updateMeta", notes };
-			console.log("[updateSessionNotes] Sending payload:", payload);
 
 			try {
 				await fetch(`/api/sessions/${sessionIdRef.current}`, {
@@ -573,13 +594,103 @@ export const useSession = () => {
 					},
 					body: JSON.stringify(payload),
 				});
-				console.log("[updateSessionNotes] Notes saved successfully");
+				logger.info("updateSessionNotes - Notes saved successfully", {
+					sessionId: sessionIdRef.current,
+				});
 			} catch (error) {
-				console.error("[updateSessionNotes] Failed to save notes:", error);
+				logger.error(
+					"updateSessionNotes - Failed to save notes",
+					error as Error,
+					{ sessionId: sessionIdRef.current }
+				);
 			}
 		},
 		[hasPendingSave]
 	);
+
+	const updateSessionMeta = useCallback(
+		async (
+			sessionId: string,
+			meta: { notes?: string; deepWorkQuality?: number; tags?: string[] }
+		) => {
+			if (!sessionId) return;
+			try {
+				const res = await fetch(`/api/sessions/${sessionId}`, {
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+						"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
+					},
+					body: JSON.stringify({
+						action: "updateMeta",
+						...meta,
+					}),
+				});
+				if (!res.ok) {
+					const data = await res.json();
+					throw new Error(data?.error || "Failed to update session metadata");
+				}
+				// Update local state
+				setCurrentSession((prev) => (prev ? { ...prev, ...meta } : prev));
+			} catch (error) {
+				logger.error("Failed to update session metadata", error as Error);
+				throw error;
+			}
+		},
+		[]
+	);
+
+	// Handle early stop modal interactions
+	const handleEarlyStopProceed = useCallback(() => {
+		setShowEarlyStopModal(false);
+		setShowCompleteFormModal(true);
+	}, []);
+
+	const handleEarlyStopCancel = useCallback(() => {
+		setShowEarlyStopModal(false);
+	}, []);
+
+	const handleCompleteFormClose = useCallback(() => {
+		setShowCompleteFormModal(false);
+		// Reset session state
+		setIsActive(false);
+		setIsPaused(false);
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+			timerRef.current = null;
+		}
+		setCurrentSession(null);
+		setElapsedTime(0);
+		setRemainingTime(null);
+		clearSnapshot();
+	}, []);
+
+	// Force stop session (bypass 5-minute check)
+	const forceStopSession = useCallback(async () => {
+		if (!sessionIdRef.current) return;
+		// Optimistic UI: stop immediately
+		setIsActive(false);
+		setIsPaused(false);
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+			timerRef.current = null;
+		}
+		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+				"Idempotency-Key": toIdempotencyKey("sessions:forceStop"),
+			},
+			body: JSON.stringify({ action: "stop" }),
+		});
+		const data = await res.json();
+		if (!res.ok) throw new Error(data?.error || "Failed to stop");
+		const session = mapServerSession(data);
+		setCurrentSession(session);
+		setElapsedTime(session.elapsedTime ?? 0);
+		setRemainingTime(null);
+		clearSnapshot();
+	}, []);
 
 	return {
 		// Session state
@@ -589,6 +700,10 @@ export const useSession = () => {
 		elapsedTime,
 		remainingTime,
 		hasPendingSave,
+
+		// Modal states
+		showEarlyStopModal,
+		showCompleteFormModal,
 
 		// Session actions
 		startSession,
@@ -600,6 +715,13 @@ export const useSession = () => {
 		dismissSession,
 		updateDeepWorkQuality,
 		updateSessionNotes,
+		updateSessionMeta,
+
+		// Modal handlers
+		handleEarlyStopProceed,
+		handleEarlyStopCancel,
+		handleCompleteFormClose,
+		forceStopSession,
 
 		// Utility functions
 		formatTime,

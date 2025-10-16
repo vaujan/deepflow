@@ -241,7 +241,7 @@ export default function Sidebar() {
 											<span>Feedback</span>
 
 											<span className="badge badge-sm badge-soft rounded-sm badge-accent">
-												We're in Beta!
+												We&apos;re in Beta!
 											</span>
 										</>
 									)}

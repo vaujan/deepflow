@@ -21,13 +21,15 @@ export async function GET() {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 
 	return NextResponse.json(
-		(data || []).map((n: any) => ({
+		(data || []).map((n: Record<string, unknown>) => ({
 			id: n.id,
 			title: n.title ?? "",
 			content: n.content ?? "",
 			timestamp:
 				n.updated_at || n.created_at
-					? new Date(n.updated_at || n.created_at).toLocaleDateString("en-US", {
+					? new Date(
+							(n.updated_at || n.created_at) as string
+					  ).toLocaleDateString("en-US", {
 							month: "short",
 							day: "numeric",
 					  })

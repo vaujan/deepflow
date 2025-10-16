@@ -15,6 +15,8 @@ import ReloadGuard from "../components/ui/reload-guard";
 import { UnsavedChangesProvider } from "../contexts/UnsavedChangesContext";
 import FeedbackButton from "../components/ui/feedback-button";
 import SessionResumeBanner from "../components/ui/session-resume-banner";
+import { ErrorBoundary } from "../components/ui/error-boundary";
+import SessionModals from "../components/ui/session-modals";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -42,13 +44,16 @@ export default function RootLayout({
 								<QueryProvider>
 									<UnsavedChangesProvider>
 										<WidgetProvider>
-											{children}
-											<ReloadGuard />
-											<SessionResumeBanner />
-											<FeedbackButton />
-											<SonnerToaster />
-											<SpeedInsights />
-											<Analytics />
+											<ErrorBoundary>
+												{children}
+												<ReloadGuard />
+												<SessionResumeBanner />
+												<SessionModals />
+												<FeedbackButton />
+												<SonnerToaster />
+												<SpeedInsights />
+												<Analytics />
+											</ErrorBoundary>
 										</WidgetProvider>
 									</UnsavedChangesProvider>
 								</QueryProvider>

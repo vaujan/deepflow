@@ -7,6 +7,8 @@ import TagsOverviewLazy from "@/src/components/ui/tags-overview-lazy";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
 
+export const dynamic = "force-dynamic";
+
 export default function StatsPage() {
 	return (
 		<div className="flex flex-col min-h-screen bg-base-300 lg:flex-row">

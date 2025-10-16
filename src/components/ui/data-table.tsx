@@ -32,6 +32,9 @@ import {
 	Edit3,
 } from "lucide-react";
 import { DataItem, mockDataTableData } from "../../data/mockDataTable";
+
+// Re-export DataItem for other components
+export type { DataItem };
 import { useUpdateSession } from "@/src/hooks/useSessionsQuery";
 import { SessionEditModal } from "./session-edit-modal";
 import { toast } from "sonner";
@@ -55,7 +58,11 @@ const tagsFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
 };
 
 // Global filter function
-const globalFilterFn = (row: any, columnId: any, filterValue: any) => {
+const globalFilterFn = (
+	row: { getValue: (columnId: string) => unknown },
+	columnId: string,
+	filterValue: string
+) => {
 	const searchValue = filterValue.toLowerCase();
 	const cellValue = row.getValue(columnId);
 
@@ -103,14 +110,14 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const updateSession = useUpdateSession();
 
-	const isRowLocked = (row: any) => {
-		const status = (row.original as any)?.status as string | undefined;
-		return status === "active" || status === "paused";
+	const isRowLocked = (row: { original: DataItem & { status?: string } }) => {
+		const status = row.original?.status;
+		return status === "active" || status === "inactive";
 	};
 
-	const openEditModal = (session: DataItem) => {
-		const status = (session as any)?.status as string | undefined;
-		if (status === "active" || status === "paused") {
+	const openEditModal = (session: DataItem & { status?: string }) => {
+		const status = session?.status;
+		if (status === "active" || status === "inactive") {
 			toast.warning("Cannot edit active session", {
 				description: "Please wait for the session to end before editing",
 			});
@@ -141,17 +148,71 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 		notes: "min-w-[250px]",
 	};
 
+	// Helper component for selected tags display
+	const SelectedTagsDisplay = ({
+		column,
+	}: {
+		column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		};
+	}) => {
+		const getFilterValueAsStringArray = (column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		}): string[] => {
+			const value = column.getFilterValue();
+			return Array.isArray(value) ? value : [];
+		};
+
+		const filterValue = getFilterValueAsStringArray(column);
+		if (filterValue.length === 0) return null;
+
+		return (
+			<div className="mb-2">
+				<div className="text-xs text-base-content/70 mb-1">Selected:</div>
+				<div className="flex flex-wrap gap-1">
+					{filterValue.map((tag, index) => (
+						<span
+							key={index}
+							className="badge rounded-sm badge-sm badge-primary"
+						>
+							#{tag}
+							<button
+								onClick={() => {
+									const newTags = filterValue.filter((_, i) => i !== index);
+									column.setFilterValue(
+										newTags.length > 0 ? newTags : undefined
+									);
+								}}
+								className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
+							>
+								×
+							</button>
+						</span>
+					))}
+				</div>
+			</div>
+		);
+	};
+
 	// Helper component for available tags list
 	const AvailableTagsList = ({
 		column,
 		data,
 		searchTerm,
 	}: {
-		column: any;
+		column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		};
 		data: DataItem[];
 		searchTerm: string;
 	}) => {
-		const getFilterValueAsStringArray = (column: any): string[] => {
+		const getFilterValueAsStringArray = (column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		}): string[] => {
 			const value = column.getFilterValue();
 			return Array.isArray(value) ? value : [];
 		};
@@ -184,7 +245,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 			<ul className="max-h-52 space-y-1">
 				{sortedTags.length === 0 ? (
 					<li className="text-center text-sm text-base-content/60 py-4">
-						No tags found matching "{searchTerm}"
+						No tags found matching &quot;{searchTerm}&quot;
 					</li>
 				) : (
 					sortedTags.map((tag) => {
@@ -443,52 +504,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 							</div>
 
 							{/* Selected Tags Display */}
-							{
-								(() => {
-									const getFilterValueAsStringArray = (
-										column: any
-									): string[] => {
-										const value = column.getFilterValue();
-										return Array.isArray(value) ? value : [];
-									};
-
-									const filterValue = getFilterValueAsStringArray(column);
-									if (filterValue.length === 0) return null;
-
-									const selectedTagsDisplay = (
-										<div className="mb-2">
-											<div className="text-xs text-base-content/70 mb-1">
-												Selected:
-											</div>
-											<div className="flex flex-wrap gap-1">
-												{filterValue.map((tag, index) => (
-													<span
-														key={index}
-														className="badge rounded-sm badge-sm badge-primary"
-													>
-														#{tag}
-														<button
-															onClick={() => {
-																const newTags = filterValue.filter(
-																	(_, i) => i !== index
-																);
-																column.setFilterValue(
-																	newTags.length > 0 ? newTags : undefined
-																);
-															}}
-															className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
-														>
-															×
-														</button>
-													</span>
-												))}
-											</div>
-										</div>
-									);
-
-									return selectedTagsDisplay;
-								})() as any // May god help me with typescript
-							}
+							<SelectedTagsDisplay column={column} />
 
 							{/* Available Tags List */}
 							<AvailableTagsList
@@ -764,7 +780,7 @@ export function DataTable({ data = mockDataTableData }: DataTableProps) {
 											</h3>
 											<p className="text-base-content/60 text-sm max-w-md">
 												Try adjusting your search terms or filters to find what
-												you're looking for.
+												you&apos;re looking for.
 											</p>
 										</div>
 										{(globalFilter ||

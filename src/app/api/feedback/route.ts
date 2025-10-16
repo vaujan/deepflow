@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../lib/supabase/server";
+import { validateCSRF } from "../../../lib/csrf";
 
 // Simple in-memory rate limiting and idempotency cache (best-effort, single instance)
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -57,6 +58,14 @@ type FeedbackBody = {
 };
 
 export async function POST(request: NextRequest) {
+	// CSRF protection
+	if (!validateCSRF(request)) {
+		return NextResponse.json(
+			{ error: "Invalid request origin" },
+			{ status: 403 }
+		);
+	}
+
 	const ip = clientIp(request);
 	if (!checkRateLimit(ip)) {
 		return NextResponse.json({ error: "Too many requests" }, { status: 429 });
@@ -122,7 +131,7 @@ export async function POST(request: NextRequest) {
 		rating: typeof rating === "number" ? rating : null,
 		app_version: appVersion,
 		page_url: pageUrl || null,
-		metadata: metadata ? (metadata as any) : null,
+		metadata: metadata ? (metadata as Record<string, unknown>) : null,
 		user_id: user?.id ?? null,
 	});
 	if (error) {

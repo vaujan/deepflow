@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Minus,
 	Square,
@@ -11,21 +11,20 @@ import {
 	RotateCcw,
 } from "lucide-react";
 import clsx from "clsx";
-import Profile from "./profile";
-
-export default function () {
+export default function ElectronTitlebar() {
 	const isElectron = typeof window !== "undefined" && !!window.electron;
 	const [isMax, setIsMax] = useState(false);
 	const [zoomLevel, setZoomLevel] = useState(1);
 
 	useEffect(() => {
 		if (!isElectron) return;
-		let unsubscribe: (() => void) | undefined;
+		const unsubscribe = window.electron?.window.onMaximizeChanged((m) =>
+			setIsMax(m)
+		);
 		window.electron?.window
 			.isMaximized()
 			.then(setIsMax)
 			.catch(() => {});
-		unsubscribe = window.electron?.window.onMaximizeChanged((m) => setIsMax(m));
 		return () => {
 			try {
 				unsubscribe?.();
@@ -41,8 +40,6 @@ export default function () {
 			.catch(() => {});
 	}, [isElectron]);
 
-	const title = useMemo(() => "Hello world", []);
-
 	if (!isElectron) return null;
 
 	return (
@@ -52,7 +49,7 @@ export default function () {
 				"h-9 select-none px-2",
 				"bg-base-300 text-[var(--color-base-content)]"
 			)}
-			style={{ WebkitAppRegion: "drag" as any }}
+			style={{ WebkitAppRegion: "drag" }}
 		>
 			<div className="electron-no-drag flex items-center gap-1">
 				<span className="text-xs text-[var(--color-base-content)]/70 px-2">

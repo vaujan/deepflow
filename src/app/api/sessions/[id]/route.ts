@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../../lib/supabase/server";
+import { logger } from "../../../../lib/logger";
 
 // Helper to compute completion_type based on expected vs actual
 function computeCompletionType(expectedEnd: string | null, endIso: string) {
@@ -54,7 +55,7 @@ export async function PATCH(
 		);
 
 	const nowIso = new Date().toISOString();
-	let update: Record<string, unknown> = {};
+	const update: Record<string, unknown> = {};
 
 	// Compute next elapsed based on current row and server time if transitioning to non-active
 	const startMs = new Date(current.start_time as string).getTime();
@@ -137,6 +138,18 @@ export async function PATCH(
 				break;
 			}
 			case "stop": {
+				// Check if session is shorter than 5 minutes
+				if (computedElapsed < 300) {
+					return NextResponse.json(
+						{
+							error: "Session too short",
+							code: "SESSION_TOO_SHORT",
+							elapsedSeconds: computedElapsed,
+							minimumSeconds: 300,
+						},
+						{ status: 400 }
+					);
+				}
 				update.status = "stopped";
 				update.end_time = nowIso;
 				update.elapsed_seconds = computedElapsed;
@@ -163,10 +176,7 @@ export async function PATCH(
 					);
 				}
 
-				console.log("=== EDIT ACTION START ===");
-				console.log("Body received:", body);
-				console.log("Body.notes:", body.notes);
-				console.log("typeof body.notes:", typeof body.notes);
+				logger.debug("API PATCH /sessions/:id - Edit action start", { body });
 
 				// Map editable fields
 				if (typeof body.goal === "string") update.goal = body.goal;
@@ -186,15 +196,15 @@ export async function PATCH(
 				}
 				if (Array.isArray(body.tags)) update.tags = body.tags;
 				if (typeof body.notes === "string") {
-					console.log("[API] Notes update - body.notes:", body.notes);
+					logger.debug("API PATCH /sessions/:id - Notes update", {
+						notes: body.notes,
+					});
 					update.notes = body.notes;
 				} else {
-					console.log(
-						"[API] Notes NOT updated - body.notes type:",
-						typeof body.notes,
-						"value:",
-						body.notes
-					);
+					logger.debug("API PATCH /sessions/:id - Notes NOT updated", {
+						notesType: typeof body.notes,
+						notesValue: body.notes,
+					});
 				}
 
 				// Duration (minutes) -> elapsed_seconds; recompute end_time if present
@@ -250,10 +260,10 @@ export async function PATCH(
 				return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 		}
 
-	console.log(
-		"[API PATCH /sessions/:id] Update payload:",
-		JSON.stringify(update, null, 2)
-	);
+	logger.debug("API PATCH /sessions/:id - Update payload", {
+		update,
+		sessionId: id,
+	});
 
 	const { data, error } = await supabase
 		.from("sessions")
@@ -264,8 +274,17 @@ export async function PATCH(
 		)
 		.single();
 
-	console.log("[API PATCH /sessions/:id] Supabase response:", { data, error });
-	console.log("[API PATCH /sessions/:id] Supabase data.notes:", data?.notes);
+	if (error) {
+		logger.error("API PATCH /sessions/:id - Supabase update failed", error, {
+			sessionId: id,
+			update,
+		});
+	} else {
+		logger.info("API PATCH /sessions/:id - Session updated successfully", {
+			sessionId: id,
+			action,
+		});
+	}
 
 	if (error)
 		return NextResponse.json({ error: error.message }, { status: 500 });
@@ -284,16 +303,7 @@ export async function PATCH(
 		status: data!.status,
 		completionType: data!.completion_type ?? null,
 		deepWorkQuality: data!.deep_work_quality ?? null,
-		_debug: {
-			updateObjectSent: update,
-			actionReceived: action,
-		},
 	};
-
-	console.log(
-		"[API PATCH /sessions/:id] Response payload notes:",
-		responsePayload.notes
-	);
 
 	return NextResponse.json(responsePayload);
 }
@@ -305,17 +315,19 @@ export async function GET(
 ) {
 	const supabase = await getSupabaseServerClient();
 	const { id } = await context.params;
-	console.log("[API GET /sessions/:id] Requested session ID:", id);
+	logger.debug("API GET /sessions/:id - Requested session ID", {
+		sessionId: id,
+	});
 
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 	if (!user) {
-		console.log("[API GET /sessions/:id] Unauthorized - no user");
+		logger.warn("API GET /sessions/:id - Unauthorized - no user", {
+			sessionId: id,
+		});
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
-
-	console.log("[API GET /sessions/:id] User ID:", user.id);
 
 	const { data, error } = await supabase
 		.from("sessions")
@@ -326,15 +338,18 @@ export async function GET(
 		.eq("user_id", user.id)
 		.single();
 
-	console.log("[API GET /sessions/:id] Supabase query result:", {
-		data,
-		error,
-	});
-
 	if (error) {
-		console.log("[API GET /sessions/:id] Session not found:", error.message);
+		logger.warn("API GET /sessions/:id - Session not found", {
+			sessionId: id,
+			userId: user.id,
+			error: error.message,
+		});
 		return NextResponse.json({ error: error.message }, { status: 404 });
 	}
+
+	logger.debug("API GET /sessions/:id - Session retrieved successfully", {
+		sessionId: id,
+	});
 
 	// Compute effective elapsed for active sessions using server time
 	const startTimeIso = data!.start_time as string | null;
