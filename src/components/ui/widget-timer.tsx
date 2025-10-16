@@ -180,6 +180,7 @@ export default function WidgetTimer() {
 				onUpdateQuality={handleQualityUpdate}
 				onUpdateNotes={handleNotesUpdate}
 				onDismiss={dismissSession}
+				onSave={saveCompletedSession}
 			/>
 		);
 	}
@@ -698,11 +699,13 @@ function SessionCompletionView({
 	onUpdateQuality,
 	onUpdateNotes,
 	onDismiss,
+	onSave,
 }: {
 	session: Session;
 	onUpdateQuality?: (id: string, q: number) => void;
 	onUpdateNotes?: (id: string, n: string) => void;
 	onDismiss?: () => void;
+	onSave?: () => Promise<any>;
 }) {
 	const router = useRouter();
 	const [deepWorkQuality, setDeepWorkQuality] = useState<number>(
@@ -779,12 +782,11 @@ function SessionCompletionView({
 		onUpdateNotes?.(session.id, newNotes);
 	};
 	const [isSaving, setIsSaving] = useState(false);
-	const { saveCompletedSession, hasPendingSave } = useSession();
 	const handleSaveSession = async () => {
 		if (isSaving) return;
 		setIsSaving(true);
 		try {
-			const saved = await saveCompletedSession();
+			const saved = await (onSave ? onSave() : Promise.resolve(null));
 			const minutes = Math.round(
 				((saved?.elapsedTime ?? session.elapsedTime ?? 0) as number) / 60
 			);

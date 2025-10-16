@@ -106,11 +106,6 @@ export const useSession = () => {
 		} catch {}
 	};
 
-	// Keep notesRef synchronized with currentSession.notes
-	useEffect(() => {
-		notesRef.current = currentSession?.notes ?? null;
-	}, [currentSession?.notes]);
-
 	const stopSession = useCallback(async () => {
 		if (!sessionIdRef.current) return;
 		// Optimistic UI: stop immediately
@@ -252,6 +247,7 @@ export const useSession = () => {
 			startTimeRef.current = session.startTime;
 			pauseTimeRef.current = null;
 			totalPausedTimeRef.current = 0;
+			notesRef.current = session.notes ?? null;
 			saveSnapshot({
 				id: session.id,
 				status: session.status,
@@ -285,6 +281,7 @@ export const useSession = () => {
 		const session = mapServerSession(data);
 		setCurrentSession(session);
 		setElapsedTime(session.elapsedTime ?? 0);
+		notesRef.current = session.notes ?? null;
 		saveSnapshot({
 			id: session.id,
 			status: session.status,
@@ -314,6 +311,7 @@ export const useSession = () => {
 		setElapsedTime(session.elapsedTime ?? 0);
 		startTimeRef.current = session.startTime;
 		pauseTimeRef.current = null;
+		notesRef.current = session.notes ?? null;
 		saveSnapshot({
 			id: session.id,
 			status: session.status,
@@ -362,6 +360,7 @@ export const useSession = () => {
 		const session = mapServerSession(data);
 		setCurrentSession(session);
 		setElapsedTime(session.elapsedTime ?? elapsedTime);
+		notesRef.current = session.notes ?? null;
 		setHasPendingSave(false);
 		clearSnapshot();
 		return session;
@@ -439,6 +438,7 @@ export const useSession = () => {
 				setIsPaused(false);
 				setElapsedTime(restored.elapsedTime);
 				setRemainingTime(restored.duration ? restored.duration * 60 : null);
+				notesRef.current = snap.notes ?? null;
 				setHasPendingSave(true);
 				return;
 			}
@@ -480,6 +480,7 @@ export const useSession = () => {
 						: session.elapsedTime ?? 0;
 				setElapsedTime(effectiveElapsed);
 				setRemainingTime(session.duration ? session.duration * 60 : null);
+				notesRef.current = session.notes ?? null;
 				if (session.status === "active") {
 					setIsActive(true);
 					setIsPaused(false);
