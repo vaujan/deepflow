@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
 	LineChart,
 	Line,
@@ -11,7 +11,7 @@ import {
 	CartesianGrid,
 } from "recharts";
 import type { TooltipProps } from "recharts";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { radixColorScales } from "../../utils/radixColorMapping";
 
 const colors = {
@@ -47,6 +47,14 @@ const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
 };
 
 const ProductivityChart: React.FC = () => {
+	const fromIso = useMemo(() => {
+		const now = new Date();
+		const start = new Date(now);
+		start.setHours(0, 0, 0, 0);
+		start.setDate(start.getDate() - 6);
+		return start.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({ from: fromIso });
 	// Group sessions by day for the last 7 days
 	const getLast7Days = () => {
 		const days = [];
@@ -70,7 +78,7 @@ const ProductivityChart: React.FC = () => {
 		const dayEnd = new Date(day);
 		dayEnd.setHours(23, 59, 59, 999);
 
-		const daySessions = mockSessions.filter(
+		const daySessions = savedSessions.filter(
 			(session) => session.startTime >= dayStart && session.startTime <= dayEnd
 		);
 

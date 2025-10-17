@@ -49,9 +49,17 @@ export function computeCoreKpis(sessions: Session[]) {
 }
 
 export function computeStreaks(sessions: Session[]) {
+	const coerceDate = (value: any): Date | null => {
+		const d = value instanceof Date ? value : new Date(value as any);
+		return Number.isFinite(d.getTime()) ? d : null;
+	};
 	const dayKey = (d: Date) => d.toISOString().split("T")[0];
 	const days = new Set<string>();
-	sessions.forEach((s) => days.add(dayKey(s.startTime)));
+	for (const s of sessions) {
+		const dt = coerceDate((s as any).startTime);
+		if (!dt) continue;
+		days.add(dayKey(dt));
+	}
 
 	// ISO week helpers (Monday first day)
 	const startOfIsoWeek = (date: Date) => {
@@ -66,7 +74,11 @@ export function computeStreaks(sessions: Session[]) {
 
 	// Set of active weeks (by ISO week start date)
 	const weeks = new Set<string>();
-	sessions.forEach((s) => weeks.add(weekKey(s.startTime)));
+	for (const s of sessions) {
+		const dt = coerceDate((s as any).startTime);
+		if (!dt) continue;
+		weeks.add(weekKey(dt));
+	}
 
 	// Current day streak
 	let currentStreakDays = 0;

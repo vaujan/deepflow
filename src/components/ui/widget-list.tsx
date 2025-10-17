@@ -93,7 +93,7 @@ const WIDGET_META: Record<
 };
 
 export default function WidgetList() {
-	const { activeWidgets, visibleWidgets } = useWidgets();
+	const { activeWidgets, visibleWidgets, toggleVisibility } = useWidgets();
 	const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 	const settingsBtnRef = React.useRef<HTMLButtonElement | null>(null);
 
@@ -114,26 +114,45 @@ export default function WidgetList() {
 		<div className="flex items-center gap-2">
 			{/* Widget list */}
 			<div className="flex gap-2 p-2">
-				{dockItems.map((item, index) => (
-					<DockItem
-						key={item.id}
-						id={item.id}
-						label={item.label}
-						icon={item.icon}
-						widgetType={item.widgetType}
-					/>
-				))}
+				{dockItems.map((item, index) => {
+					const isActive = item.widgetType
+						? visibleWidgets.includes(item.widgetType)
+						: false;
+					return (
+						<button
+							key={item.id}
+							onClick={() => {
+								if (item.widgetType) toggleVisibility(item.widgetType);
+							}}
+							className={`relative inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+								isActive
+									? "bg-primary/20 text-primary"
+									: "text-base-content/80 hover:bg-base-200/60"
+							}`}
+							aria-label={`${item.label} ${
+								isActive ? "(active)" : "(inactive)"
+							}`}
+							title={`${item.label} - Click to toggle`}
+						>
+							<item.icon className="w-5 h-5 text-current" />
+							{item.label}
+							{isActive && (
+								<span className="absolute -bottom-1 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-primary"></span>
+							)}
+						</button>
+					);
+				})}
 			</div>
 
 			<div className="tooltip tooltip-bottom">
-				<div className="tooltip-content">Widgets Settings</div>
+				<div className="tooltip-content">Settings</div>
 				<button
 					ref={settingsBtnRef}
 					className="btn btn-sm btn-circle btn-ghost"
 					onClick={() => setIsSettingsOpen(true)}
 					aria-haspopup="dialog"
 					aria-expanded={isSettingsOpen}
-					aria-label="Open widgets settings"
+					aria-label="Open settings"
 				>
 					<Settings className="size-4 text-base-content/50" />
 				</button>

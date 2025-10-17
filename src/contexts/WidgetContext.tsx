@@ -20,7 +20,11 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 		// Initialize from localStorage if available
 		if (typeof window !== "undefined") {
 			const saved = localStorage.getItem("activeWidgets");
-			return saved ? JSON.parse(saved) : [];
+			const parsed: Widgets[] = saved ? JSON.parse(saved) : [];
+			// Ensure timer is always active
+			return parsed.includes("timer")
+				? parsed
+				: (["timer", ...parsed] as Widgets[]);
 		}
 		return [];
 	});
@@ -29,14 +33,22 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 		if (typeof window !== "undefined") {
 			try {
 				const savedVisible = localStorage.getItem("visibleWidgets");
-				if (savedVisible) return JSON.parse(savedVisible);
+				if (savedVisible) {
+					return JSON.parse(savedVisible) as Widgets[];
+				}
 				const savedActive = localStorage.getItem("activeWidgets");
-				return savedActive ? JSON.parse(savedActive) : [];
+				const initial = (
+					savedActive ? JSON.parse(savedActive) : []
+				) as Widgets[];
+				// Ensure timer is visible on first load when there is no saved visibility
+				return initial.includes("timer")
+					? initial
+					: (["timer", ...initial] as Widgets[]);
 			} catch {
-				return [];
+				return ["timer"] as Widgets[];
 			}
 		}
-		return [];
+		return ["timer"] as Widgets[];
 	});
 
 	const toggleWidget = (widget: Widgets) => {
@@ -45,6 +57,9 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 			if (prev.includes(widget) && prev.length === 1) {
 				return prev;
 			}
+
+			// Timer must always remain active
+			if (widget === "timer") return prev;
 
 			const newState = prev.includes(widget)
 				? prev.filter((w) => w !== widget)
@@ -71,7 +86,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 				if (typeof window !== "undefined") {
 					localStorage.setItem("visibleWidgets", JSON.stringify(nextVisible));
 				}
-				return nextVisible;
+				return nextVisible as Widgets[];
 			});
 
 			return newState;
@@ -80,11 +95,19 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 
 	const setActiveWidget = (widget: Widgets | null) => {
 		setActiveWidgets((prev) => {
-			const nextActive = widget ? [widget] : prev.length ? [prev[0]] : ["note"];
+			const candidate: Widgets[] = widget
+				? [widget]
+				: prev.length
+				? [prev[0]]
+				: ["note"];
+			const nextActive: Widgets[] = candidate.includes("timer")
+				? candidate
+				: (["timer", ...candidate] as Widgets[]);
 			if (typeof window !== "undefined") {
 				localStorage.setItem("activeWidgets", JSON.stringify(nextActive));
 			}
-			setVisibleWidgets(nextActive);
+			// Do not enforce timer visibility; only synchronize visible to active selection
+			setVisibleWidgets(nextActive as Widgets[]);
 			if (typeof window !== "undefined") {
 				localStorage.setItem("visibleWidgets", JSON.stringify(nextActive));
 			}
@@ -95,7 +118,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 	const clearAllWidgets = () => {
 		// Keep at least one widget active/visible
 		setActiveWidgets((prev) => {
-			const fallback: Widgets = prev[0] ?? "note";
+			const fallback: Widgets = "timer";
 			const nextActive: Widgets[] = [fallback];
 			if (typeof window !== "undefined") {
 				localStorage.setItem("activeWidgets", JSON.stringify(nextActive));
@@ -120,7 +143,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 			if (typeof window !== "undefined") {
 				localStorage.setItem("visibleWidgets", JSON.stringify(next));
 			}
-			return next;
+			return next as Widgets[];
 		});
 	};
 

@@ -10,6 +10,13 @@ import { Analytics } from "@vercel/analytics/next";
 import { ThemeLoadingWrapper } from "../components/ui/theme-loading-wrapper";
 import SonnerToaster from "../components/ui/sonner-toaster";
 import ElectronTitlebar from "../components/ui/electron-titlebar";
+import QueryProvider from "../components/query-provider";
+import ReloadGuard from "../components/ui/reload-guard";
+import { UnsavedChangesProvider } from "../contexts/UnsavedChangesContext";
+import FeedbackButton from "../components/ui/feedback-button";
+import SessionResumeBanner from "../components/ui/session-resume-banner";
+import { ErrorBoundary } from "../components/ui/error-boundary";
+import SessionModals from "../components/ui/session-modals";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -34,12 +41,22 @@ export default function RootLayout({
 						<FontProvider>
 							<SidebarProvider>
 								<ElectronTitlebar />
-								<WidgetProvider>
-									{children}
-									<SonnerToaster />
-									<SpeedInsights />
-									<Analytics />
-								</WidgetProvider>
+								<QueryProvider>
+									<UnsavedChangesProvider>
+										<WidgetProvider>
+											<ErrorBoundary>
+												{children}
+												<ReloadGuard />
+												<SessionResumeBanner />
+												<SessionModals />
+												<FeedbackButton />
+												<SonnerToaster />
+												<SpeedInsights />
+												<Analytics />
+											</ErrorBoundary>
+										</WidgetProvider>
+									</UnsavedChangesProvider>
+								</QueryProvider>
 							</SidebarProvider>
 						</FontProvider>
 					</ThemeLoadingWrapper>

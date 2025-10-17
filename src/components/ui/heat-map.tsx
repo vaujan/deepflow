@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
 
 interface HeatMapDay {
@@ -20,13 +20,28 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 	const currentYear = new Date().getFullYear();
 
 	// Pre-bucket sessions by day for the current year to avoid repeated filtering
+	const jan1 = useMemo(() => {
+		const d = new Date(new Date().getFullYear(), 0, 1);
+		d.setHours(0, 0, 0, 0);
+		return d.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({
+		from: jan1,
+		limit: 10000,
+	});
+
 	const perDayBuckets = useMemo(() => {
 		const yearStart = new Date(currentYear, 0, 1);
 		const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 		const map = new Map<string, { sessions: number; totalMinutes: number }>();
-		for (const s of mockSessions) {
-			if (s.startTime < yearStart || s.startTime > yearEnd) continue;
-			const key = s.startTime.toISOString().split("T")[0];
+		for (const s of savedSessions) {
+			const start =
+				typeof (s.startTime as any)?.toISOString === "function"
+					? (s.startTime as Date)
+					: new Date(s.startTime as any);
+			if (!Number.isFinite(start.getTime())) continue;
+			if (start < yearStart || start > yearEnd) continue;
+			const key = start.toISOString().split("T")[0];
 			const prev = map.get(key) || { sessions: 0, totalMinutes: 0 };
 			map.set(key, {
 				sessions: prev.sessions + 1,
@@ -34,7 +49,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			});
 		}
 		return map;
-	}, [currentYear]);
+	}, [currentYear, savedSessions]);
 
 	// Generate heat map data for the current month using the pre-bucketed map
 	const heatMapData = useMemo(() => {
@@ -53,7 +68,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ className = "" }) => {
 			date.setDate(startDate.getDate() + i);
 			const isCurrentMonth = date.getMonth() === month;
 			if (isCurrentMonth) {
-				const key = date.toISOString().split("T")[0];
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
 				const agg = perDayBuckets.get(key);
 				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;
@@ -284,7 +305,13 @@ const YearlyHeatMap: React.FC<{
 			date.setDate(firstMonday.getDate() + i);
 			const isCurrentYear = date.getFullYear() === currentYear;
 			if (isCurrentYear) {
-				const key = date.toISOString().split("T")[0];
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
 				const agg = perDay.get(key);
 				const totalTime = agg?.totalMinutes || 0;
 				let value = 0;

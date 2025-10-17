@@ -137,7 +137,10 @@ const ContextMenuContent = ({ editor }: { editor: any }) => {
 	};
 
 	return (
-		<ContextMenu.Content className="min-w-[220px] bg-base-100 rounded-lg shadow-xl border border-base-300 p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-200">
+		<ContextMenu.Content
+			className="min-w-[220px] bg-base-100 rounded-lg shadow-xl border border-base-300 p-1 z-50 animate-in fade-in-0 zoom-in-95 duration-200"
+			data-editor-popup="true"
+		>
 			{/* Text Formatting */}
 			<ContextMenu.Group>
 				<ContextMenu.Label className="px-2 py-1.5 text-xs font-semibold text-base-content/60 uppercase tracking-wider">
@@ -351,7 +354,10 @@ const ContextMenuContent = ({ editor }: { editor: any }) => {
 
 			{/* Link Form Modal */}
 			{showLinkForm && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+				<div
+					className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+					data-editor-popup="true"
+				>
 					<div className="bg-base-100 rounded-lg p-6 w-96 max-w-[90vw]">
 						<h3 className="text-lg font-semibold mb-4">Add Link</h3>
 						<div className="space-y-3">
@@ -391,7 +397,10 @@ const ContextMenuContent = ({ editor }: { editor: any }) => {
 
 			{/* Image Form Modal */}
 			{showImageForm && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+				<div
+					className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+					data-editor-popup="true"
+				>
 					<div className="bg-base-100 rounded-lg p-6 w-96 max-w-[90vw]">
 						<h3 className="text-lg font-semibold mb-4">Add Image</h3>
 						<div className="space-y-3">
@@ -466,11 +475,7 @@ export default function ContextMenuEditor({
 				placeholder,
 			}),
 			Underline,
-			HardBreak.configure({
-				HTMLAttributes: {
-					style: "line-height: 1.5;",
-				},
-			}),
+			HardBreak.configure({}),
 			TextAlign.configure({
 				types: ["heading", "paragraph"],
 			}),
@@ -514,7 +519,7 @@ export default function ContextMenuEditor({
 		},
 		editorProps: {
 			attributes: {
-				class: "max-w-none focus:outline-none h-fit p-4",
+				class: "max-w-none focus:outline-none h-fit p-4 leading-tight",
 				title:
 					"Right-click for formatting • Ctrl+B (bold) • Ctrl+I (italic) • Ctrl+U (underline)",
 			},

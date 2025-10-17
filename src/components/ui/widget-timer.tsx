@@ -14,7 +14,9 @@ import {
 	ChevronDown,
 	ChevronUp,
 	AlertCircle,
+	Loader2,
 } from "lucide-react";
+import { ScrollArea } from "./scroll-area";
 import { useSession, type Session } from "../../hooks/useSession";
 import { usePomodoroSettings } from "../../hooks/usePomodoroSettings";
 import { toast } from "sonner";
@@ -25,23 +27,28 @@ import { useWidgets } from "@/src/contexts/WidgetContext";
 
 export default function WidgetTimer() {
 	const [duration, setDuration] = useState(25);
-	const [focusLevel, setFocusLevel] = useState("5");
 	const [goal, setGoal] = useState("");
 	const [tags, setTags] = useState("");
 	const [activeTab, setActiveTab] = useState<
 		"time-boxed" | "open" | "pomodoro"
 	>("time-boxed");
-	const [completedSession, setCompletedSession] = useState<Session | null>(
-		null
-	);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const {
 		currentSession,
 		isActive,
+		isPaused,
+		elapsedTime,
+		remainingTime,
 		startSession,
+		pauseSession,
+		resumeSession,
+		completeSession,
+		saveCompletedSession,
+		dismissSession,
 		updateDeepWorkQuality,
 		updateSessionNotes,
+		hasPendingSave,
 	} = useSession();
 	const { settings, updateSettings } = usePomodoroSettings();
 
@@ -56,6 +63,7 @@ export default function WidgetTimer() {
 		"Practice piano for 30 minutes...",
 	];
 	const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+	const [isStarting, setIsStarting] = useState(false);
 	useEffect(() => {
 		const interval = setInterval(() => {
 			setCurrentPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
@@ -98,51 +106,105 @@ export default function WidgetTimer() {
 		});
 	};
 
-	const handleStartSession = () => {
+	const handleStartSession = async () => {
+		if (isStarting || !isGoalValid) return;
+		setIsStarting(true);
 		const sessionConfig = {
 			goal: goal.trim(),
 			duration: activeTab !== "open" ? duration : undefined,
-			focusLevel: parseInt(focusLevel),
 			tags: tags
 				.trim()
 				.split(/\s+/)
 				.filter((t) => t.length > 0),
 			sessionType: activeTab as "time-boxed" | "open" | "pomodoro",
 		};
-		startSession(sessionConfig);
+		try {
+			await startSession(sessionConfig);
+		} catch (e: any) {
+			toast.error(e?.message || "Failed to start session");
+		} finally {
+			setIsStarting(false);
+		}
 	};
 
-	const handleSessionComplete = (session: Session) =>
-		setCompletedSession(session);
+	// Update browser tab title with live timer when a session is running
+	const formatSecondsForTitle = useCallback((seconds: number) => {
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
+		const secs = Math.floor(seconds % 60);
+		if (hours > 0)
+			return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+				.toString()
+				.padStart(2, "0")}`;
+		return `${minutes}:${secs.toString().padStart(2, "0")}`;
+	}, []);
+
+	useEffect(() => {
+		if (typeof document === "undefined") return;
+		const baseTitle = "Deepflow";
+		if (currentSession && (isActive || isPaused)) {
+			const isPlanned = currentSession.sessionType !== "open";
+			const seconds = isPlanned
+				? Math.max(0, remainingTime ?? 0)
+				: Math.max(0, elapsedTime ?? 0);
+			const timeText = formatSecondsForTitle(seconds);
+			const prefix = isPaused ? "⏸" : "⏱";
+			const goalText = currentSession.goal?.trim()
+				? ` • ${currentSession.goal.trim()}`
+				: "";
+			document.title = `${prefix} ${timeText}${goalText} — ${baseTitle}`;
+			return () => {
+				document.title = baseTitle;
+			};
+		} else {
+			document.title = baseTitle;
+		}
+	}, [
+		currentSession,
+		isActive,
+		isPaused,
+		elapsedTime,
+		remainingTime,
+		formatSecondsForTitle,
+	]);
+
 	const handleQualityUpdate = (sessionId: string, quality: number) =>
 		updateDeepWorkQuality(sessionId, quality);
 	const handleNotesUpdate = (sessionId: string, notes: string) =>
 		updateSessionNotes(sessionId, notes);
 
-	if (completedSession) {
+	if (currentSession && currentSession.status === "completed") {
 		return (
 			<SessionCompletionView
-				session={completedSession}
+				session={currentSession}
 				onUpdateQuality={handleQualityUpdate}
 				onUpdateNotes={handleNotesUpdate}
+				onDismiss={dismissSession}
+				onSave={saveCompletedSession}
 			/>
 		);
 	}
 
-	if (isActive && currentSession) {
+	if ((isActive || isPaused) && currentSession) {
 		return (
 			<ActiveSessionView
 				session={currentSession}
-				onSessionComplete={handleSessionComplete}
+				isPaused={isPaused}
+				elapsedTime={elapsedTime}
+				remainingTime={remainingTime}
+				onPauseResume={() => (isPaused ? resumeSession() : pauseSession())}
+				onComplete={() => completeSession(currentSession.id)}
 			/>
 		);
 	}
 
 	return (
 		<div
-			className={`card h-fit border-border ${
-				visibleWidgets.length === 1 ? "md:bg-card border" : "md:bg-transparent"
-			} shadow-xs w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden`}
+			className={`card border-border ${
+				visibleWidgets.length === 1
+					? "md:bg-card shadow-xs borderas"
+					: "md:bg-transparent"
+			} w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col`}
 		>
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
@@ -151,7 +213,7 @@ export default function WidgetTimer() {
 				</p>
 			</div>
 
-			<div className="flex flex-col space-y-3">
+			<div className="flex flex-col space-y-6 pr-2">
 				<div className="relative">
 					<textarea
 						ref={textareaRef}
@@ -275,7 +337,7 @@ export default function WidgetTimer() {
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
 							<span className="badge rounded-sm badge-soft badge-secondary">
-								No time limit
+								Max 4 hours
 							</span>
 						</div>
 						<div className="bg-base-300 p-3 rounded-box text-center">
@@ -284,7 +346,7 @@ export default function WidgetTimer() {
 							</p>
 						</div>
 						<p className="text-xs text-base-content/60">
-							Timer will count up from zero until you manually stop
+							Timer counts up to 4 hours, then stops automatically
 						</p>
 					</div>
 				</div>
@@ -296,42 +358,62 @@ export default function WidgetTimer() {
                 </label> */}
 			</div>
 
-			<div className="collapse border border-border bg-base-200 dark:bg-base-100">
-				<input type="checkbox" className="peer" />
-				<div className="collapse-title text-sm font-medium">
-					Tags (Optional)
-				</div>
-				<div className="collapse-content">
-					<div className="space-y-4 pt-2">
-						<div className="form-control">
-							<label className="label">
-								<span className="label-text-alt text-xs text-base-content/60">
-									Separate with spaces
-								</span>
-							</label>
-							<input
-								type="text"
-								placeholder="blog essay urgent work"
-								value={tags}
-								onChange={handleTagsChange}
-								className="input input-sm w-full bg-base-200"
-							/>
+			<div className="h-fit">
+				<div className="collapse border border-border bg-base-200 dark:bg-base-100">
+					<input type="checkbox" className="peer" />
+					<div className="collapse-title text-sm font-medium">
+						Tags (Optional)
+					</div>
+					<div className="collapse-content">
+						<div className="space-y-4 pt-2">
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text-alt text-xs text-base-content/60">
+										Separate with spaces
+									</span>
+								</label>
+								<input
+									type="text"
+									placeholder="blog essay urgent work"
+									value={tags}
+									onChange={handleTagsChange}
+									className="input input-sm w-full bg-base-200"
+								/>
+								{tags.trim() && (
+									<div className="flex flex-wrap gap-1 mt-2">
+										{tags
+											.trim()
+											.split(/\s+/)
+											.filter((tag) => tag.length > 0)
+											.map((tag, index) => (
+												<span
+													key={index}
+													className="badge badge-sm badge-soft badge-neutral rounded-sm"
+												>
+													#{tag.replace(/^#/, "")}
+												</span>
+											))}
+									</div>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="card-actions">
+			<div className="card-actions flex-shrink-0">
 				<button
-					className={`btn btn-block h-14 transition-all duration-200 ${
+					className={`btn btn-block mb-8 h-14 transition-all duration-200 ${
 						isGoalValid ? "btn-primary" : "btn-disabled"
 					}`}
-					disabled={!isGoalValid}
+					disabled={!isGoalValid || isStarting}
 					onClick={handleStartSession}
 					style={{ touchAction: "manipulation" }}
-					aria-disabled={!isGoalValid}
+					aria-disabled={!isGoalValid || isStarting}
+					aria-busy={isStarting}
 					aria-label="Start focus session"
 				>
+					{isStarting && <Loader2 className="size-4 animate-spin" />}
 					<Play className="size-4" />
 					<span>
 						Start {activeTab === "open" ? "Open" : formatTime(duration)} Session
@@ -346,123 +428,23 @@ export default function WidgetTimer() {
 
 function ActiveSessionView({
 	session,
-	onSessionComplete,
+	isPaused,
+	elapsedTime,
+	remainingTime,
+	onPauseResume,
+	onComplete,
 }: {
 	session: Session;
-	onSessionComplete: (s: Session) => void;
+	isPaused: boolean;
+	elapsedTime: number;
+	remainingTime: number | null;
+	onPauseResume: () => void;
+	onComplete: () => void;
 }) {
-	const [elapsedTime, setElapsedTime] = useState(0);
-	const [isPaused, setIsPaused] = useState(false);
-	const [remainingTime, setRemainingTime] = useState<number | null>(
-		session.duration ? session.duration * 60 : null
-	);
 	const [isTimerExpanded, setIsTimerExpanded] = useState(false);
 	const [isTimeVisible, setIsTimeVisible] = useState(true);
 
-	const timerRef = useRef<NodeJS.Timeout | null>(null);
-	const startTimeRef = useRef<number>(session.startTime.getTime());
-	const pauseTimeRef = useRef<number | null>(null);
-	const totalPausedTimeRef = useRef(0);
-	const sessionRef = useRef(session);
-	const onSessionCompleteRef = useRef(onSessionComplete);
-	const hasInitializedRef = useRef(false);
-
-	useEffect(() => {
-		sessionRef.current = session;
-		onSessionCompleteRef.current = onSessionComplete;
-	}, [session, onSessionComplete]);
-
-	const startTimer = useCallback(() => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		timerRef.current = setInterval(() => {
-			const now = Date.now();
-			const newElapsed = Math.floor(
-				(now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-			);
-			setElapsedTime(newElapsed);
-			if (
-				sessionRef.current.duration &&
-				newElapsed >= sessionRef.current.duration * 60
-			) {
-				if (timerRef.current) {
-					clearInterval(timerRef.current);
-					timerRef.current = null;
-				}
-				playSound(800, 0.3, 0.5);
-				const endTime = new Date();
-				let completionType: "completed" | "premature" | "overtime" =
-					"completed";
-				if (sessionRef.current.duration && sessionRef.current.expectedEndTime) {
-					const expectedEnd = sessionRef.current.expectedEndTime.getTime();
-					const actualEnd = endTime.getTime();
-					const timeDiff = actualEnd - expectedEnd;
-					const toleranceMs = 60000;
-					if (timeDiff < -toleranceMs) completionType = "premature";
-					else if (timeDiff > toleranceMs) completionType = "overtime";
-				}
-				const completedSession = {
-					...sessionRef.current,
-					status: "completed" as const,
-					endTime,
-					elapsedTime: newElapsed,
-					completionType,
-				};
-				onSessionCompleteRef.current(completedSession);
-			}
-		}, 1000);
-	}, []);
-
-	useEffect(() => {
-		if (!isPaused && !hasInitializedRef.current) {
-			startTimer();
-			hasInitializedRef.current = true;
-		}
-	}, [isPaused, startTimer]);
-
-	useEffect(() => {
-		if (isPaused) {
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-		} else if (hasInitializedRef.current) {
-			startTimer();
-		}
-	}, [isPaused]);
-
-	useEffect(() => {
-		return () => {
-			if (timerRef.current) clearInterval(timerRef.current);
-		};
-	}, []);
-
-	const pauseSession = () => {
-		setIsPaused(true);
-		pauseTimeRef.current = Date.now();
-		playSound(400, 0.2, 0.3);
-		toast.warning("Session paused");
-	};
-	const resumeSession = () => {
-		setIsPaused(false);
-		if (pauseTimeRef.current) {
-			totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
-			pauseTimeRef.current = null;
-		}
-		playSound(600, 0.2, 0.3);
-		toast.info("Session resumed");
-	};
-	const handlePauseResume = useCallback(
-		() => (isPaused ? resumeSession() : pauseSession()),
-		[isPaused]
-	);
-
-	useEffect(() => {
-		if (session.duration && !isPaused)
-			setRemainingTime(Math.max(0, session.duration * 60 - elapsedTime));
-	}, [elapsedTime, session.duration, isPaused]);
+	const handlePauseResume = useCallback(() => onPauseResume(), [onPauseResume]);
 
 	const formatTime = (seconds: number) => {
 		const hours = Math.floor(seconds / 3600);
@@ -508,35 +490,11 @@ function ActiveSessionView({
 	const truncateGoal = (goal: string, maxLength: number = 100) =>
 		goal.length <= maxLength ? goal : goal.substring(0, maxLength) + "...";
 
-	const confirmComplete = () => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		playSound(800, 0.3, 0.5);
-		const endTime = new Date();
-		let completionType: "completed" | "premature" | "overtime" = "completed";
-		if (session.duration && session.expectedEndTime) {
-			const expectedEnd = session.expectedEndTime.getTime();
-			const actualEnd = endTime.getTime();
-			const timeDiff = actualEnd - expectedEnd;
-			const toleranceMs = 60000;
-			if (timeDiff < -toleranceMs) completionType = "premature";
-			else if (timeDiff > toleranceMs) completionType = "overtime";
-		}
-		const completedSession = {
-			...session,
-			status: "completed" as const,
-			endTime,
-			elapsedTime,
-			completionType,
-		};
-		onSessionComplete(completedSession);
-	};
+	const confirmComplete = () => onComplete();
 
 	return (
-		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
-			<div className="flex flex-col text-center">
+		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
+			<div className="flex flex-col text-center flex-shrink-0">
 				<h1
 					className="font-semibold text-lg break-words"
 					style={{
@@ -556,173 +514,180 @@ function ActiveSessionView({
 				</p>
 			</div>
 
-			<div
-				className={`text-center border border-border bg-card z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer transition-all duration-300 ease-out transform ${
-					isTimerExpanded ? "bg-base-200" : "bg-card scale-100"
-				}`}
-				onClick={() => setIsTimerExpanded(!isTimerExpanded)}
-				title="Click to show/hide session details"
-			>
-				{isTimeVisible ? (
-					<>
-						{isPlannedSession ? (
-							<div className="space-y-2">
-								<div className="text-4xl text-base-content font-mono">
-									{remainingTime ? formatTime(remainingTime) : "00:00"}
-								</div>
-								<p className="text-sm text-base-content/60">
-									{isPaused ? "Paused" : "Remaining"}
-								</p>
-							</div>
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col gap-4 pr-2">
+					<div
+						className={`text-center border border-border bg-card z-10 group flex flex-col rounded-box gap-8 p-8 cursor-pointer transition-all duration-300 ease-out transform ${
+							isTimerExpanded ? "bg-base-200" : "bg-card scale-100"
+						}`}
+						onClick={() => setIsTimerExpanded(!isTimerExpanded)}
+						title="Click to show/hide session details"
+					>
+						{isTimeVisible ? (
+							<>
+								{isPlannedSession ? (
+									<div className="space-y-2">
+										<div className="text-4xl text-base-content font-mono">
+											{remainingTime ? formatTime(remainingTime) : "00:00"}
+										</div>
+										<p className="text-sm text-base-content/60">
+											{isPaused ? "Paused" : "Remaining"}
+										</p>
+									</div>
+								) : (
+									<div className="space-y-2">
+										<div className="text-4xl font-medium text-base-content font-mono">
+											{formatTime(elapsedTime)}
+										</div>
+										<p className="text-sm text-base-content/60">
+											{isPaused ? "Paused" : "Elapsed time"}
+										</p>
+									</div>
+								)}
+							</>
 						) : (
 							<div className="space-y-2">
-								<div className="text-4xl font-medium text-base-content font-mono">
-									{formatTime(elapsedTime)}
-								</div>
 								<p className="text-sm text-base-content/60">
-									{isPaused ? "Paused" : "Elapsed time"}
+									{isPaused ? "Paused" : " "}
 								</p>
+								{!isPlannedSession && (
+									<p className="text-sm text-base-content/60">
+										{isPaused ? null : "Session is running..."}
+									</p>
+								)}
 							</div>
 						)}
-					</>
-				) : (
-					<div className="space-y-2">
-						<p className="text-sm text-base-content/60">
-							{isPaused ? "Paused" : " "}
-						</p>
-						{!isPlannedSession && (
-							<p className="text-sm text-base-content/60">
-								{isPaused ? null : "Session is running..."}
-							</p>
-						)}
-					</div>
-				)}
 
-				{isPlannedSession && (
-					<div className="space-y-3">
+						{isPlannedSession && (
+							<div className="space-y-3">
+								{isTimeVisible && (
+									<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
+										<span className="text-base-content/70 font-medium">
+											Progress
+										</span>
+										<span className="text-base-content font-medium">
+											{Math.round(progressPercentage)}%
+										</span>
+									</div>
+								)}
+								<div className="relative">
+									<div className="w-full flex align-middle items-center h-2 bg-base-300">
+										<div
+											className="h-4 bg-base-content transition-all ease-out relative "
+											style={{ width: `${progressPercentage}%` }}
+										></div>
+									</div>
+								</div>
+							</div>
+						)}
+
+						<div className="flex invisible group-hover:visible justify-center">
+							{isTimerExpanded ? (
+								<ChevronUp className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+							) : (
+								<ChevronDown className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
+							)}
+						</div>
+					</div>
+
+					<div
+						className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
+							isTimerExpanded
+								? "max-h-96 h-fit opacity-100 -mt-14 pt-14"
+								: "max-h-0 opacity-0 p-0 mt-0"
+						}`}
+					>
+						<div className="flex flex-1 items-start gap-2">
+							<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+							<div className="flex-1 flex flex-col gap-1">
+								<span className="text-base-content/70 text-sm">Goal:</span>
+								<span
+									className="text-base-content font-medium leading-relaxed break-words"
+									style={{
+										wordWrap: "break-word",
+										overflowWrap: "break-word",
+										whiteSpace: "pre-wrap",
+									}}
+								>
+									{truncateGoal(session.goal, 120) || "No goal set"}
+								</span>
+							</div>
+						</div>
 						{isTimeVisible && (
-							<div className="flex justify-between text-sm invisible transition-all group-hover:visible">
-								<span className="text-base-content/70 font-medium">
-									Progress
-								</span>
-								<span className="text-base-content font-medium">
-									{Math.round(progressPercentage)}%
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/70">Started:</span>
+								<span>{session.startTime.toLocaleTimeString()}</span>
+							</div>
+						)}
+						{isTimeVisible && (
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/50">Ends at:</span>
+								<span>
+									{isPlannedSession && session.duration
+										? new Date(
+												session.startTime.getTime() +
+													session.duration * 60 * 1000
+										  ).toLocaleTimeString()
+										: "-"}
 								</span>
 							</div>
 						)}
-						<div className="relative">
-							<div className="w-full flex align-middle items-center h-2 bg-base-300">
-								<div
-									className="h-4 bg-base-content transition-all ease-out relative "
-									style={{ width: `${progressPercentage}%` }}
-								></div>
+						{session.tags.length > 0 && (
+							<div className="flex items-start gap-2">
+								<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+								<div className="flex flex-wrap gap-2">
+									{session.tags.map((tag, index) => (
+										<span key={index} className="badge rounded-sm badge-sm">
+											#{tag}
+										</span>
+									))}
+								</div>
 							</div>
-						</div>
+						)}
 					</div>
-				)}
 
-				<div className="flex invisible group-hover:visible justify-center">
-					{isTimerExpanded ? (
-						<ChevronUp className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
-					) : (
-						<ChevronDown className="size-4 text-base-content/50 transition-all duration-300 ease-out transform rotate-0" />
-					)}
-				</div>
-			</div>
-
-			<div
-				className={`flex flex-col gap-4 text-sm bg-base-200/50 card rounded-box p-6 overflow-hidden transition-all duration-300 ease-out ${
-					isTimerExpanded
-						? "max-h-96 h-fit opacity-100 -mt-14 pt-14"
-						: "max-h-0 opacity-0 p-0 mt-0"
-				}`}
-			>
-				<div className="flex flex-1 items-start gap-2">
-					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-					<div className="flex-1 flex flex-col gap-1">
-						<span className="text-base-content/70 text-sm">Goal:</span>
-						<span
-							className="text-base-content font-medium leading-relaxed break-words"
-							style={{
-								wordWrap: "break-word",
-								overflowWrap: "break-word",
-								whiteSpace: "pre-wrap",
-							}}
+					<div className="flex gap-3 w-full">
+						<button
+							onClick={confirmComplete}
+							className="btn btn-lg btn-ghost"
+							title="End and complete this session"
+							aria-label="End and complete this session"
+							style={{ touchAction: "manipulation" }}
 						>
-							{truncateGoal(session.goal, 120) || "No goal set"}
-						</span>
+							<Square className="size-5" />
+						</button>
+						<button
+							onClick={handlePauseResume}
+							className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
+							title={
+								isPaused
+									? "Resume the focus session"
+									: "Pause the focus session"
+							}
+							aria-label={isPaused ? "Resume session" : "Pause session"}
+						>
+							{isPaused ? (
+								<Play className="size-5" />
+							) : (
+								<Pause className="size-5" />
+							)}
+						</button>
+					</div>
+
+					<div className="text-center w-full justify-center">
+						<button
+							onClick={toggleTimeVisibility}
+							className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
+							title={isTimeVisible ? "Hide time display" : "Show time display"}
+							aria-label={isTimeVisible ? "Hide time" : "Show time"}
+						>
+							{isTimeVisible ? "Hide Time" : "Show Time"}
+						</button>
 					</div>
 				</div>
-				{isTimeVisible && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Started:</span>
-						<span>{session.startTime.toLocaleTimeString()}</span>
-					</div>
-				)}
-				{isTimeVisible && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/50">Ends at:</span>
-						<span>
-							{isPlannedSession && session.duration
-								? new Date(
-										session.startTime.getTime() + session.duration * 60 * 1000
-								  ).toLocaleTimeString()
-								: "-"}
-						</span>
-					</div>
-				)}
-				{session.tags.length > 0 && (
-					<div className="flex items-start gap-2">
-						<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex flex-wrap gap-2">
-							{session.tags.map((tag, index) => (
-								<span key={index} className="badge rounded-sm badge-sm">
-									#{tag}
-								</span>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
-
-			<div className="flex gap-3 w-full">
-				<button
-					onClick={confirmComplete}
-					className="btn btn-lg btn-ghost"
-					title="End and complete this session"
-					aria-label="End and complete this session"
-					style={{ touchAction: "manipulation" }}
-				>
-					<Square className="size-5" />
-				</button>
-				<button
-					onClick={handlePauseResume}
-					className={`btn btn-lg flex-1 ${isPaused ? "btn-primary" : ""}`}
-					title={
-						isPaused ? "Resume the focus session" : "Pause the focus session"
-					}
-					aria-label={isPaused ? "Resume session" : "Pause session"}
-				>
-					{isPaused ? (
-						<Play className="size-5" />
-					) : (
-						<Pause className="size-5" />
-					)}
-				</button>
-			</div>
-
-			<div className="text-center w-full justify-center">
-				<button
-					onClick={toggleTimeVisibility}
-					className="btn btn-xs btn-ghost hover:opacity-100 opacity-25"
-					title={isTimeVisible ? "Hide time display" : "Show time display"}
-					aria-label={isTimeVisible ? "Hide time" : "Show time"}
-				>
-					{isTimeVisible ? "Hide Time" : "Show Time"}
-				</button>
-			</div>
+			</ScrollArea>
 		</div>
 	);
 }
@@ -733,10 +698,14 @@ function SessionCompletionView({
 	session,
 	onUpdateQuality,
 	onUpdateNotes,
+	onDismiss,
+	onSave,
 }: {
 	session: Session;
 	onUpdateQuality?: (id: string, q: number) => void;
 	onUpdateNotes?: (id: string, n: string) => void;
+	onDismiss?: () => void;
+	onSave?: () => Promise<any>;
 }) {
 	const router = useRouter();
 	const [deepWorkQuality, setDeepWorkQuality] = useState<number>(
@@ -812,7 +781,33 @@ function SessionCompletionView({
 		setNotes(newNotes);
 		onUpdateNotes?.(session.id, newNotes);
 	};
-	const handleSaveSession = () => router.push("/");
+	const [isSaving, setIsSaving] = useState(false);
+	const handleSaveSession = async () => {
+		if (isSaving) return;
+		setIsSaving(true);
+		try {
+			const saved = await (onSave ? onSave() : Promise.resolve(null));
+			const minutes = Math.round(
+				((saved?.elapsedTime ?? session.elapsedTime ?? 0) as number) / 60
+			);
+			// TEMPORARILY DISABLED: 5-minute minimum check
+			// if (
+			// 	(saved?.status === "completed" || saved?.status === "stopped") &&
+			// 	(saved?.elapsedTime ?? session.elapsedTime ?? 0) < 300
+			// ) {
+			// 	toast.info("Session under 5 minutes was discarded and not counted.");
+			// } else {
+			toast.success(
+				`Deep work logged — ${minutes} minutes of focused progress. Nice work!`
+			);
+			// }
+			onDismiss?.();
+		} catch (e: any) {
+			toast.error(e?.message || "Failed to save session");
+		} finally {
+			setIsSaving(false);
+		}
+	};
 
 	const formatTime = (seconds: number) => {
 		const hours = Math.floor(seconds / 3600);
@@ -826,8 +821,8 @@ function SessionCompletionView({
 	};
 
 	return (
-		<div className="card bg-transparent w-full p-4 lg:p-6 gap-4 lg:gap-6 overflow-hidden">
-			<div className="flex flex-col text-center">
+		<div className="card bg-transparent w-full h-fit p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col">
+			<div className="flex flex-col text-center flex-shrink-0">
 				<h1 className="font-semibold">Session Complete</h1>
 				<p className="text-base-content/50">
 					{isPlannedSession
@@ -835,182 +830,198 @@ function SessionCompletionView({
 						: "Excellent work! You finished your flow session."}
 				</p>
 			</div>
-			{session.completionType && isPlannedSession && (
-				<div className={`${getCompletionTypeColor()} gap-2`}>
-					<AlertCircle className="size-4" />
-					<span className="text-sm font-medium">
-						{getCompletionTypeMessage()}
-					</span>
-				</div>
-			)}
-			<div className="flex flex-col gap-4 text-sm bg-card border border-border card rounded-box p-6">
-				<div className="flex flex-1 items-start gap-2">
-					<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-					<div className="flex-1 flex flex-col gap-1">
-						<span className="text-base-content/70 text-sm">Goal:</span>
-						<span
-							className="text-base-content font-medium leading-relaxed break-words"
-							style={{
-								wordWrap: "break-word",
-								overflowWrap: "break-word",
-								whiteSpace: "pre-wrap",
-							}}
-						>
-							{session.goal}
-						</span>
-					</div>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Target className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Session Type:</span>
-					<span className="font-medium">
-						{session.sessionType === "time-boxed"
-							? "Time-boxed Session"
-							: "Flow Session"}
-					</span>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Started:</span>
-					<span>{session.startTime.toLocaleTimeString()}</span>
-				</div>
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Duration:</span>
-					<span className="font-medium">
-						{Math.round((session.elapsedTime ?? 0) / 60)} minutes
-					</span>
-				</div>
-				{isPlannedSession && (
-					<div className="flex align-middle items-center gap-2">
-						<Clock className="size-4 text-base-content/50" />
-						<span className="text-base-content/70">Expected End:</span>
-						<span>
-							{session.expectedEndTime
-								? session.expectedEndTime.toLocaleTimeString()
-								: "-"}
-						</span>
-					</div>
-				)}
-				<div className="flex align-middle items-center gap-2">
-					<Clock className="size-4 text-base-content/50" />
-					<span className="text-base-content/70">Actual End:</span>
-					<span>
-						{session.endTime ? session.endTime.toLocaleTimeString() : "-"}
-					</span>
-				</div>
-				{session.tags.length > 0 && (
-					<div className="flex items-start gap-2">
-						<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
-						<div className="flex flex-wrap gap-2">
-							{session.tags.map((tag, index) => (
-								<span
-									key={index}
-									className="badge rounded-sm badge-neutral badge-sm"
-								>
-									#{tag}
-								</span>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
 
-			<div className="card bg-card border border-border p-6 gap-6">
-				<div className="flex flex-col gap-1 text-center">
-					<h3 className="font-medium text-base-content w-full text-center">
-						Rate Your Deep Work Quality
-					</h3>
-					<p className="text-sm text-base-content/70">
-						How would you rate the quality of your focus during this session?
-					</p>
-				</div>
-				<div className="space-y-4">
-					<div className="flex flex-col items-center gap-3">
-						<div className="flex justify-center">
-							<div className="rating">
-								{Array.from({ length: 10 }, (_, i) => (
-									<input
-										key={i + 1}
-										type="radio"
-										name={`rating-${session.id}`}
-										className="mask mask-star cursor-pointer"
-										checked={deepWorkQuality === i + 1}
-										onChange={() => handleQualityRating(i + 1)}
-										onMouseEnter={() => setHoverRating(i + 1)}
-										onMouseLeave={() => setHoverRating(0)}
-									/>
-								))}
-							</div>
-						</div>
-						{hoverRating > 0 && (
-							<div className={`text-center ${getRatingColor(hoverRating)}`}>
-								<span className="font-medium text-sm">
-									{hoverRating}/10 - {getRatingLabel(hoverRating)}
-								</span>
-							</div>
-						)}
-						{!hoverRating && deepWorkQuality > 0 && (
-							<div className={`text-center ${getRatingColor(deepWorkQuality)}`}>
-								<span className="font-medium text-sm">
-									{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
-								</span>
-							</div>
-						)}
-					</div>
-					{hasRated && (
-						<div className="text-center pt-2 border-t border-base-300">
-							<p className="text-xs text-base-content/70 mt-mp1">
-								Current rating:
-								<button
-									className={`font-medium badge badge-sm badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
-									onClick={() => handleQualityRating(0)}
-									title="Reset Rating"
-								>
-									<span className="group-hover:hidden">
-										{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
-									</span>
-									<span className="hidden group-hover:inline">
-										Reset Rating
-									</span>
-								</button>
-							</p>
+			<ScrollArea className="flex-1 min-h-0">
+				<div className="flex flex-col gap-4 pr-2">
+					{session.completionType && isPlannedSession && (
+						<div className={`${getCompletionTypeColor()} gap-2`}>
+							<AlertCircle className="size-4" />
+							<span className="text-sm font-medium">
+								{getCompletionTypeMessage()}
+							</span>
 						</div>
 					)}
-				</div>
-			</div>
-
-			<div className="collapse border border-base-100 bg-card">
-				<input type="checkbox" className="peer" />
-				<div className="collapse-title text-sm font-medium">
-					Notes (Optional)
-				</div>
-				<div className="collapse-content">
-					<div className="space-y-4 pt-2">
-						<div className="form-control">
-							<textarea
-								className="textarea w-full min-h-[100px] resize-none"
-								placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
-								value={notes}
-								onChange={(e) => handleNotesChange(e.target.value)}
-							/>
-							<label className="label">
-								<span className="label-text-alt text-xs text-base-content/60">
-									Add any thoughts, insights, or observations
+					<div className="flex flex-col gap-4 text-sm bg-card border border-border card rounded-box p-6">
+						<div className="flex flex-1 items-start gap-2">
+							<Goal className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+							<div className="flex-1 flex flex-col gap-1">
+								<span className="text-base-content/70 text-sm">Goal:</span>
+								<span
+									className="text-base-content font-medium leading-relaxed break-words"
+									style={{
+										wordWrap: "break-word",
+										overflowWrap: "break-word",
+										whiteSpace: "pre-wrap",
+									}}
+								>
+									{session.goal}
 								</span>
-							</label>
+							</div>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Target className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Session Type:</span>
+							<span className="font-medium">
+								{session.sessionType === "time-boxed"
+									? "Time-boxed Session"
+									: "Flow Session"}
+							</span>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Started:</span>
+							<span>{session.startTime.toLocaleTimeString()}</span>
+						</div>
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Duration:</span>
+							<span className="font-medium">
+								{Math.round((session.elapsedTime ?? 0) / 60)} minutes
+							</span>
+						</div>
+						{isPlannedSession && (
+							<div className="flex align-middle items-center gap-2">
+								<Clock className="size-4 text-base-content/50" />
+								<span className="text-base-content/70">Expected End:</span>
+								<span>
+									{session.expectedEndTime
+										? session.expectedEndTime.toLocaleTimeString()
+										: "-"}
+								</span>
+							</div>
+						)}
+						<div className="flex align-middle items-center gap-2">
+							<Clock className="size-4 text-base-content/50" />
+							<span className="text-base-content/70">Actual End:</span>
+							<span>
+								{session.endTime ? session.endTime.toLocaleTimeString() : "-"}
+							</span>
+						</div>
+						{session.tags.length > 0 && (
+							<div className="flex items-start gap-2">
+								<Hash className="size-4 text-base-content/50 mt-0.5 flex-shrink-0" />
+								<div className="flex flex-wrap gap-2">
+									{session.tags.map((tag, index) => (
+										<span
+											key={index}
+											className="badge rounded-sm badge-neutral badge-sm"
+										>
+											#{tag}
+										</span>
+									))}
+								</div>
+							</div>
+						)}
+					</div>
+
+					<div className="card bg-card border border-border p-6 gap-6">
+						<div className="flex flex-col gap-1 text-center">
+							<h3 className="font-medium text-base-content w-full text-center">
+								Rate Your Deep Work Quality
+							</h3>
+							<p className="text-sm text-base-content/70">
+								How would you rate the quality of your focus during this
+								session?
+							</p>
+						</div>
+						<div className="space-y-4">
+							<div className="flex flex-col items-center gap-3">
+								<div className="flex justify-center">
+									<div className="rating">
+										{Array.from({ length: 10 }, (_, i) => (
+											<input
+												key={i + 1}
+												type="radio"
+												name={`rating-${session.id}`}
+												className="mask mask-star cursor-pointer"
+												checked={deepWorkQuality === i + 1}
+												onChange={() => handleQualityRating(i + 1)}
+												onMouseEnter={() => setHoverRating(i + 1)}
+												onMouseLeave={() => setHoverRating(0)}
+											/>
+										))}
+									</div>
+								</div>
+								{hoverRating > 0 && (
+									<div className={`text-center ${getRatingColor(hoverRating)}`}>
+										<span className="font-medium text-sm">
+											{hoverRating}/10 - {getRatingLabel(hoverRating)}
+										</span>
+									</div>
+								)}
+								{!hoverRating && deepWorkQuality > 0 && (
+									<div
+										className={`text-center ${getRatingColor(deepWorkQuality)}`}
+									>
+										<span className="font-medium text-sm">
+											{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+										</span>
+									</div>
+								)}
+							</div>
+							{hasRated && (
+								<div className="text-center pt-2 border-t border-base-300">
+									<p className="text-xs text-base-content/70 mt-mp1">
+										Current rating:{" "}
+										<button
+											className={`font-medium badge badge-sm px-2 badge-soft rounded-sm hover:badge-error transition-all duration-200 cursor-pointer group`}
+											onClick={() => handleQualityRating(0)}
+											title="Reset Rating"
+										>
+											<span className="group-hover:hidden">
+												{deepWorkQuality}/10 - {getRatingLabel(deepWorkQuality)}
+											</span>
+											<span className="hidden group-hover:inline">
+												Reset Rating
+											</span>
+										</button>
+									</p>
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="collapse border border-base-100 bg-card">
+						<input type="checkbox" className="peer" />
+						<div className="collapse-title text-sm font-medium">
+							Notes (Optional)
+						</div>
+						<div className="collapse-content">
+							<div className="space-y-4 pt-2">
+								<div className="form-control">
+									<textarea
+										className="textarea border-0 shadow-none w-full min-h-[100px] resize-none"
+										placeholder="What went well? What could be improved? Any distractions or breakthroughs?"
+										value={notes}
+										onChange={(e) => handleNotesChange(e.target.value)}
+									/>
+									<label className="label">
+										<span className="label-text-alt text-xs text-base-content/60">
+											Add any thoughts, insights, or observations
+										</span>
+									</label>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
+			</ScrollArea>
 
-			<div className="card-actions justify-center">
+			<div className="card-actions justify-center flex-shrink-0 pt-2 pb-6">
 				<button
 					onClick={handleSaveSession}
 					className="btn btn-primary btn-block"
-					disabled={!hasRated}
+					disabled={!hasRated || isSaving}
 				>
-					{hasRated ? "Save Session" : "Rate Session to Continue"}
+					{isSaving ? (
+						<span className="inline-flex items-center gap-2">
+							<Loader2 className="size-4 animate-spin" /> Saving…
+						</span>
+					) : hasRated ? (
+						"Save Session"
+					) : (
+						"Rate Session to Continue"
+					)}
 				</button>
 			</div>
 		</div>

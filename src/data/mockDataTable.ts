@@ -4,7 +4,6 @@ export type DataItem = {
 	goal: string;
 	sessionType: "planned session" | "open session";
 	duration: number; // in minutes
-	focusLevel: number | null; // 1-10 or null if not set
 	quality: number; // 1-10
 	notes: string;
 	tags: string[]; // optional tags for categorization
@@ -31,7 +30,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Complete API integration for user authentication",
 		sessionType: "planned session",
 		duration: 150,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Had some interruptions but managed to complete the core functionality. The JWT implementation is working well and integration tests are passing.",
@@ -43,7 +41,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Draft comprehensive blog post outline",
 		sessionType: "open session",
 		duration: 105,
-		focusLevel: null,
 		quality: 8,
 		notes:
 			"Good flow; outline is comprehensive. Need to research more statistics for the productivity section.",
@@ -55,7 +52,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Redesign landing page with modern UI",
 		sessionType: "planned session",
 		duration: 195,
-		focusLevel: 9,
 		quality: 10,
 		notes:
 			"Excellent focus; design came together beautifully. The new color scheme and typography really improved the overall feel.",
@@ -67,7 +63,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Study React Server Components",
 		sessionType: "planned session",
 		duration: 90,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Focused study session on RSC patterns. The documentation was clear and examples were helpful. Need to practice implementation.",
@@ -79,7 +74,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Code review and refactoring",
 		sessionType: "open session",
 		duration: 120,
-		focusLevel: 6,
 		quality: 7,
 		notes:
 			"Reviewed several PRs and refactored some legacy code. Found some performance issues that need addressing.",
@@ -91,7 +85,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Plan next sprint tasks and priorities",
 		sessionType: "planned session",
 		duration: 60,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Productive planning session. Prioritized features based on user feedback and technical debt. Clear roadmap for next 2 weeks.",
@@ -103,7 +96,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Debug performance issues in dashboard",
 		sessionType: "open session",
 		duration: 180,
-		focusLevel: 9,
 		quality: 8,
 		notes:
 			"Deep debugging session. Found the bottleneck was in the data fetching logic. Optimized queries and added caching.",
@@ -115,7 +107,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Write technical documentation",
 		sessionType: "planned session",
 		duration: 75,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Documented the new API endpoints and authentication flow. Added code examples and troubleshooting guides.",
@@ -127,7 +118,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Learn TypeScript advanced patterns",
 		sessionType: "open session",
 		duration: 135,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Great learning session on generics and utility types. The examples were clear and I feel more confident with complex types.",
@@ -139,7 +129,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Design user onboarding flow",
 		sessionType: "planned session",
 		duration: 165,
-		focusLevel: 9,
 		quality: 9,
 		notes:
 			"Creative session focused on UX. Created wireframes and user journey maps. The flow feels intuitive and engaging.",
@@ -151,7 +140,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Fix critical security vulnerability",
 		sessionType: "open session",
 		duration: 240,
-		focusLevel: 10,
 		quality: 10,
 		notes:
 			"Urgent security fix. Identified and patched SQL injection vulnerability. Updated all related code and added security tests.",
@@ -163,7 +151,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Research new database optimization techniques",
 		sessionType: "open session",
 		duration: 90,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Research session on database indexing and query optimization. Found some interesting techniques to implement.",
@@ -175,7 +162,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Implement automated testing suite",
 		sessionType: "planned session",
 		duration: 180,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Set up comprehensive test suite with Jest and Cypress. Added unit tests, integration tests, and E2E tests. Coverage is now at 85%.",
@@ -187,7 +173,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Create data visualization dashboard",
 		sessionType: "open session",
 		duration: 210,
-		focusLevel: 9,
 		quality: 9,
 		notes:
 			"Built interactive dashboard with D3.js and React. The charts are responsive and the data insights are clear.",
@@ -199,7 +184,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Study system design patterns",
 		sessionType: "planned session",
 		duration: 120,
-		focusLevel: 8,
 		quality: 8,
 		notes:
 			"Focused study on microservices architecture and distributed systems. The case studies were very insightful.",
@@ -211,7 +195,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Optimize mobile app performance",
 		sessionType: "open session",
 		duration: 150,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Performance optimization session. Reduced bundle size by 30% and improved load times significantly.",
@@ -223,7 +206,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Write project proposal",
 		sessionType: "planned session",
 		duration: 135,
-		focusLevel: 6,
 		quality: 7,
 		notes:
 			"Drafted comprehensive project proposal. Need to review and refine the technical specifications section.",
@@ -235,7 +217,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Learn GraphQL best practices",
 		sessionType: "open session",
 		duration: 105,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Excellent learning session on GraphQL schema design and query optimization. The examples were practical and well-explained.",
@@ -247,7 +228,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Design component library",
 		sessionType: "planned session",
 		duration: 195,
-		focusLevel: 9,
 		quality: 10,
 		notes:
 			"Created comprehensive design system with reusable components. The consistency and accessibility features are solid.",
@@ -259,7 +239,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Implement real-time notifications",
 		sessionType: "open session",
 		duration: 165,
-		focusLevel: 8,
 		quality: 8,
 		notes:
 			"Built WebSocket-based notification system. The real-time updates are working smoothly across different browsers.",
@@ -271,7 +250,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Study machine learning fundamentals",
 		sessionType: "planned session",
 		duration: 90,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Introduction to ML concepts and algorithms. The mathematical foundations are challenging but interesting.",
@@ -283,7 +261,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Refactor legacy authentication code",
 		sessionType: "open session",
 		duration: 180,
-		focusLevel: 6,
 		quality: 7,
 		notes:
 			"Complex refactoring session. The legacy code was tightly coupled but managed to improve maintainability.",
@@ -295,7 +272,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Create user feedback system",
 		sessionType: "planned session",
 		duration: 120,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Designed and implemented feedback collection system. The UI is intuitive and the data collection is comprehensive.",
@@ -307,7 +283,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Learn Docker containerization",
 		sessionType: "open session",
 		duration: 150,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Hands-on learning session with Docker. Successfully containerized the application and set up multi-stage builds.",
@@ -319,7 +294,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Optimize database queries",
 		sessionType: "planned session",
 		duration: 135,
-		focusLevel: 9,
 		quality: 9,
 		notes:
 			"Database optimization session. Added proper indexes and rewrote slow queries. Performance improved by 60%.",
@@ -331,7 +305,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Design mobile app wireframes",
 		sessionType: "open session",
 		duration: 165,
-		focusLevel: 8,
 		quality: 8,
 		notes:
 			"Mobile-first design session. Created responsive wireframes that work well across different screen sizes.",
@@ -343,7 +316,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Study cybersecurity best practices",
 		sessionType: "planned session",
 		duration: 105,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Security awareness session. Learned about common vulnerabilities and how to prevent them in web applications.",
@@ -355,7 +327,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Implement caching strategy",
 		sessionType: "open session",
 		duration: 120,
-		focusLevel: 8,
 		quality: 8,
 		notes:
 			"Added Redis caching to improve API response times. The cache invalidation strategy is working well.",
@@ -367,7 +338,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Write technical blog post",
 		sessionType: "planned session",
 		duration: 180,
-		focusLevel: 7,
 		quality: 8,
 		notes:
 			"Comprehensive blog post about modern web development practices. Included code examples and best practices.",
@@ -379,7 +349,6 @@ export const mockDataTableData: DataItem[] = [
 		goal: "Learn advanced CSS techniques",
 		sessionType: "open session",
 		duration: 90,
-		focusLevel: 8,
 		quality: 9,
 		notes:
 			"Explored CSS Grid, Flexbox, and modern layout techniques. The responsive designs are much cleaner now.",

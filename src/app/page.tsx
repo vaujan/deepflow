@@ -6,25 +6,25 @@ import Header from "../components/ui/header";
 import WidgetsContainer from "../components/ui/widgets-container";
 export default function Page() {
 	return (
-		<div className="flex flex-col bg-gray-2 h-screen overflow-hidden lg:flex-row">
+		<div className="flex flex-col bg-gray-2 h-screen">
 			{/* Container */}
 			<main
-				className={`flex flex-col flex-1 items-start justify-start min-h-0`}
+				className={`flex flex-col flex-1 min-h-0 overflow-hidden items-start justify-start`}
 			>
 				<Header />
-				<div className="flex-1 min-h-0 flex w-full h-full">
-					{/* Workspace background/div */}
-					<div
-						className={`flex flex-col lg:flex-row w-full items-start gap-8 px-4 lg:px-8 py-5`}
-					>
-						{/* Widgets Container respects visibility/enabled state */}
-						<div className="flex-1 min-h-0 h-full w-full">
-							<WidgetsContainer />
+				<div className="w-full px-2 pb-2 flex-1 min-h-0">
+					<div className="rounded-xl border border-border bg-dots scrollbar-thin overflow-auto h-full">
+						{/* Workspace background/div */}
+						<div
+							className={`flex flex-col lg:flex-row w-full min-h-full items-start gap-8 `}
+						>
+							{/* Widgets Container respects visibility/enabled state */}
+							<div className="flex-1 w-full py-4">
+								<WidgetsContainer />
+							</div>
 						</div>
 					</div>
 				</div>
-
-				{/* <Dock /> */}
 			</main>
 		</div>
 	);

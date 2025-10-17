@@ -6,7 +6,6 @@ export default function SessionTable() {
 			id: 1,
 			date: "2024-01-15",
 			duration: 150,
-			focusLevel: 8,
 			quality: 9,
 			tags: "coding, project",
 			goal: "Complete API integration",
@@ -17,7 +16,6 @@ export default function SessionTable() {
 			id: 2,
 			date: "2024-01-14",
 			duration: 105,
-			focusLevel: null,
 			quality: 8,
 			tags: "",
 			goal: "Draft blog post outline",
@@ -27,7 +25,6 @@ export default function SessionTable() {
 			id: 3,
 			date: "2024-01-13",
 			duration: 195,
-			focusLevel: 9,
 			quality: 10,
 			tags: "design, ui",
 			goal: "Redesign landing page",
@@ -37,7 +34,6 @@ export default function SessionTable() {
 			id: 4,
 			date: "2024-01-12",
 			duration: 80,
-			focusLevel: 6,
 			quality: 7,
 			tags: "",
 			goal: "Market research analysis",
@@ -48,7 +44,6 @@ export default function SessionTable() {
 			id: 5,
 			date: "2024-01-11",
 			duration: 165,
-			focusLevel: null,
 			quality: 8,
 			tags: "coding, debugging",
 			goal: "Fix critical bugs in production",
@@ -58,7 +53,6 @@ export default function SessionTable() {
 			id: 6,
 			date: "2024-01-10",
 			duration: 90,
-			focusLevel: 5,
 			quality: 6,
 			tags: "",
 			goal: "Team sprint planning",
@@ -68,7 +62,6 @@ export default function SessionTable() {
 			id: 7,
 			date: "2024-01-09",
 			duration: 120,
-			focusLevel: 7,
 			quality: 8,
 			tags: "writing, documentation",
 			goal: "Update technical documentation",
@@ -78,7 +71,6 @@ export default function SessionTable() {
 			id: 8,
 			date: "2024-01-08",
 			duration: 75,
-			focusLevel: null,
 			quality: 5,
 			tags: "",
 			goal: "Process pending emails",
@@ -88,7 +80,6 @@ export default function SessionTable() {
 			id: 9,
 			date: "2024-01-07",
 			duration: 180,
-			focusLevel: 9,
 			quality: 9,
 			tags: "coding, architecture",
 			goal: "Design system architecture",
@@ -98,7 +89,6 @@ export default function SessionTable() {
 			id: 10,
 			date: "2024-01-06",
 			duration: 105,
-			focusLevel: 6,
 			quality: 7,
 			tags: "",
 			goal: "Complete React tutorial",
@@ -131,12 +121,6 @@ export default function SessionTable() {
 		return `${minutes}`;
 	};
 
-	const getFocusLevelColor = (level: number) => {
-		if (level <= 3) return "badge-success";
-		if (level <= 7) return "badge-warning";
-		return "badge-error";
-	};
-
 	const getQualityColor = (quality: number) => {
 		if (quality <= 5) return "badge-error";
 		if (quality <= 7) return "badge-warning";
@@ -150,7 +134,6 @@ export default function SessionTable() {
 					<tr>
 						<th className="bg-base-300/50 w-24">Deep Work (Minutes)</th>
 						<th className="bg-base-300/50 w-24">Date</th>
-						<th className="bg-base-300/50 w-20">Focus</th>
 						<th className="bg-base-300/50 w-20">Quality</th>
 						<th className="bg-base-300/50 w-32">Tags</th>
 						<th className="bg-base-300/50 w-48">Goal</th>
@@ -164,19 +147,6 @@ export default function SessionTable() {
 								{formatDuration(session.duration)}
 							</td>
 							<td className="whitespace-nowrap">{formatDate(session.date)}</td>
-							<td className="whitespace-nowrap">
-								{session.focusLevel ? (
-									<span
-										className={`badge badge-sm rounded-sm ${getFocusLevelColor(
-											session.focusLevel
-										)}`}
-									>
-										{session.focusLevel}
-									</span>
-								) : (
-									<span className="text-base-content/40 text-sm">—</span>
-								)}
-							</td>
 							<td className="whitespace-nowrap">
 								<span
 									className={`badge badge-sm rounded-sm ${getQualityColor(

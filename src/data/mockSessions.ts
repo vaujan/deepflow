@@ -55,7 +55,6 @@ export const generateMockSessions = (): Session[] => {
 				goal: goals[goalIndex],
 				startTime,
 				duration: sessionType === "time-boxed" ? duration : undefined,
-				focusLevel: Math.floor(Math.random() * 10) + 1, // 1-10
 				tags: tags[goalIndex],
 				notes:
 					Math.random() > 0.7

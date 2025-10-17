@@ -2,8 +2,8 @@
 
 import React, { useMemo } from "react";
 import { Check, Circle, Flame } from "lucide-react";
-import { mockSessions } from "../../data/mockSessions";
 import { computeStreaks } from "../../lib/analytics";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { radixColorScales } from "../../utils/radixColorMapping";
 
 interface FocusStreakProps {
@@ -21,7 +21,19 @@ const startOfIsoWeek = (date: Date) => {
 };
 
 export default function FocusStreak({ className = "" }: FocusStreakProps) {
-	const streaks = useMemo(() => computeStreaks(mockSessions), []);
+	const jan1 = useMemo(() => {
+		const d = new Date(new Date().getFullYear(), 0, 1);
+		d.setHours(0, 0, 0, 0);
+		return d.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({
+		from: jan1,
+		limit: 10000,
+	});
+	const streaks = useMemo(
+		() => computeStreaks(savedSessions as any),
+		[savedSessions]
+	);
 
 	// Build activity across the current ISO week (Mon..Sun)
 	const weekActivity = useMemo(() => {
@@ -31,14 +43,14 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 		end.setDate(end.getDate() + 7);
 
 		const active: boolean[] = Array.from({ length: 7 }, () => false);
-		for (const s of mockSessions) {
+		for (const s of savedSessions) {
 			if (s.startTime >= start && s.startTime < end) {
 				const idx = (s.startTime.getDay() + 6) % 7; // Mon=0..Sun=6
 				active[idx] = true;
 			}
 		}
 		return active;
-	}, []);
+	}, [savedSessions]);
 
 	const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

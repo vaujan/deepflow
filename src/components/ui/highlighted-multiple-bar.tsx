@@ -11,7 +11,7 @@ import {
 	CartesianGrid,
 } from "recharts";
 import type { TooltipProps } from "recharts";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { radixColorScales } from "../../utils/radixColorMapping";
 import { Loader2 } from "lucide-react";
 
@@ -48,7 +48,7 @@ const ChartLoadingSkeleton: React.FC = () => {
 	);
 };
 
-const buildDailyData = (days: number): ChartPoint[] => {
+const buildDailyData = (days: number, sessions: any[]): ChartPoint[] => {
 	const today = new Date();
 	const points: ChartPoint[] = [];
 	for (let i = days - 1; i >= 0; i--) {
@@ -59,11 +59,11 @@ const buildDailyData = (days: number): ChartPoint[] => {
 		const end = new Date(day);
 		end.setHours(23, 59, 59, 999);
 
-		const sessions = mockSessions.filter(
+		const daySessions = sessions.filter(
 			(s) => s.startTime >= start && s.startTime <= end
 		);
 		const totalMinutes = Math.round(
-			sessions.reduce((acc, s) => acc + (s.elapsedTime || 0), 0) / 60
+			daySessions.reduce((acc, s) => acc + (s.elapsedTime || 0), 0) / 60
 		);
 
 		points.push({
@@ -104,7 +104,18 @@ const FocusTimeLineChart: React.FC<FocusTimeLineChartProps> = ({
 	days = 14,
 }) => {
 	const [isLoading, setIsLoading] = useState(false);
-	const data = useMemo(() => buildDailyData(days), [days]);
+	const fromIso = useMemo(() => {
+		const now = new Date();
+		const start = new Date(now);
+		start.setHours(0, 0, 0, 0);
+		start.setDate(start.getDate() - (days - 1));
+		return start.toISOString();
+	}, [days]);
+	const { data: savedSessions = [] } = useStatsSessions({ from: fromIso });
+	const data = useMemo(
+		() => buildDailyData(days, savedSessions as any),
+		[days, savedSessions]
+	);
 
 	// If fetching real data, control isLoading via requests; avoid artificial delays.
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import {
 	computeHourlyFocus,
 	findPeakWindow,
@@ -42,12 +42,21 @@ const PeakFocusWindowChart: React.FC<PeakFocusWindowChartProps> = ({
 	period = "30d",
 	windowHours = 3,
 }) => {
+	const fromIso = useMemo(() => {
+		const now = new Date();
+		const start = new Date(now);
+		start.setHours(0, 0, 0, 0);
+		if (period === "7d") start.setDate(start.getDate() - 6);
+		else start.setDate(start.getDate() - 29);
+		return start.toISOString();
+	}, [period]);
+	const { data: savedSessions = [] } = useStatsSessions({ from: fromIso });
 	const { hourly, best } = useMemo(() => {
-		const range = getDateRangeSessions(mockSessions, period);
+		const range = getDateRangeSessions(savedSessions, period);
 		const hourly = computeHourlyFocus(range);
 		const best = findPeakWindow(hourly, windowHours);
 		return { hourly, best };
-	}, [period, windowHours]);
+	}, [period, windowHours, savedSessions]);
 
 	const highlighted = new Set<number>();
 	for (let h = best.startHour; h <= best.endHour; h++) highlighted.add(h);
@@ -55,7 +64,7 @@ const PeakFocusWindowChart: React.FC<PeakFocusWindowChartProps> = ({
 	// Build weekday (Mon-Sun) × hour (0-23) grid of total minutes
 	const { grid, maxCellMinutes, mostActiveDayIdx, mostActiveDayMinutes } =
 		useMemo(() => {
-			const range = getDateRangeSessions(mockSessions, period);
+			const range = getDateRangeSessions(savedSessions, period);
 			const g: number[][] = Array.from({ length: 7 }, () =>
 				Array.from({ length: 24 }, () => 0)
 			);
@@ -76,7 +85,7 @@ const PeakFocusWindowChart: React.FC<PeakFocusWindowChartProps> = ({
 				mostActiveDayIdx: mai,
 				mostActiveDayMinutes: dayTotals[mai],
 			};
-		}, [period]);
+		}, [period, savedSessions]);
 
 	const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 	const hourLabels = Array.from({ length: 24 }, (_, h) => h);

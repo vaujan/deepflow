@@ -28,6 +28,9 @@
 @import "@radix-ui/colors/olive-dark.css";
 @import "@radix-ui/colors/sand.css";
 @import "@radix-ui/colors/sand-dark.css";
+@import "@milkdown/prose/view/style/prosemirror.css";
+@import "@milkdown/prose/gapcursor/style/gapcursor.css";
+@import "@milkdown/prose/tables/style/tables.css";
 
 /* Custom font configuration */
 :root {
@@ -232,7 +235,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -279,7 +282,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -287,6 +290,90 @@ html:not([data-theme]) {
 	--color-card: var(--gray-3, #222222);
 	--color-sidebar: var(--gray-3, #222222);
 	--color-sidebar-border: var(--gray-4, #2a2a2a);
+}
+
+/* Cally calendar theming mapped to DaisyUI palette */
+.cally {
+	/* container spacing is provided by parent; only minor adjustments here */
+	display: block;
+	border-radius: var(--radius-box, 0.75rem);
+}
+
+.cally::part(heading) {
+	font-weight: 600;
+	color: hsl(var(--bc));
+}
+
+.cally::part(previous),
+.cally::part(next) {
+	inline-size: 2rem;
+	block-size: 2rem;
+	border-radius: var(--radius-field, 0.5rem);
+	display: inline-grid;
+	place-items: center;
+	color: hsl(var(--bc));
+}
+
+.cally::part(previous):hover,
+.cally::part(next):hover {
+	background: hsl(var(--b2));
+}
+
+.cally::part(previous):focus-visible,
+.cally::part(next):focus-visible {
+	outline: 2px solid hsl(var(--p));
+	outline-offset: 2px;
+}
+
+.cally::part(day) {
+	inline-size: 2.25rem;
+	block-size: 2.25rem;
+	border-radius: var(--radius-field, 0.5rem);
+	display: grid;
+	place-items: center;
+	font-variant-numeric: tabular-nums;
+	color: hsl(var(--bc) / 0.88);
+	/* Match DaisyUI button footprint so state changes don't shift layout */
+	border: 1px solid transparent;
+	transition: background-color 150ms ease, color 150ms ease,
+		border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.cally::part(day):hover {
+	background: hsl(var(--b2));
+}
+
+.cally::part(day)[aria-selected="true"] {
+	/* DaisyUI primary button look */
+	background: hsl(var(--p));
+	color: hsl(var(--pc));
+	border-color: hsl(var(--p));
+	box-shadow: 0 1px 0 hsl(var(--p) / 0.4) inset;
+}
+
+.cally::part(day)[aria-selected="true"]:hover {
+	filter: brightness(0.98);
+}
+
+.cally::part(day):focus-visible {
+	outline: 2px solid hsl(var(--p));
+	outline-offset: 2px;
+}
+
+.cally::part(day)[aria-current="date"] {
+	/* DaisyUI outline button look for Today */
+	border-color: hsl(var(--p) / 0.6);
+	color: hsl(var(--p));
+}
+
+.cally::part(day)[aria-disabled="true"] {
+	opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cally {
+		transition: none;
+	}
 }
 
 /* CSS-based light theme switching */
@@ -328,7 +415,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -375,7 +462,7 @@ html:not([data-theme]) {
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;
-	--depth: 0;
+	--depth: 1;
 	--noise: 0;
 
 	/* Custom semantic tokens for components */
@@ -383,21 +470,6 @@ html:not([data-theme]) {
 	--color-card: var(--gray-1, #fcfcfc);
 	--color-sidebar: var(--gray-3, #f0f0f0);
 	--color-sidebar-border: var(--gray-4, #e8e8e8);
-}
-
-/* Stronger selection styles (appended last to win cascade) */
-.ProseMirror::selection,
-.ProseMirror ::selection,
-.ProseMirror *::selection {
-	background: rgba(59, 130, 246, 0.45) !important; /* blue-500 @ 45% */
-	color: #ffffff !important;
-}
-
-.ProseMirror::-moz-selection,
-.ProseMirror ::-moz-selection,
-.ProseMirror *::-moz-selection {
-	background: rgba(59, 130, 246, 0.45) !important;
-	color: #ffffff !important;
 }
 
 /* Global selection styles for the whole UI */
@@ -485,74 +557,6 @@ html:not([data-theme]) {
 	hyphens: auto;
 }
 
-/* Use Tailwind Typography prose styling for TipTap editor */
-.ProseMirror {
-	@apply prose max-w-none prose-h1:text-2xl prose-h2:text-xl prose-headings:text-lg;
-}
-
-/* Custom prose styling for dark theme */
-.prose {
-	--tw-prose-body: hsl(var(--bc));
-	--tw-prose-headings: hsl(var(--bc));
-	--tw-prose-lead: hsl(var(--bc) / 0.8);
-	--tw-prose-links: hsl(var(--p));
-	--tw-prose-bold: hsl(var(--bc));
-	--tw-prose-counters: hsl(var(--bc) / 0.6);
-	--tw-prose-bullets: hsl(var(--bc) / 0.6);
-	--tw-prose-hr: hsl(var(--bc) / 0.2);
-	--tw-prose-quotes: hsl(var(--bc) / 0.8);
-	--tw-prose-quote-borders: hsl(var(--bc) / 0.2);
-	--tw-prose-captions: hsl(var(--bc) / 0.6);
-	--tw-prose-code: hsl(var(--bc));
-	--tw-prose-pre-code: hsl(var(--bc));
-	--tw-prose-pre-bg: hsl(var(--b2));
-	--tw-prose-th-borders: hsl(var(--bc) / 0.2);
-	--tw-prose-td-borders: hsl(var(--bc) / 0.1);
-}
-
-/* Consistent line height for all paragraph types */
-.ProseMirror p {
-	line-height: 1.5 !important;
-	margin-top: 0 !important;
-	margin-bottom: 0.75em !important;
-}
-
-/* Line breaks (Shift+Enter) should have same line height as paragraphs */
-.ProseMirror br {
-	line-height: 1.5 !important;
-}
-
-.ProseMirror br + * {
-	line-height: 1.5 !important;
-}
-
-/* Ensure hard breaks have consistent spacing */
-.ProseMirror .hard-break {
-	line-height: 1.5 !important;
-	display: block;
-	margin: 0;
-	padding: 0;
-}
-
-/* Ensure consistent spacing for lists */
-.ProseMirror ul,
-.ProseMirror ol {
-	line-height: 1.5 !important;
-	margin: 0.75em 0 !important;
-	padding-left: 1.5em !important;
-}
-
-.ProseMirror li {
-	line-height: 1.5 !important;
-	margin-bottom: 0.25em !important;
-	display: list-item !important;
-}
-
-.ProseMirror li p {
-	margin: 0 !important;
-	line-height: 1.5 !important;
-}
-
 /* Custom Scrollbar Styles */
 .scrollbar-thin {
 	scrollbar-width: thin;
@@ -577,7 +581,45 @@ html:not([data-theme]) {
 
 /* Subtle dotted background utility for pages/containers */
 .bg-dots {
-	background-image: radial-gradient(hsl(var(--bc) / 0.08) 1px, transparent 1px);
-	background-size: 14px 14px;
+	/* Provide safe defaults that don't rely on DaisyUI vars */
+	background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+	background-size: 18px 18px;
 	background-position: 0 0;
+}
+
+/* Increase legibility in dark theme */
+[data-theme="dark"] .bg-dots,
+.dark .bg-dots,
+.dark-theme .bg-dots {
+	background-image: radial-gradient(
+		rgba(255, 255, 255, 0.1) 1px,
+		transparent 1px
+	);
+}
+
+/* Optional denser variant */
+.bg-dots-sm {
+	background-size: 12px 12px;
+}
+
+/* Fix: date input calendar icon contrast in modals (DaisyUI) */
+.modal input[type="date"]::-webkit-calendar-picker-indicator {
+	opacity: 0.85;
+}
+
+[data-theme="dark"]
+	.modal
+	input[type="date"]::-webkit-calendar-picker-indicator,
+.dark .modal input[type="date"]::-webkit-calendar-picker-indicator,
+.dark-theme .modal input[type="date"]::-webkit-calendar-picker-indicator {
+	/* Invert to keep icon visible on dark backgrounds */
+	filter: invert(1) grayscale(100%);
+}
+
+[data-theme="light"]
+	.modal
+	input[type="date"]::-webkit-calendar-picker-indicator,
+.light .modal input[type="date"]::-webkit-calendar-picker-indicator,
+.light-theme .modal input[type="date"]::-webkit-calendar-picker-indicator {
+	filter: none;
 }

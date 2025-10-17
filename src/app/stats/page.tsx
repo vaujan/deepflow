@@ -6,8 +6,8 @@ import FocusStreakLazy from "../../components/ui/focus-streak-lazy";
 import TagsOverviewLazy from "@/src/components/ui/tags-overview-lazy";
 import PeakFocusWindowChartLazy from "@/src/components/ui/peak-focus-window-chart-lazy";
 import LazyStatsOverview from "../../components/ui/stats-overview-lazy";
-import Sidebar from "@/src/components/ui/sidebar";
-import Header from "@/src/components/ui/header";
+
+export const dynamic = "force-dynamic";
 
 export default function StatsPage() {
 	return (

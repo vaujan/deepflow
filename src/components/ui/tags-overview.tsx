@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { mockSessions } from "../../data/mockSessions";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 // Using theme colors via CSS variables; no per-tag color mapping needed
 
 interface TagData {
@@ -13,12 +13,14 @@ interface TagData {
 
 type BarChartData = TagData;
 
-const calculateTagStats = (): TagData[] => {
+const calculateTagStats = (
+	sessions: Array<{ tags: string[]; elapsedTime: number }>
+): TagData[] => {
 	// Aggregate focus time by tags
 	const tagTimeMap = new Map<string, { totalTime: number; sessions: number }>();
 
-	mockSessions.forEach((session) => {
-		session.tags.forEach((tag) => {
+	sessions.forEach((session) => {
+		session.tags.forEach((tag: string) => {
 			const current = tagTimeMap.get(tag) || { totalTime: 0, sessions: 0 };
 			tagTimeMap.set(tag, {
 				totalTime: current.totalTime + session.elapsedTime,
@@ -54,7 +56,18 @@ const formatTime = (seconds: number): string => {
 };
 
 export default function TagsOverview() {
-	const tagStats = useMemo(() => calculateTagStats(), []);
+	const fromIso = useMemo(() => {
+		const now = new Date();
+		const start = new Date(now);
+		start.setHours(0, 0, 0, 0);
+		start.setDate(start.getDate() - 29);
+		return start.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({ from: fromIso });
+	const tagStats = useMemo(
+		() => calculateTagStats(savedSessions as any),
+		[savedSessions]
+	);
 
 	// Prepare data for bar chart (single color applied via bar fill)
 	const barData: BarChartData[] = tagStats;
