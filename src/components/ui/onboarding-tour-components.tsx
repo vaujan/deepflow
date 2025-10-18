@@ -2,25 +2,12 @@
 
 import React from "react";
 import {
-	CheckCircle,
 	ArrowRight,
 	ArrowLeft,
 	X,
 	SkipForward,
+	CheckCircle,
 } from "lucide-react";
-
-// Custom Badge Component
-export function CustomBadge({ children, ...props }: any) {
-	return (
-		<div
-			{...props}
-			className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white shadow-lg"
-		>
-			<CheckCircle className="w-3 h-3" />
-			{children}
-		</div>
-	);
-}
 
 // Custom Controls Component
 export function CustomControls({
@@ -39,11 +26,7 @@ export function CustomControls({
 			<button
 				onClick={() => setCurrentStep(currentStep - 1)}
 				disabled={isFirstStep}
-				className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-					isFirstStep
-						? "opacity-50 cursor-not-allowed"
-						: "hover:bg-gray-100 dark:hover:bg-gray-700"
-				}`}
+				className={`btn btn-ghost btn-sm ${isFirstStep ? "btn-disabled" : ""}`}
 			>
 				<ArrowLeft className="w-4 h-4" />
 				Previous
@@ -56,10 +39,10 @@ export function CustomControls({
 						key={i}
 						className={`w-2 h-2 rounded-full transition-all ${
 							i === currentStep
-								? "bg-blue-500 scale-125"
+								? "bg-primary scale-125"
 								: i < currentStep
-								? "bg-blue-300"
-								: "bg-gray-300 dark:bg-gray-600"
+								? "bg-primary/60"
+								: "bg-base-300"
 						}`}
 					/>
 				))}
@@ -74,7 +57,7 @@ export function CustomControls({
 						setCurrentStep(currentStep + 1);
 					}
 				}}
-				className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-all"
+				className="btn btn-primary btn-sm"
 			>
 				{isLastStep ? "Finish" : "Next"}
 				{isLastStep ? (
@@ -92,9 +75,9 @@ export function CustomPopover({ children, ...props }: any) {
 	return (
 		<div
 			{...props}
-			className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-md"
+			className="card bg-base-100 shadow-xl border border-base-300 max-w-md"
 		>
-			{children}
+			<div className="card-body p-6">{children}</div>
 		</div>
 	);
 }
@@ -104,11 +87,16 @@ export function CustomCloseButton({ onClick, ...props }: any) {
 	return (
 		<button
 			{...props}
-			onClick={onClick}
-			className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+			onClick={(e) => {
+				onClick?.(e);
+				// Trigger the tour close event
+				const event = new CustomEvent("tour:close");
+				window.dispatchEvent(event);
+			}}
+			className="btn btn-ghost btn-sm btn-circle absolute top-4 right-4"
 			aria-label="Close tour"
 		>
-			<X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+			<X className="w-5 h-5" />
 		</button>
 	);
 }
@@ -119,7 +107,7 @@ export function CustomSkipButton({ onClick, ...props }: any) {
 		<button
 			{...props}
 			onClick={onClick}
-			className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+			className="btn btn-ghost btn-sm text-neutral-content hover:text-base-content"
 		>
 			<SkipForward className="w-4 h-4" />
 			Skip Tour

@@ -13,14 +13,17 @@ export default function Header() {
 					{/* active widgets count */}
 					<WidgetList />
 					<div className="flex gap-4 items-center">
-						<button
-							onClick={startTour}
-							className="p-2 rounded-lg hover:bg-gray-4 focus:outline-none focus:ring-2 focus:ring-blue-9 focus:ring-offset-2 focus:ring-offset-gray-2 transition-colors"
-							aria-label="Replay tutorial"
-							data-tour="help-button"
-						>
-							<HelpCircle className="w-5 h-5 text-gray-11 hover:text-gray-12" />
-						</button>
+						<div className="tooltip tooltip-bottom">
+							<div className="tooltip-content">Help</div>
+							<button
+								onClick={startTour}
+								className="btn btn-sm btn-circle btn-ghost"
+								aria-label="Replay tutorial"
+								data-tour="help-button"
+							>
+								<HelpCircle className="size-4 text-base-content/50" />
+							</button>
+						</div>
 						<Profile />
 					</div>
 				</div>

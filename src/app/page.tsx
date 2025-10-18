@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-
 import Header from "../components/ui/header";
 import WidgetsContainer from "../components/ui/widgets-container";
 import {

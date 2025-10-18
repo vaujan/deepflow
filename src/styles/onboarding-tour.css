@@ -13,12 +13,10 @@
 @keyframes highlightPulse {
 	0%,
 	100% {
-		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3),
-			0 0 0 8px rgba(59, 130, 246, 0.1);
+		box-shadow: 0 0 0 4px var(--color-primary), 0 0 0 8px var(--color-primary);
 	}
 	50% {
-		box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.4),
-			0 0 0 12px rgba(59, 130, 246, 0.15);
+		box-shadow: 0 0 0 6px var(--color-primary), 0 0 0 12px var(--color-primary);
 	}
 }
 
@@ -32,12 +30,10 @@
 @keyframes highlightPulseDark {
 	0%,
 	100% {
-		box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4),
-			0 0 0 8px rgba(59, 130, 246, 0.2);
+		box-shadow: 0 0 0 4px var(--color-primary), 0 0 0 8px var(--color-primary);
 	}
 	50% {
-		box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.5),
-			0 0 0 12px rgba(59, 130, 246, 0.25);
+		box-shadow: 0 0 0 6px var(--color-primary), 0 0 0 12px var(--color-primary);
 	}
 }
 
