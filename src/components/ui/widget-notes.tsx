@@ -1,277 +1,524 @@
 "use client";
 
-import { Plus, Trash2, Edit3, X, Notebook, Ellipsis } from "lucide-react";
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import ContextMenuEditor from "./context-menu-editor";
-import { mockNotes, type Note } from "../../data/mockNotes";
+import { Plus, Trash2, Notebook } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import { toast } from "sonner";
+
+const MilkdownEditor = dynamic(() => import("./milkdown-editor"), {
+	ssr: false,
+});
+
+interface Note {
+	id: number;
+	title: string;
+	content: string;
+	timestamp: string;
+	_clientId?: string; // Stable client-side ID for React keys
+}
 
 export default function WidgetNotes() {
-	const [notes, setNotes] = useState<Note[]>(mockNotes);
-	const [editingNote, setEditingNote] = useState<number | null>(null);
-	const [isAddingNew, setIsAddingNew] = useState(false);
-	const [newNoteTitle, setNewNoteTitle] = useState("");
-	const [newNoteContent, setNewNoteContent] = useState("<p></p>");
-	const [originalNote, setOriginalNote] = useState<Note | null>(null);
-
-	// Refs for click-outside detection
-	const addNoteRef = useRef<HTMLDivElement>(null);
-	const editNoteRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-
-	// Debounced update for smoother experience
-	const debouncedUpdate = useCallback(
-		(() => {
-			let timeoutId: NodeJS.Timeout;
-			return (id: number, updates: Partial<Note>) => {
-				clearTimeout(timeoutId);
-				timeoutId = setTimeout(() => {
-					setNotes(
-						notes.map((note) =>
-							note.id === id
-								? { ...note, ...updates, timestamp: "Just now" }
-								: note
-						)
-					);
-				}, 150);
-			};
-		})(),
-		[notes]
+	const [notes, setNotes] = useState<Note[] | null>(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const cached = localStorage.getItem("notes-cache");
+				if (cached) {
+					const parsed = JSON.parse(cached);
+					if (Array.isArray(parsed)) {
+						// Ensure cached notes have client IDs
+						return parsed.map((note: Note) => ({
+							...note,
+							_clientId: note._clientId || crypto.randomUUID(),
+						}));
+					}
+				}
+			} catch {}
+		}
+		return null;
+	});
+	const [loading, setLoading] = useState(() => notes === null);
+	const [newlyCreatedNoteId, setNewlyCreatedNoteId] = useState<number | null>(
+		null
 	);
+	const [savingNotes, setSavingNotes] = useState<Set<number>>(new Set());
+	const [saveStatus, setSaveStatus] = useState<
+		Map<number, "saved" | "saving" | "error" | "pending">
+	>(new Map());
+	const updateTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+	const newlyCreatedNoteIdRef = useRef<number | null>(null);
 
-	const addNote = () => {
-		if (newNoteTitle.trim() && newNoteContent.trim() !== "<p></p>") {
-			const newNote: Note = {
-				id: Date.now(),
-				title: newNoteTitle,
-				content: newNoteContent,
-				timestamp: "Just now",
-			};
-			setNotes([newNote, ...notes]);
-			setIsAddingNew(false);
-		}
-	};
-
-	const deleteNote = (id: number) => {
-		setNotes(notes.filter((note) => note.id !== id));
-		if (editingNote === id) {
-			setEditingNote(null);
-		}
-	};
-
-	const updateNote = (id: number, updates: Partial<Note>) => {
-		// Immediate update for UI responsiveness
-		setNotes(
-			notes.map((note) =>
-				note.id === id ? { ...note, ...updates, timestamp: "Just now" } : note
-			)
-		);
-		// Debounced update for smoother experience
-		debouncedUpdate(id, updates);
-	};
-
-	const startEditing = (id: number) => {
-		const noteToEdit = notes.find((note) => note.id === id);
-		if (noteToEdit) {
-			setOriginalNote({ ...noteToEdit });
-			setEditingNote(id);
-		}
-	};
-
-	const stopEditing = () => {
-		if (editingNote) {
-			setEditingNote(null);
-			setOriginalNote(null);
-		}
-	};
-
-	const cancelEditing = () => {
-		if (editingNote && originalNote) {
-			// Revert the note to its original state
-			setNotes(
-				notes.map((note) => (note.id === editingNote ? originalNote : note))
-			);
-			setEditingNote(null);
-			setOriginalNote(null);
-		}
-	};
-
-	const startAddingNew = () => {
-		setIsAddingNew(true);
-		setEditingNote(null);
-		setNewNoteTitle("Untitled");
-		setNewNoteContent("<p></p>");
-	};
-
-	const cancelAddingNew = () => {
-		setIsAddingNew(false);
-		setNewNoteTitle("");
-		setNewNoteContent("<p></p>");
-	};
-
-	// Global escape key handler
+	// Keep ref in sync with state
 	useEffect(() => {
-		const handleGlobalKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				if (isAddingNew) {
-					event.preventDefault();
-					cancelAddingNew();
-				} else if (editingNote !== null) {
-					event.preventDefault();
-					cancelEditing();
+		newlyCreatedNoteIdRef.current = newlyCreatedNoteId;
+	}, [newlyCreatedNoteId]);
+
+	// Restore unsaved note ID from cache on initial load and trigger save
+	const hasRestoredRef = useRef(false);
+	const pendingSaveRef = useRef<{ id: number; content: string } | null>(null);
+	useEffect(() => {
+		if (notes !== null && !hasRestoredRef.current) {
+			const unsavedNote = notes.find((n) => n.id > 1000000000000);
+			if (unsavedNote && unsavedNote.content) {
+				setNewlyCreatedNoteId(unsavedNote.id);
+				// Store for triggering save after component is ready
+				pendingSaveRef.current = {
+					id: unsavedNote.id,
+					content: unsavedNote.content,
+				};
+			}
+			hasRestoredRef.current = true;
+		}
+	}, [notes]); // Run when notes are loaded
+
+	// Extract title from markdown content (first heading)
+	const extractTitle = (content: string): string => {
+		const match = content.match(/^#\s+(.+)$/m);
+		return match ? match[1].trim() : "Untitled";
+	};
+
+	// Get status icon and color for save status
+	const getStatusIcon = (noteId: number) => {
+		const status = saveStatus.get(noteId);
+
+		switch (status) {
+			case "saving":
+				return (
+					<div
+						className="size-1.5 rounded-full bg-base-content/40 animate-pulse"
+						title="Saving..."
+					/>
+				);
+			case "saved":
+				return (
+					<div
+						className="size-1.5 rounded-full bg-base-content/60"
+						title="Saved"
+					/>
+				);
+			case "error":
+				return (
+					<div
+						className="size-1.5 rounded-full bg-error/60"
+						title="Save failed"
+					/>
+				);
+			case "pending":
+				return (
+					<div
+						className="size-1.5 rounded-full bg-base-content/30 animate-pulse"
+						title="Pending save..."
+					/>
+				);
+			default:
+				return null;
+		}
+	};
+
+	// Generate idempotency key
+	const generateIdempotencyKey = (prefix: string) => {
+		try {
+			return `${prefix}-${crypto.randomUUID()}`;
+		} catch {
+			return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+		}
+	};
+
+	// Ensure all notes have client IDs
+	const ensureClientIds = (notes: Note[]): Note[] => {
+		return notes.map((note) => ({
+			...note,
+			_clientId: note._clientId || crypto.randomUUID(),
+		}));
+	};
+
+	// Initial fetch - load from cache first, then sync with server
+	useEffect(() => {
+		(async () => {
+			// If we have cached data, we're already not loading
+			if (notes !== null) {
+				setLoading(false);
+			}
+
+			try {
+				const res = await fetch("/api/notes");
+				if (!res.ok)
+					throw new Error((await res.json()).error || "Failed to load notes");
+				const data = await res.json();
+
+				// Merge server data with local unsaved notes
+				setNotes((current) => {
+					if (JSON.stringify(current) !== JSON.stringify(data)) {
+						// Preserve existing client IDs when syncing
+						const currentMap = new Map(
+							current?.map((n) => [n.id, n._clientId]) ?? []
+						);
+
+						const syncedNotes = data.map((note: Note) => ({
+							...note,
+							_clientId: currentMap.get(note.id) || crypto.randomUUID(),
+						}));
+
+						// Preserve unsaved notes (notes with temp timestamp IDs)
+						// Database IDs are typically small integers, temp IDs are timestamps (13 digits)
+						const unsavedNotes =
+							current?.filter((n) => n.id > 1000000000000) ?? [];
+
+						if (unsavedNotes.length > 0) {
+							// Merge: unsaved notes first, then synced notes
+							return [...unsavedNotes, ...syncedNotes];
+						}
+
+						return syncedNotes;
+					}
+					return current;
+				});
+			} catch (e: any) {
+				// Only show error if we don't have cached data
+				if (notes === null) {
+					toast.error(e.message || "Failed to load notes");
+				}
+			} finally {
+				setLoading(false);
+			}
+		})();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run once on mount
+
+	// Persist notes to cache whenever they change (only when non-null)
+	// Use requestIdleCallback for non-blocking writes
+	useEffect(() => {
+		if (notes === null) return;
+
+		const saveToCache = () => {
+			try {
+				localStorage.setItem("notes-cache", JSON.stringify(notes));
+			} catch (error) {
+				console.warn("Failed to cache notes:", error);
+			}
+		};
+
+		// Use requestIdleCallback if available, otherwise setTimeout
+		if (typeof requestIdleCallback !== "undefined") {
+			requestIdleCallback(saveToCache);
+		} else {
+			setTimeout(saveToCache, 0);
+		}
+	}, [notes]);
+
+	// Add new note (local only until user types)
+	const addNote = async () => {
+		// Generate a stable client ID for React key
+		const clientId = crypto.randomUUID();
+		const tempId = Date.now();
+
+		const newNote: Note = {
+			id: tempId,
+			title: "Untitled",
+			content: "", // Start with empty content for auto-focus
+			timestamp: "Just now",
+			_clientId: clientId,
+		};
+
+		// Add to local state immediately
+		setNotes((prev) => [newNote, ...(prev ?? [])]);
+		setNewlyCreatedNoteId(tempId);
+
+		// Note will be created in database when user types content (via updateNote)
+	};
+
+	// Delete note with optimistic update
+	const deleteNote = async (id: number, title: string) => {
+		if (
+			!confirm(
+				`Are you sure you want to delete "${title}"? This action cannot be undone.`
+			)
+		) {
+			return;
+		}
+
+		const isNewNote = newlyCreatedNoteId === id;
+		const isTempNote = id > 1000000000000; // Temp notes have timestamp IDs
+		const previous = notes;
+
+		// Optimistic update - remove immediately from UI
+		setNotes((prev) => (prev ?? []).filter((note) => note.id !== id));
+
+		// If it's a new note or temp note that hasn't been saved, just clear the flag
+		if (isNewNote || isTempNote) {
+			setNewlyCreatedNoteId(null);
+			return;
+		}
+
+		// Delete from server with retry
+		const deleteWithRetry = async (retryCount = 0) => {
+			try {
+				const res = await fetch(`/api/notes/${id}`, {
+					method: "DELETE",
+					headers: {
+						"Idempotency-Key": generateIdempotencyKey(`notes:delete:${id}`),
+					},
+				});
+
+				if (!res.ok) throw new Error("Failed to delete note");
+			} catch (e: any) {
+				if (retryCount < 2) {
+					// Retry silently
+					setTimeout(
+						() => deleteWithRetry(retryCount + 1),
+						1000 * (retryCount + 1)
+					);
+				} else {
+					// Final failure - show error and rollback
+					toast.error(e.message || "Failed to delete note");
+					setNotes(previous);
 				}
 			}
 		};
 
-		// Only add listener when we're in adding or editing mode
-		if (isAddingNew || editingNote !== null) {
-			document.addEventListener("keydown", handleGlobalKeyDown);
-		}
-
-		return () => {
-			document.removeEventListener("keydown", handleGlobalKeyDown);
-		};
-	}, [isAddingNew, editingNote]);
-
-	// Click outside handler
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as Node;
-
-			// Check if clicking outside add note form
-			if (
-				isAddingNew &&
-				addNoteRef.current &&
-				!addNoteRef.current.contains(target)
-			) {
-				cancelAddingNew();
-			}
-
-			// Check if clicking outside edit note form
-			if (
-				editingNote !== null &&
-				editNoteRefs.current[editingNote] &&
-				!editNoteRefs.current[editingNote]?.contains(target)
-			) {
-				cancelEditing();
-			}
-		};
-
-		// Only add listener when we're in adding or editing mode
-		if (isAddingNew || editingNote !== null) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [isAddingNew, editingNote]);
-
-	const renderContent = (content: string) => {
-		return (
-			<ContextMenuEditor
-				content={content}
-				onChange={() => {}} // No-op for read mode
-				editable={false}
-				className="h-fit -m-4"
-			/>
-		);
+		deleteWithRetry();
 	};
 
-	return (
-		<div className="w-full min-w-lg max-w-xl h-full group flex flex-col gap-2 overflow-hidden">
-			<div className="flex justify-between items-center text-base-content/80 group">
-				<div className="flex gap-2 items-center justify-center w-fit ">
-					<span className="font-medium text-lg">Notes</span>
-					<button className="btn btn-xs btn-circle btn-ghost invisible group-hover:visible">
-						<Ellipsis className="size-4" />
-					</button>
-				</div>
-				<button
-					className={`btn btn-circle btn-sm ${
-						isAddingNew || editingNote !== null
-							? "btn-ghost opacity-50"
-							: "btn-ghost"
-					}`}
-					onClick={startAddingNew}
-					disabled={isAddingNew || editingNote !== null}
-					title={
-						isAddingNew || editingNote !== null
-							? "Finish current note first"
-							: "Add new note"
+	// Update note with debouncing and retry logic
+	const updateNote = (id: number, content: string) => {
+		const title = extractTitle(content);
+		const isNewNote = newlyCreatedNoteId === id;
+
+		// Update UI immediately
+		setNotes((prev) =>
+			(prev ?? []).map((note) =>
+				note.id === id
+					? { ...note, content, title, timestamp: "Just now" }
+					: note
+			)
+		);
+
+		// Mark as pending save
+		setSaveStatus((prev) => new Map(prev).set(id, "pending"));
+
+		// Clear existing timeout for this note
+		const existingTimeout = updateTimeoutsRef.current.get(id);
+		if (existingTimeout) {
+			clearTimeout(existingTimeout);
+			updateTimeoutsRef.current.delete(id);
+		}
+
+		// Debounce backend save with retry
+		const saveWithRetry = async (retryCount = 0) => {
+			// Check if this is still a new note (use ref to get current value)
+			const isStillNewNote = newlyCreatedNoteIdRef.current === id;
+
+			// Mark as saving
+			setSavingNotes((prev) => new Set(prev).add(id));
+			setSaveStatus((prev) => new Map(prev).set(id, "saving"));
+
+			try {
+				if (isStillNewNote) {
+					// Create new note in database
+					const res = await fetch("/api/notes", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Idempotency-Key": generateIdempotencyKey("notes:create"),
+						},
+						body: JSON.stringify({ title, content }),
+					});
+
+					if (!res.ok) {
+						const errorData = await res.json().catch(() => ({}));
+						throw new Error(errorData.error || "Failed to create note");
 					}
+
+					const data = await res.json();
+
+					// Update the temp note with server data, preserving client ID
+					setNotes((prev) =>
+						(prev ?? []).map((n) =>
+							n.id === id ? { ...data, _clientId: n._clientId } : n
+						)
+					);
+
+					// Update the saving state to use the real ID
+					setSavingNotes((prev) => {
+						const newSet = new Set(prev);
+						newSet.delete(id); // Remove temp ID
+						newSet.delete(data.id); // Also clear real ID if it was there
+						return newSet;
+					});
+
+					// Clear the newly created flag
+					setNewlyCreatedNoteId(null);
+
+					// Mark as saved
+					setSaveStatus((prev) => new Map(prev).set(id, "saved"));
+				} else {
+					// Update existing note
+					const res = await fetch(`/api/notes/${id}`, {
+						method: "PATCH",
+						headers: {
+							"Content-Type": "application/json",
+							"Idempotency-Key": generateIdempotencyKey(`notes:update:${id}`),
+						},
+						body: JSON.stringify({ content, title }),
+					});
+
+					if (!res.ok) throw new Error("Failed to update note");
+
+					// Remove from saving state
+					setSavingNotes((prev) => {
+						const newSet = new Set(prev);
+						newSet.delete(id);
+						return newSet;
+					});
+
+					// Mark as saved
+					setSaveStatus((prev) => new Map(prev).set(id, "saved"));
+				}
+			} catch (e: any) {
+				// Retry up to 2 times for network issues
+				if (retryCount < 2) {
+					setTimeout(
+						() => saveWithRetry(retryCount + 1),
+						1000 * (retryCount + 1)
+					);
+				} else {
+					toast.error("Failed to save note");
+					setSaveStatus((prev) => new Map(prev).set(id, "error"));
+				}
+			} finally {
+				// Final cleanup - remove from saving state
+				setSavingNotes((prev) => {
+					const newSet = new Set(prev);
+					newSet.delete(id);
+					return newSet;
+				});
+			}
+		};
+
+		const timeout = setTimeout(() => {
+			// Clean up the timeout from the map when it fires
+			updateTimeoutsRef.current.delete(id);
+			saveWithRetry();
+		}, 10000); // 10 seconds debounce
+		updateTimeoutsRef.current.set(id, timeout);
+	};
+
+	// Trigger save for restored unsaved notes after component is ready
+	useEffect(() => {
+		if (pendingSaveRef.current && !loading) {
+			const { id, content } = pendingSaveRef.current;
+			// Trigger save after a short delay to ensure component is fully mounted
+			setTimeout(() => {
+				updateNote(id, content);
+			}, 500);
+			pendingSaveRef.current = null;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [loading]); // Trigger when loading completes
+
+	// Background sync - periodically sync with server when tab is visible
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+
+		const syncWithServer = async () => {
+			if (document.hidden || !notes) return;
+
+			try {
+				const res = await fetch("/api/notes");
+				if (!res.ok) return;
+				const data = await res.json();
+
+				// Update if server has newer data
+				setNotes((current) => {
+					if (!current || JSON.stringify(current) !== JSON.stringify(data)) {
+						// Preserve existing client IDs when syncing
+						const currentMap = new Map(
+							current?.map((n) => [n.id, n._clientId]) ?? []
+						);
+
+						const syncedNotes = data.map((note: Note) => ({
+							...note,
+							_clientId: currentMap.get(note.id) || crypto.randomUUID(),
+						}));
+
+						// Preserve ALL unsaved notes (notes with temp timestamp IDs)
+						// Database IDs are typically small integers, temp IDs are timestamps (13 digits)
+						const unsavedNotes =
+							current?.filter((n) => n.id > 1000000000000) ?? [];
+
+						if (unsavedNotes.length > 0) {
+							// Merge: unsaved notes first, then synced notes
+							return [...unsavedNotes, ...syncedNotes];
+						}
+
+						return syncedNotes;
+					}
+					return current;
+				});
+			} catch (error) {
+				// Silent sync failures - no need to log
+			}
+		};
+
+		// Sync every 30 seconds when tab is visible
+		const interval = setInterval(syncWithServer, 30000);
+
+		// Sync when tab becomes visible
+		const handleVisibilityChange = () => {
+			if (!document.hidden) {
+				syncWithServer();
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+
+		return () => {
+			clearInterval(interval);
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			// Don't clear timeouts here - let them complete naturally
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [notes]); // newlyCreatedNoteId accessed via ref
+
+	// Cleanup timeouts only on component unmount
+	useEffect(() => {
+		return () => {
+			updateTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+			updateTimeoutsRef.current.clear();
+		};
+	}, []); // Only run on unmount
+
+	return (
+		<div className="flex h-full w-full flex-col gap-3 overflow-hidden">
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<span className="text-lg font-medium text-base-content/80">Notes</span>
+				<button
+					className="btn btn-circle btn-sm btn-ghost"
+					onClick={addNote}
+					type="button"
+					aria-label="Add new note"
+					title="Add new note"
 				>
-					<Plus className="size-3" />
+					<Plus className="size-4" />
 				</button>
 			</div>
-			{/* New note form */}
-			{isAddingNew && (
-				<div
-					ref={addNoteRef}
-					className="w-full card text-base-content/90 overflow-hidden bg-card border border-border shadow-xs"
-				>
-					<div className="flex justify-between p-4">
-						<div className="flex items-center gap-2">
-							<input
-								type="text"
-								placeholder="Note title..."
-								className="border-b-1  border-base-content/50  outline-base-content/10 focus:outline-0 w-32"
-								value={newNoteTitle}
-								onChange={(e) => setNewNoteTitle(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter" && e.shiftKey) {
-										e.preventDefault();
-										addNote();
-									} else if (e.key === "Escape") {
-										e.preventDefault();
-										cancelAddingNew();
-									}
-								}}
-							/>
-						</div>
-						<div className="flex gap-2">
-							<button
-								className="btn btn-sm btn-ghost"
-								onClick={addNote}
-								disabled={
-									!newNoteTitle.trim() || newNoteContent.trim() === "<p></p>"
-								}
-							>
-								Add
-								<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
-								<kbd className="kbd kbd-xs">enter</kbd>
-							</button>
-							<button
-								className="btn btn-ghost btn-sm btn-circle"
-								onClick={cancelAddingNew}
-							>
-								<X className="size-3" />
-							</button>
-						</div>
-					</div>
 
-					<ContextMenuEditor
-						content={newNoteContent}
-						onChange={setNewNoteContent}
-						className="h-fit"
-						autoFocus={true}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && e.shiftKey) {
-								e.preventDefault();
-								addNote();
-							} else if (e.key === "Escape") {
-								e.preventDefault();
-								cancelAddingNew();
-							}
-						}}
-					/>
-				</div>
-			)}{" "}
-			{/* Note list */}
-			<div
-				className={`flex flex-col gap-4 rounded-box flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${
-					editingNote !== null || isAddingNew ? "relative" : ""
-				}`}
-			>
-				{notes.length === 0 && !isAddingNew ? (
+			{/* Notes list */}
+			<div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-2">
+				{loading && notes === null ? (
+					// Loading skeleton
+					<>
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div
+								key={i}
+								className="card bg-base-200 shadow-sm p-3 flex flex-col gap-2"
+							>
+								<div className="skeleton h-4 w-24" />
+								<div className="skeleton h-20 w-full" />
+							</div>
+						))}
+					</>
+				) : (notes?.length ?? 0) === 0 ? (
 					// Empty state
 					<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
 						<div className="size-16 mb-6 rounded-full bg-base-200 flex items-center justify-center">
@@ -284,141 +531,56 @@ export default function WidgetNotes() {
 							Start capturing your thoughts, ideas, and important information.
 							Create your first note to get started.
 						</p>
-						<button onClick={startAddingNew} className="btn btn-sm gap-2">
+						<button onClick={addNote} className="btn btn-sm gap-2">
 							<Plus className="size-4" />
 							Create your first note
 						</button>
 					</div>
 				) : (
-					notes.map((note) => (
+					// Notes
+					(notes ?? []).map((note) => (
 						<div
-							key={note.id}
-							ref={(el) => {
-								if (editingNote === note.id) {
-									editNoteRefs.current[note.id] = el;
-								}
-							}}
-							className={`w-full border-border border shadow-xs card text-base-content/90 p-4 transition-all ease-out group ${
-								editingNote === note.id
-									? "bg-card"
-									: editingNote !== null || isAddingNew
-									? "bg-card opacity-40"
-									: "bg-card"
-							}`}
-							onClick={() => {
-								// Only handle clicks when not in editing mode
-								if (editingNote !== note.id) {
-									// Handle note selection or other actions here if needed
-								}
-							}}
+							key={note._clientId || note.id}
+							className="card bg-base-200 shadow-sm relative group"
 						>
-							{editingNote === note.id ? (
-								// Editing mode - same interface as adding new note
-								<>
-									<div className="flex justify-between p-4 -m-4 mb-3">
-										<div className="flex items-center gap-2">
-											<input
-												type="text"
-												placeholder="Note title..."
-												className="border-b-1  border-base-content/50 outline-base-content/10 focus:outline-0 w-32"
-												value={note.title}
-												onChange={(e) =>
-													updateNote(note.id, { title: e.target.value })
-												}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" && e.shiftKey) {
-														e.preventDefault();
-														stopEditing();
-													} else if (e.key === "Escape") {
-														e.preventDefault();
-														cancelEditing();
-													}
-												}}
-											/>
-										</div>
-										<div className="flex gap-2">
-											<button
-												className="btn btn-sm btn-ghost"
-												onClick={stopEditing}
-												disabled={
-													!note.title.trim() ||
-													note.content.trim() === "<p></p>"
-												}
-											>
-												Save
-												<kbd className="ml-2 kbd kbd-xs">shift</kbd>+
-												<kbd className="kbd kbd-xs">enter</kbd>
-											</button>
-											<button
-												className="btn btn-ghost btn-sm btn-circle"
-												onClick={cancelEditing}
-											>
-												<X className="size-3" />
-											</button>
-										</div>
+							{/* Note header */}
+							<div className="card-body p-3 pb-2">
+								<div className="flex items-center justify-between gap-2">
+									<div className="flex items-center gap-2 min-w-0">
+										<h3
+											className="text-sm font-medium text-base-content/90 truncate max-w-[200px]"
+											title={note.title}
+										>
+											{note.title}
+										</h3>
+										<span className="text-xs text-base-content/50 flex-shrink-0 flex items-center gap-1">
+											{note.timestamp}
+											{getStatusIcon(note.id)}
+										</span>
 									</div>
-
-									<ContextMenuEditor
-										content={note.content}
-										onChange={(content) => updateNote(note.id, { content })}
-										className="h-fit -m-4"
-										autoFocus={true}
-										onKeyDown={(e) => {
-											if (e.key === "Enter" && e.shiftKey) {
-												e.preventDefault();
-												stopEditing();
-											} else if (e.key === "Escape") {
-												e.preventDefault();
-												cancelEditing();
-											}
-										}}
-									/>
-								</>
-							) : (
-								// Read mode
-								<>
-									{/* Note header with title, time, and actions */}
-									<div
-										className={`flex ${
-											note.title ? "justify-between" : "justify-end"
-										} text-base-content/50 items-center mb-3`}
+									{/* Delete button - shown on hover */}
+									<button
+										className="btn btn-xs btn-ghost btn-square opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+										onClick={() => deleteNote(note.id, note.title)}
+										title="Delete note"
+										aria-label="Delete note"
+										type="button"
 									>
-										{note.title && (
-											<span className="badge badge-sm rounded-sm">
-												{note.title}
-											</span>
-										)}
-										<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-											<p className="text-xs">{note.timestamp}</p>
-											<button
-												className="btn btn-sm btn-ghost btn-square"
-												onClick={(e) => {
-													e.stopPropagation();
-													startEditing(note.id);
-												}}
-												title="Edit note"
-											>
-												<Edit3 className="size-3" />
-											</button>
-											<button
-												className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/20"
-												onClick={(e) => {
-													e.stopPropagation();
-													deleteNote(note.id);
-												}}
-												title="Delete note"
-											>
-												<Trash2 className="size-3" />
-											</button>
-										</div>
-									</div>
+										<Trash2 className="size-3 text-error" />
+									</button>
+								</div>
+							</div>
 
-									{/* Note content */}
-									<div className="h-fit break-words">
-										{renderContent(note.content)}
-									</div>
-								</>
-							)}
+							{/* Editor container */}
+							<div className="px-3 pb-3">
+								<MilkdownEditor
+									content={note.content}
+									onChange={(content) => updateNote(note.id, content)}
+									className="min-h-[120px]"
+									autoFocus={newlyCreatedNoteId === note.id}
+									placeholder="Start writing..."
+								/>
+							</div>
 						</div>
 					))
 				)}

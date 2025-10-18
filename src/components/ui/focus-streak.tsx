@@ -2,8 +2,8 @@
 
 import React, { useMemo } from "react";
 import { Check, Circle, Flame } from "lucide-react";
-import { mockSessions } from "../../data/mockSessions";
 import { computeStreaks } from "../../lib/analytics";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 import { radixColorScales } from "../../utils/radixColorMapping";
 
 interface FocusStreakProps {
@@ -21,7 +21,19 @@ const startOfIsoWeek = (date: Date) => {
 };
 
 export default function FocusStreak({ className = "" }: FocusStreakProps) {
-	const streaks = useMemo(() => computeStreaks(mockSessions), []);
+	const jan1 = useMemo(() => {
+		const d = new Date(new Date().getFullYear(), 0, 1);
+		d.setHours(0, 0, 0, 0);
+		return d.toISOString();
+	}, []);
+	const { data: savedSessions = [] } = useStatsSessions({
+		from: jan1,
+		limit: 10000,
+	});
+	const streaks = useMemo(
+		() => computeStreaks(savedSessions as any),
+		[savedSessions]
+	);
 
 	// Build activity across the current ISO week (Mon..Sun)
 	const weekActivity = useMemo(() => {
@@ -31,14 +43,14 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 		end.setDate(end.getDate() + 7);
 
 		const active: boolean[] = Array.from({ length: 7 }, () => false);
-		for (const s of mockSessions) {
+		for (const s of savedSessions) {
 			if (s.startTime >= start && s.startTime < end) {
 				const idx = (s.startTime.getDay() + 6) % 7; // Mon=0..Sun=6
 				active[idx] = true;
 			}
 		}
 		return active;
-	}, []);
+	}, [savedSessions]);
 
 	const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -46,17 +58,17 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 		<div className={`w-full ${className}`}>
 			<div className="flex w-full gap-4">
 				{/* Current Streak Card */}
-				<div className="card border border-border w-full transition-all ease-out bg-card p-2">
-					<div className="h-full flex justify-between">
+				<div className="w-full p-2 transition-all ease-out border card border-border bg-card">
+					<div className="flex justify-between h-full">
 						<div className="flex flex-col w-full gap-4">
 							{/* Data & informations */}
 							<div className="flex gap-4">
-								<div className="flex gap-4 items-center border-r-1 border-border w-full p-4 h-fit">
+								<div className="flex items-center w-full gap-4 p-4 border-r-1 border-border h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
 											Daily Streak
 										</p>
-										<p className="text-2xl font-medium text-base-content font-mono">
+										<p className="font-mono text-2xl font-medium text-base-content">
 											{streaks.currentStreakDays}{" "}
 											{streaks.currentStreakDays === 1 ? "day" : "days"}
 										</p>
@@ -68,18 +80,18 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 
 									{/* Icon - only show if there are daily streaks */}
 									{streaks.currentStreakDays > 0 && (
-										<div className="bg-accent/20 size-8 flex justify-center items-center rounded-sm">
+										<div className="flex items-center justify-center rounded-sm bg-accent/20 size-8">
 											<Flame className="size-4 text-accent animate-pulse" />
 										</div>
 									)}
 								</div>
 
-								<div className="flex gap-4 items-center w-full p-4 h-fit">
+								<div className="flex items-center w-full gap-4 p-4 h-fit">
 									<div className="flex flex-col gap-1">
 										<p className="text-sm text-medium text-base-content/60">
 											Weekly Streak
 										</p>
-										<p className="text-2xl font-medium text-base-content font-mono">
+										<p className="font-mono text-2xl font-medium text-base-content">
 											{streaks.currentStreakWeeks}{" "}
 											{streaks.currentStreakWeeks === 1 ? "week" : "weeks"}
 										</p>
@@ -91,7 +103,7 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 
 									{/* Icon - only show if there are weekly streaks */}
 									{streaks.currentStreakWeeks > 0 && (
-										<div className="bg-accent/20 size-8 flex justify-center items-center rounded-sm">
+										<div className="flex items-center justify-center rounded-sm bg-accent/20 size-8">
 											<Flame className="size-4 text-accent animate-pulse" />
 										</div>
 									)}
@@ -99,8 +111,8 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 							</div>
 
 							{/* Weekly Activity Grid */}
-							<div className="bg-base-100 border border-border relative rounded-box flex p-4 justify-center items-center gap-3 overflow-x-auto">
-								<span className="text-xs invisible sm:visible absolute left-2 top-2 badge badge-neutral badge-soft font-medium text-base-content/70">
+							<div className="relative flex items-center justify-center gap-3 p-4 overflow-x-auto border bg-base-100 border-border rounded-box">
+								<span className="absolute invisible text-xs font-medium 2xl:visible left-2 top-2 badge badge-neutral badge-soft text-base-content/70">
 									W{" "}
 									{Math.ceil(
 										(new Date().getTime() -
@@ -131,14 +143,14 @@ export default function FocusStreak({ className = "" }: FocusStreakProps) {
 												`}
 											>
 												{isActive ? (
-													<Check className="size-4 text-white" />
+													<Check className="text-white size-4" />
 												) : isFuture ? (
 													<Circle className="size-4 text-base-content/20" />
 												) : (
 													<Circle className="size-4 text-base-content/30" />
 												)}
 												{isToday && (
-													<div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+													<div className="absolute w-2 h-2 bg-orange-500 rounded-full -top-1 -right-1"></div>
 												)}
 											</div>
 											<span

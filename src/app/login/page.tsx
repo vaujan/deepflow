@@ -78,13 +78,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-2 flex bg-dots items-center justify-center p-4">
       <div className="w-full bg-base-300 border border-border card max-w-md rounded-box shadow-xl p-8">
-                <h1
-                    ref={headingRef}
-                    tabIndex={-1}
-                    className="text-2xl font-bold text-base-content text-center mb-8 focus:outline-none"
-                >
-                    Welcome to DeepFlow
-                </h1>
 
         <div className="space-y-4">
           <button

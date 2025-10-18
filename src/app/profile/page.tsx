@@ -11,8 +11,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
+import Dock from "@/src/components/ui/widget-list";
+import Image from "next/image";
 import Sidebar from "@/src/components/ui/sidebar";
-import Dock from "@/src/components/ui/dock";
 
 export default function ProfilePage() {
 	const router = useRouter();
@@ -42,7 +43,7 @@ export default function ProfilePage() {
 							<div className="flex flex-col items-center text-center mb-8">
 								<div className="avatar avatar-online mb-6">
 									<div className="w-32 rounded-full">
-										<img
+										<Image
 											src="https://img.daisyui.com/images/profile/demo/gordon@192.webp"
 											alt="Profile"
 										/>

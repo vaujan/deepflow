@@ -48,14 +48,13 @@ export const generateMockSessions = (): Session[] => {
 			];
 
 			const goalIndex = Math.floor(Math.random() * goals.length);
-			const sessionType = Math.random() > 0.3 ? "planned" : "open"; // 70% planned, 30% open
+			const sessionType = Math.random() > 0.3 ? "time-boxed" : "open"; // 70% planned, 30% open
 
 			const session: Session = {
 				id: `session-${i}-${j}-${Date.now()}`,
 				goal: goals[goalIndex],
 				startTime,
-				duration: sessionType === "planned" ? duration : undefined,
-				focusLevel: Math.floor(Math.random() * 10) + 1, // 1-10
+				duration: sessionType === "time-boxed" ? duration : undefined,
 				tags: tags[goalIndex],
 				notes:
 					Math.random() > 0.7
@@ -64,9 +63,9 @@ export const generateMockSessions = (): Session[] => {
 				status: "completed",
 				elapsedTime: duration * 60, // in seconds
 				endTime,
-				sessionType: sessionType as "planned" | "open",
+				sessionType: sessionType as "time-boxed" | "open",
 				deepWorkQuality: Math.floor(Math.random() * 10) + 1, // 1-10
-				expectedEndTime: sessionType === "planned" ? endTime : undefined,
+				expectedEndTime: sessionType === "time-boxed" ? endTime : undefined,
 				completionType: Math.random() > 0.1 ? "completed" : "premature", // 90% completed, 10% premature
 			};
 

@@ -21,6 +21,7 @@ import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSidebar } from "../../contexts/SidebarContext";
+import Link from "next/link";
 
 interface SidebarItem {
 	label: string;
@@ -37,8 +38,6 @@ interface WorkspaceItem {
 const navigationItems: SidebarItem[] = [
 	{ label: "Home", href: "/", icon: Home },
 	{ label: "Stats", href: "/stats", icon: ChartAreaIcon },
-	// { label: "Widgets", href: "/test-widgets", icon: SquareAsterisk },
-	// { label: "Editable Table", href: "/editable-data-table-demo", icon: Edit3 },
 ];
 
 const workspaceItems: WorkspaceItem[] = [
@@ -80,8 +79,8 @@ export default function Sidebar() {
 				></label>
 
 				<div
-					className={`text-base-content min-h-full bg- transition-all duration-300 ease-in-out ${
-						isCollapsed ? "w-16" : "bg-sidebar border-border border w-74"
+					className={`text-base-content flex justify-between min-h-full transition-all duration-300 ease-in-out ${
+						isCollapsed ? "w-16" : "bg-sidebar border-r-1 border-border w-74"
 					} flex flex-col`}
 				>
 					{/* Navigation Menu */}
@@ -89,23 +88,27 @@ export default function Sidebar() {
 						<ul className="menu space-y-2 w-full">
 							{navigationItems.map((item) => (
 								<li key={item.href}>
-									<a
+									<Link
 										href={item.href}
 										className={`gap-3 ${
 											isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
 										}`}
 										title={isCollapsed ? item.label : undefined}
+										target={item.href === "/stats" ? "_blank" : undefined}
+										rel={
+											item.href === "/stats" ? "noopener noreferrer" : undefined
+										}
 									>
 										<item.icon className="w-4 h-4 text-base-content/50" />
 										{!isCollapsed && <span>{item.label}</span>}
-									</a>
+									</Link>
 								</li>
 							))}
 						</ul>
 					</nav>
 
 					{/* Workspaces Section */}
-					<nav className="flex-1 p-2">
+					{/* <nav className="flex-1 p-2">
 						{!isCollapsed && (
 							<div className="flex justify-between items-center p-2 rounded-b-none -mb-2 rounded-lg bg-base-100">
 								<span className="bg-base-300 uppercase font-mono inline-flex w-fit py-1 px-2 text-xs rounded-sm text-base-content/50 font-medium">
@@ -134,7 +137,7 @@ export default function Sidebar() {
 								</li>
 							))}
 						</ul>
-					</nav>
+					</nav> */}
 
 					{/* Card bottom content */}
 					<div className="flex flex-col h-full p-2 gap-2">
@@ -238,7 +241,7 @@ export default function Sidebar() {
 											<span>Feedback</span>
 
 											<span className="badge badge-sm badge-soft rounded-sm badge-accent">
-												We're in Beta!
+												We&apos;re in Beta!
 											</span>
 										</>
 									)}

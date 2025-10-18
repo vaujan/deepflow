@@ -1,50 +1,31 @@
 "use client";
 
-import SessionCard from "@/src/components/ui/session-card";
-import Sidebar from "../components/ui/sidebar";
 import React from "react";
 
 import Header from "../components/ui/header";
-import { useWidgets } from "../contexts/WidgetContext";
-import WidgetNotes from "../components/ui/widget-notes";
-import WidgetTask from "../components/ui/widget-task";
-
+import WidgetsContainer from "../components/ui/widgets-container";
 export default function Page() {
-	const { activeWidgets } = useWidgets();
-
-	return (
-		<div className="min-h-screen bg-base-300 flex flex-col lg:flex-row">
-			<Sidebar />
-			{/* Container */}
-			<main className="w-full h-full relative overflow-hidden flex flex-col gap-4 flex-1 items-start justify-start">
-				<Header />
-				<div className="flex w-full h-full flex-col">
-					<div className="w-full h-full overflow-x-auto horizontal-scroll-container">
-						<div
-							className={`flex flex-col lg:flex-row ${
-								activeWidgets.length > 1 ? "justify-start" : "justify-center"
-							} w-full items-start gap-8 px-4 lg:px-8 py-4`}
-						>
-							{/* Session Card - Always visible */}
-							<SessionCard />
-
-							{/* Widgets Container */}
-							{(activeWidgets.includes("note") ||
-								activeWidgets.includes("tasks") ||
-								activeWidgets.includes("kanban")) && (
-								<div
-									className={`flex flex-row rounded-box w-full border-border border md:bg-pink-500 lg:bg-cyan-500 p-4 md:w-fit md:p-0 md:border-0 overflow-x-auto gap-8 h-fit`}
-								>
-									{activeWidgets.includes("note") && <WidgetNotes />}
-									{activeWidgets.includes("tasks") && <WidgetTask />}
-									{/* {activeWidgets.includes("kanban") && <WidgetKanban />} */}
-								</div>
-							)}
-							{/* <div className="w-xl h-xl bg-red-500">hello world</div> */}
-						</div>
-					</div>
-				</div>
-			</main>
-		</div>
-	);
+  return (
+    <div className="flex flex-col bg-gray-2 h-screen">
+      {/* Container */}
+      <main
+        className={`flex flex-col flex-1 min-h-0 overflow-hidden items-start justify-start`}
+      >
+        <Header />
+        <div className="w-full px-2 pb-2 flex-1 min-h-0">
+          <div className="rounded-xl border border-border bg-dots scrollbar-thin overflow-auto h-full">
+            {/* Workspace background/div */}
+            <div
+              className={`flex flex-col lg:flex-row w-full min-h-full items-start gap-8 `}
+            >
+              {/* Widgets Container respects visibility/enabled state */}
+              <div className="flex-1 w-full py-4">
+                <WidgetsContainer />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }

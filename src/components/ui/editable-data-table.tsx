@@ -76,7 +76,6 @@ export function EditableDataTable({
 		goal: "",
 		sessionType: "planned session",
 		duration: 0,
-		focusLevel: null,
 		quality: 7,
 		notes: "",
 	});
@@ -434,7 +433,6 @@ export function EditableDataTable({
 				goal: newItem.goal,
 				sessionType: newItem.sessionType,
 				duration: newItem.duration || 0,
-				focusLevel: newItem.focusLevel || null,
 				quality: newItem.quality || 7,
 				tags: newItem.tags || [],
 				notes: newItem.notes || "",
@@ -445,7 +443,6 @@ export function EditableDataTable({
 				goal: "",
 				sessionType: "planned session",
 				duration: 0,
-				focusLevel: null,
 				quality: 7,
 				tags: [],
 				notes: "",

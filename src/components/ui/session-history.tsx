@@ -2,12 +2,12 @@
 
 import React from "react";
 import { DataTable } from "./data-table";
-import { mockSessions } from "../../data/mockSessions";
 import { transformSessionsToDataItems } from "../../utils/sessionDataTransformer";
+import { useStatsSessions } from "@/src/hooks/useStatsSessions";
 
 export default function SessionHistory() {
-	// Transform session data to the format expected by the data table
-	const dataItems = transformSessionsToDataItems(mockSessions);
+	const { data: sessions = [] } = useStatsSessions();
+	const dataItems = transformSessionsToDataItems(sessions as any);
 
 	return <DataTable data={dataItems} />;
 }

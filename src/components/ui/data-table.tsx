@@ -29,67 +29,15 @@ import {
 	Timer,
 	Check,
 	X,
+	Edit3,
 } from "lucide-react";
-import TagsOverview from "./tags-overview";
+import { DataItem, mockDataTableData } from "../../data/mockDataTable";
 
-// Session row type - represents a single deep work session
-// Planned session: user sets duration beforehand
-// Open session: flow-based, ends naturally when done
-export type DataItem = {
-	id: string;
-	goal: string;
-	sessionType: "planned session" | "open session";
-	duration: number; // in minutes
-	focusLevel: number | null; // 1-10 or null if not set
-	quality: number; // 1-10
-	notes: string;
-	tags: string[]; // optional tags for categorization
-	sessionDate: string; // when the session was taken
-	// Legacy fields to avoid breaking other components; optional
-	name?: string;
-	status?: "active" | "inactive" | "pending";
-	category?: string;
-	priority?: "low" | "medium" | "high";
-	createdAt?: string;
-};
-
-// Sample data
-const sampleData: DataItem[] = [
-	{
-		id: "1",
-		goal: "Complete API integration",
-		sessionType: "planned session",
-		duration: 150,
-		focusLevel: 8,
-		quality: 9,
-		notes:
-			"Had some interruptions but managed to complete the core functionality",
-		tags: ["coding", "api", "backend"],
-		sessionDate: "2024-01-15",
-	},
-	{
-		id: "2",
-		goal: "Draft blog post outline",
-		sessionType: "open session",
-		duration: 105,
-		focusLevel: null,
-		quality: 8,
-		notes: "Good flow; outline is comprehensive",
-		tags: ["writing", "content"],
-		sessionDate: "2024-01-14",
-	},
-	{
-		id: "3",
-		goal: "Redesign landing page",
-		sessionType: "planned session",
-		duration: 195,
-		focusLevel: 9,
-		quality: 10,
-		notes: "Excellent focus; design came together",
-		tags: ["design", "ui", "frontend"],
-		sessionDate: "2024-01-13",
-	},
-];
+// Re-export DataItem for other components
+export type { DataItem };
+import { useUpdateSession } from "@/src/hooks/useSessionsQuery";
+import { SessionEditModal } from "./session-edit-modal";
+import { toast } from "sonner";
 
 // Custom filter function for duration
 const durationFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
@@ -110,7 +58,11 @@ const tagsFilter: FilterFn<DataItem> = (row, columnId, filterValue) => {
 };
 
 // Global filter function
-const globalFilterFn = (row: any, columnId: any, filterValue: any) => {
+const globalFilterFn = (
+	row: { getValue: (columnId: string) => unknown },
+	columnId: string,
+	filterValue: string
+) => {
 	const searchValue = filterValue.toLowerCase();
 	const cellValue = row.getValue(columnId);
 
@@ -129,7 +81,7 @@ interface DataTableProps {
 	data?: DataItem[];
 }
 
-export function DataTable({ data = sampleData }: DataTableProps) {
+export function DataTable({ data = mockDataTableData }: DataTableProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
@@ -137,7 +89,6 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		goal: true,
 		sessionType: true,
 		duration: true,
-		focusLevel: false,
 		quality: false,
 		notes: true,
 		tags: true,
@@ -148,13 +99,102 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		"sessionType",
 		"duration",
 		"sessionDate",
-		"focusLevel",
 		"quality",
 		"tags",
 		"notes",
+		"actions",
 	]);
 	const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 	const [tagsSearchTerm, setTagsSearchTerm] = useState("");
+	const [editingSession, setEditingSession] = useState<DataItem | null>(null);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const updateSession = useUpdateSession();
+
+	const isRowLocked = (row: { original: DataItem & { status?: string } }) => {
+		const status = row.original?.status;
+		return status === "active" || status === "inactive";
+	};
+
+	const openEditModal = (session: DataItem & { status?: string }) => {
+		const status = session?.status;
+		if (status === "active" || status === "inactive") {
+			toast.warning("Cannot edit active session", {
+				description: "Please wait for the session to end before editing",
+			});
+			return;
+		}
+		setEditingSession(session);
+		setIsModalOpen(true);
+	};
+
+	const closeEditModal = () => {
+		setIsModalOpen(false);
+		setEditingSession(null);
+	};
+
+	const handleEditSuccess = () => {
+		// Success toast is handled in the modal
+		console.log("Session updated successfully");
+	};
+
+	// Minimum widths per column to keep layout readable
+	const columnMinWidth: Record<string, string> = {
+		goal: "min-w-[200px]",
+		sessionType: "min-w-[120px]",
+		duration: "min-w-[80px]",
+		sessionDate: "min-w-[100px]",
+		quality: "min-w-[100px]",
+		tags: "min-w-[160px]",
+		notes: "min-w-[250px]",
+	};
+
+	// Helper component for selected tags display
+	const SelectedTagsDisplay = ({
+		column,
+	}: {
+		column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		};
+	}) => {
+		const getFilterValueAsStringArray = (column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		}): string[] => {
+			const value = column.getFilterValue();
+			return Array.isArray(value) ? value : [];
+		};
+
+		const filterValue = getFilterValueAsStringArray(column);
+		if (filterValue.length === 0) return null;
+
+		return (
+			<div className="mb-2">
+				<div className="text-xs text-base-content/70 mb-1">Selected:</div>
+				<div className="flex flex-wrap gap-1">
+					{filterValue.map((tag, index) => (
+						<span
+							key={index}
+							className="badge rounded-sm badge-sm badge-primary"
+						>
+							#{tag}
+							<button
+								onClick={() => {
+									const newTags = filterValue.filter((_, i) => i !== index);
+									column.setFilterValue(
+										newTags.length > 0 ? newTags : undefined
+									);
+								}}
+								className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
+							>
+								×
+							</button>
+						</span>
+					))}
+				</div>
+			</div>
+		);
+	};
 
 	// Helper component for available tags list
 	const AvailableTagsList = ({
@@ -162,11 +202,17 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 		data,
 		searchTerm,
 	}: {
-		column: any;
+		column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		};
 		data: DataItem[];
 		searchTerm: string;
 	}) => {
-		const getFilterValueAsStringArray = (column: any): string[] => {
+		const getFilterValueAsStringArray = (column: {
+			getFilterValue: () => unknown;
+			setFilterValue: (value: unknown) => void;
+		}): string[] => {
 			const value = column.getFilterValue();
 			return Array.isArray(value) ? value : [];
 		};
@@ -196,10 +242,10 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			.filter((tag): tag is string => tag !== null && typeof tag === "string");
 
 		return (
-			<ul className="max-h-52 overflow-y-auto space-y-1">
+			<ul className="max-h-52 space-y-1">
 				{sortedTags.length === 0 ? (
 					<li className="text-center text-sm text-base-content/60 py-4">
-						No tags found matching "{searchTerm}"
+						No tags found matching &quot;{searchTerm}&quot;
 					</li>
 				) : (
 					sortedTags.map((tag) => {
@@ -242,6 +288,31 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 
 	const columns: ColumnDef<DataItem>[] = useMemo(
 		() => [
+			{
+				id: "actions",
+				header: () => null,
+				cell: ({ row }) => {
+					const locked = isRowLocked(row);
+					const session = row.original as DataItem;
+					return (
+						<div className="flex items-center justify-end gap-1">
+							<button
+								title={
+									locked
+										? "Editing available after session ends"
+										: "Edit session"
+								}
+								className={`btn btn-sm btn-ghost btn-square ${
+									locked ? "opacity-50" : ""
+								}`}
+								onClick={() => openEditModal(session)}
+							>
+								<Edit3 className="size-3" />
+							</button>
+						</div>
+					);
+				},
+			},
 			{
 				accessorKey: "goal",
 				header: () => <span className="text-xs">Goal</span>,
@@ -294,7 +365,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											: ""
 									}`}
 								>
-									{column.getFilterValue() === "openx	 session" && (
+									{column.getFilterValue() === "open session" && (
 										<Check className="size-3" />
 									)}
 									Open
@@ -381,29 +452,8 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				},
 			},
 			{
-				accessorKey: "focusLevel",
-				header: () => <span className="text-xs">Focus Level</span>,
-				cell: ({ row }) => {
-					const focus = row.getValue("focusLevel") as number | null;
-					if (focus === null || focus === undefined) {
-						return <span className="-content/40 text-sm">—</span>;
-					}
-					const color =
-						focus <= 3
-							? "badge-success"
-							: focus <= 7
-							? "badge-warning"
-							: "badge-error";
-					return (
-						<span className={`badge badge-sm badge-soft rounded-sm ${color}`}>
-							{focus}
-						</span>
-					);
-				},
-			},
-			{
 				accessorKey: "quality",
-				header: () => <span className="text-xs">Session Quality</span>,
+				header: () => <span className="text-xs">Quality</span>,
 				cell: ({ row }) => {
 					const quality = row.getValue("quality") as number;
 					const color =
@@ -454,52 +504,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							</div>
 
 							{/* Selected Tags Display */}
-							{
-								(() => {
-									const getFilterValueAsStringArray = (
-										column: any
-									): string[] => {
-										const value = column.getFilterValue();
-										return Array.isArray(value) ? value : [];
-									};
-
-									const filterValue = getFilterValueAsStringArray(column);
-									if (filterValue.length === 0) return null;
-
-									const selectedTagsDisplay = (
-										<div className="mb-2">
-											<div className="text-xs text-base-content/70 mb-1">
-												Selected:
-											</div>
-											<div className="flex flex-wrap gap-1">
-												{filterValue.map((tag, index) => (
-													<span
-														key={index}
-														className="badge rounded-sm badge-sm badge-primary"
-													>
-														#{tag}
-														<button
-															onClick={() => {
-																const newTags = filterValue.filter(
-																	(_, i) => i !== index
-																);
-																column.setFilterValue(
-																	newTags.length > 0 ? newTags : undefined
-																);
-															}}
-															className="ml-1 hover:bg-primary-focus rounded-full w-3 h-3 flex items-center justify-center text-xs"
-														>
-															×
-														</button>
-													</span>
-												))}
-											</div>
-										</div>
-									);
-
-									return selectedTagsDisplay;
-								})() as any // May god help me with typescript
-							}
+							<SelectedTagsDisplay column={column} />
 
 							{/* Available Tags List */}
 							<AvailableTagsList
@@ -535,7 +540,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 							{tags.map((tag, index) => (
 								<span
 									key={index}
-									className="badge badge-sm rounded-sm badge-neutral"
+									className="badge badge-sm rounded-sm badge-soft badge-neutral"
 								>
 									#{tag}
 								</span>
@@ -547,9 +552,9 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 			},
 			{
 				accessorKey: "notes",
-				header: () => <span className="text-xs">Notes</span>,
+				header: () => <span className="text-xs text-wrap">Notes</span>,
 				cell: ({ row }) => (
-					<div className="min-w-[250px] max-w-[400px]">
+					<div className="min-w-[250px] max-w-[480px]">
 						{row.getValue("notes")}
 					</div>
 				),
@@ -656,9 +661,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											}}
 										/>
 										<span className="capitalize">
-											{columnId === "focusLevel"
-												? "Focus Level"
-												: columnId === "sessionType"
+											{columnId === "sessionType"
 												? "Session Type"
 												: columnId === "sessionDate"
 												? "Session Date"
@@ -676,7 +679,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 				</div>
 			</div>
 			{/* Table */}
-			<div className="overflow-x-auto">
+			<div className="overflow-y-auto w-full" aria-live="polite">
 				<table className="table rounded-none w-full min-w-full">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -688,7 +691,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											dragOverColumn === header.id
 												? "ring-2 ring-primary ring-opacity-50 bg-primary/10"
 												: ""
-										}`}
+										} ${columnMinWidth[header.column.id as string] ?? ""}`}
 										onDragStart={(e) => {
 											e.dataTransfer.effectAllowed = "move";
 											e.dataTransfer.setData("text/plain", header.id);
@@ -750,7 +753,12 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 									className="hover hover:bg-base-300/50 transition-all ease-out"
 								>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id}>
+										<td
+											key={cell.id}
+											className={`whitespace-normal break-words ${
+												columnMinWidth[cell.column.id as string] ?? ""
+											}`}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()
@@ -772,7 +780,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 											</h3>
 											<p className="text-base-content/60 text-sm max-w-md">
 												Try adjusting your search terms or filters to find what
-												you're looking for.
+												you&apos;re looking for.
 											</p>
 										</div>
 										{(globalFilter ||
@@ -827,7 +835,7 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 
 				<div className="flex items-center gap-2">
 					<select
-						className="select select-sm"
+						className="select select-ghost select-sm"
 						value={table.getState().pagination.pageSize}
 						onChange={(e) => {
 							table.setPageSize(Number(e.target.value));
@@ -841,6 +849,14 @@ export function DataTable({ data = sampleData }: DataTableProps) {
 					</select>
 				</div>
 			</div>
+
+			{/* Session Edit Modal */}
+			<SessionEditModal
+				isOpen={isModalOpen}
+				onClose={closeEditModal}
+				session={editingSession}
+				onSuccess={handleEditSuccess}
+			/>
 		</div>
 	);
 }
