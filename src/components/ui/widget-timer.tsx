@@ -200,11 +200,12 @@ export default function WidgetTimer() {
 
 	return (
 		<div
-			className={`card border-border ${
+			className={`card border-border h-fit ${
 				visibleWidgets.length === 1
 					? "md:bg-card shadow-xs borderas"
 					: "md:bg-transparent"
 			} w-full p-4 lg:p-6 gap-4 lg:gap-6 flex flex-col`}
+			data-tour="timer-widget"
 		>
 			<div className="flex flex-col text-center">
 				<h1 className="font-semibold">What will you accomplish today?</h1>
@@ -412,6 +413,7 @@ export default function WidgetTimer() {
 					aria-disabled={!isGoalValid || isStarting}
 					aria-busy={isStarting}
 					aria-label="Start focus session"
+					data-tour="timer-start"
 				>
 					{isStarting && <Loader2 className="size-4 animate-spin" />}
 					<Play className="size-4" />

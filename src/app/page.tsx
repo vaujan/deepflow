@@ -1,10 +1,27 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import Header from "../components/ui/header";
 import WidgetsContainer from "../components/ui/widgets-container";
-export default function Page() {
+import {
+	OnboardingProvider,
+	useOnboarding,
+} from "../contexts/OnboardingContext";
+function PageContent() {
+	const { hasCompletedOnboarding, startTour } = useOnboarding();
+
+	// Auto-trigger tour on first visit
+	useEffect(() => {
+		if (!hasCompletedOnboarding) {
+			// Small delay to ensure widgets are rendered
+			const timer = setTimeout(() => {
+				startTour();
+			}, 500);
+			return () => clearTimeout(timer);
+		}
+	}, [hasCompletedOnboarding, startTour]);
+
 	return (
 		<div className="flex flex-col bg-gray-2 h-screen">
 			{/* Container */}
@@ -27,5 +44,13 @@ export default function Page() {
 				</div>
 			</main>
 		</div>
+	);
+}
+
+export default function Page() {
+	return (
+		<OnboardingProvider>
+			<PageContent />
+		</OnboardingProvider>
 	);
 }
