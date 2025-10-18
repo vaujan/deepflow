@@ -1,0 +1,207 @@
+/* Custom onboarding tour styles */
+.onboarding-tour {
+	/* Custom animations */
+	--tour-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom highlight area with rounded corners */
+.onboarding-tour [data-tour-elem="mask-area"] {
+	border-radius: 12px !important;
+	animation: highlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 4px var(--color-primary), 0 0 0 8px var(--color-primary);
+	}
+	50% {
+		box-shadow: 0 0 0 6px var(--color-primary), 0 0 0 12px var(--color-primary);
+	}
+}
+
+/* Dark mode highlight */
+@media (prefers-color-scheme: dark) {
+	.onboarding-tour [data-tour-elem="mask-area"] {
+		animation: highlightPulseDark 2s ease-in-out infinite;
+	}
+}
+
+@keyframes highlightPulseDark {
+	0%,
+	100% {
+		box-shadow: 0 0 0 4px var(--color-primary), 0 0 0 8px var(--color-primary);
+	}
+	50% {
+		box-shadow: 0 0 0 6px var(--color-primary), 0 0 0 12px var(--color-primary);
+	}
+}
+
+/* Custom popup animations */
+.onboarding-tour [data-tour-elem="popover"] {
+	animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+/* Custom mask animations */
+.onboarding-tour [data-tour-elem="mask"] {
+	animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* Custom button hover effects */
+.onboarding-tour [data-tour-elem="next-button"] {
+	position: relative;
+	overflow: hidden;
+}
+
+.onboarding-tour [data-tour-elem="next-button"]::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.2),
+		transparent
+	);
+	transition: left 0.5s;
+}
+
+.onboarding-tour [data-tour-elem="next-button"]:hover::before {
+	left: 100%;
+}
+
+/* Custom progress bar */
+.onboarding-tour [data-tour-elem="progress"] {
+	position: relative;
+	overflow: hidden;
+}
+
+.onboarding-tour [data-tour-elem="progress"]::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.3),
+		transparent
+	);
+	animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+	0% {
+		left: -100%;
+	}
+	100% {
+		left: 100%;
+	}
+}
+
+/* Custom close button */
+.onboarding-tour [data-tour-elem="close"] {
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.onboarding-tour [data-tour-elem="close"]:hover {
+	transform: rotate(90deg);
+}
+
+/* Custom badge */
+.onboarding-tour [data-tour-elem="badge"] {
+	position: relative;
+	overflow: hidden;
+}
+
+.onboarding-tour [data-tour-elem="badge"]::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.3),
+		transparent
+	);
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		left: -100%;
+	}
+	50% {
+		left: 100%;
+	}
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.onboarding-tour [data-tour-elem="popover"] {
+		max-width: 90vw;
+		margin: 0 5vw;
+	}
+
+	.onboarding-tour [data-tour-elem="controls"] {
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.onboarding-tour [data-tour-elem="next-button"],
+	.onboarding-tour [data-tour-elem="prev-button"] {
+		width: 100%;
+	}
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+	.onboarding-tour [data-tour-elem="popover"] {
+		backdrop-filter: blur(10px);
+	}
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+	.onboarding-tour [data-tour-elem="popover"],
+	.onboarding-tour [data-tour-elem="mask"],
+	.onboarding-tour [data-tour-elem="mask-area"] {
+		animation: none;
+	}
+
+	.onboarding-tour [data-tour-elem="next-button"]::before,
+	.onboarding-tour [data-tour-elem="progress"]::before,
+	.onboarding-tour [data-tour-elem="badge"]::after {
+		display: none;
+	}
+}

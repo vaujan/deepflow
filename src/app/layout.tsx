@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "../styles/onboarding-tour.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { SidebarProvider } from "../contexts/SidebarContext";
 import { WidgetProvider } from "../contexts/WidgetContext";

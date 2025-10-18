@@ -4,7 +4,6 @@ import React from "react";
 import {
 	StickyNote,
 	CheckSquare,
-	Kanban,
 	Inbox,
 	Calendar,
 	LayoutGrid,
@@ -86,7 +85,6 @@ const WIDGET_META: Record<
 	{ label: string; icon: React.ComponentType<{ className?: string }> }
 > = {
 	note: { label: "Notes", icon: StickyNote },
-	kanban: { label: "Kanban", icon: Kanban },
 	tasks: { label: "Tasks", icon: CheckSquare },
 	journal: { label: "Journal", icon: Inbox },
 	timer: { label: "Timer", icon: Timer },
@@ -97,7 +95,7 @@ export default function WidgetList() {
 	const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 	const settingsBtnRef = React.useRef<HTMLButtonElement | null>(null);
 
-	const order: Widgets[] = ["timer", "note", "tasks", "kanban", "journal"];
+	const order: Widgets[] = ["timer", "note", "tasks", "journal"];
 	const dockItems: DockItemData[] = React.useMemo(() => {
 		const sorted = [...activeWidgets].sort(
 			(a, b) => order.indexOf(a) - order.indexOf(b)
@@ -113,7 +111,7 @@ export default function WidgetList() {
 	return (
 		<div className="flex items-center gap-2">
 			{/* Widget list */}
-			<div className="flex gap-2 p-2">
+			<div className="flex gap-2 p-2" data-tour="widget-dock">
 				{dockItems.map((item, index) => {
 					const isActive = item.widgetType
 						? visibleWidgets.includes(item.widgetType)
@@ -153,6 +151,7 @@ export default function WidgetList() {
 					aria-haspopup="dialog"
 					aria-expanded={isSettingsOpen}
 					aria-label="Open settings"
+					data-tour="settings-button"
 				>
 					<Settings className="size-4 text-base-content/50" />
 				</button>
