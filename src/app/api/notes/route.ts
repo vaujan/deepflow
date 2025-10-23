@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../lib/supabase/server";
+import { starterNotes } from "../../../data/starterNotes";
 
 // GET /api/notes - list notes for current user
 export async function GET() {
@@ -19,6 +20,42 @@ export async function GET() {
 
 	if (error)
 		return NextResponse.json({ error: error.message }, { status: 500 });
+
+	// If user has no notes, create the welcome note
+	if (!data || data.length === 0) {
+		const welcomeNote = starterNotes[0];
+		const { data: newNote, error: insertError } = await supabase
+			.from("notes")
+			.insert({
+				user_id: user.id,
+				title: welcomeNote.title,
+				content: welcomeNote.content,
+			})
+			.select("id, title, content, created_at, updated_at")
+			.single();
+
+		if (insertError) {
+			return NextResponse.json({ error: insertError.message }, { status: 500 });
+		}
+
+		// Return the welcome note
+		return NextResponse.json([
+			{
+				id: newNote!.id,
+				title: newNote!.title ?? "",
+				content: newNote!.content ?? "",
+				timestamp:
+					newNote!.updated_at || newNote!.created_at
+						? new Date(
+								newNote!.updated_at || newNote!.created_at
+						  ).toLocaleDateString("en-US", {
+								month: "short",
+								day: "numeric",
+						  })
+						: "",
+			},
+		]);
+	}
 
 	return NextResponse.json(
 		(data || []).map((n: Record<string, unknown>) => ({

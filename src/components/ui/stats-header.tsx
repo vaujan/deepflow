@@ -4,8 +4,10 @@ import { Home } from "lucide-react";
 import React from "react";
 import Profile from "./profile";
 import Link from "next/link";
+import { useAuthUser } from "@/src/hooks/useAuthUser";
 
 export default function Header() {
+	const { isGuest } = useAuthUser();
 	return (
 		<header className="w-full relative border-b border-border/50 flex flex-col gap-4 items-center justify-start">
 			<div className="flex w-full h-fit justify-center items-center flex-col">
@@ -17,7 +19,18 @@ export default function Header() {
 							Home
 						</button>
 					</Link>
-					<Profile />
+					{isGuest ? (
+						<Link href="/login">
+							<button
+								className="btn btn-sm btn-primary"
+								aria-label="Sign in to save & sync"
+							>
+								Sign in to save & sync
+							</button>
+						</Link>
+					) : (
+						<Profile />
+					)}
 				</div>
 			</div>
 		</header>

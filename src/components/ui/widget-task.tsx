@@ -5,8 +5,11 @@ import React, { useState, useRef, useEffect } from "react";
 import type { Task } from "../../data/mockTasks";
 import { toast } from "sonner";
 import DatePicker from "./date-picker";
+import { useAuthUser } from "@/src/hooks/useAuthUser";
+import { guestStorage } from "@/src/lib/guestStorage";
 
 export default function WidgetTask() {
+	const { isGuest } = useAuthUser();
 	const [tasks, setTasks] = useState<Task[] | null>(() => {
 		if (typeof window !== "undefined") {
 			try {
@@ -95,6 +98,14 @@ export default function WidgetTask() {
 		}, 0);
 
 		try {
+			if (isGuest) {
+				const current = [optimistic, ...(tasks ?? [])];
+				setTasks(current);
+				try {
+					guestStorage.setTasks(current);
+				} catch {}
+				return;
+			}
 			const res = await fetch("/api/tasks", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -132,6 +143,16 @@ export default function WidgetTask() {
 			)
 		);
 		try {
+			if (isGuest) {
+				try {
+					guestStorage.setTasks(
+						(tasks ?? []).map((t) =>
+							t.id === id ? { ...t, completed: nextCompleted } : t
+						)
+					);
+				} catch {}
+				return;
+			}
 			const res = await fetch(`/api/tasks/${id}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
@@ -155,6 +176,14 @@ export default function WidgetTask() {
 		const previous = tasks;
 		setTasks((prev) => (prev ?? []).filter((task) => task.id !== id));
 		try {
+			if (isGuest) {
+				try {
+					guestStorage.setTasks(
+						(previous ?? []).filter((task) => task.id !== id)
+					);
+				} catch {}
+				return;
+			}
 			const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
 			if (!res.ok)
 				throw new Error((await res.json()).error || "Failed to delete task");
@@ -214,6 +243,24 @@ export default function WidgetTask() {
 		setEditingTaskId(null);
 		setEditTask({ title: "", description: "", dueDate: "", project: "Inbox" });
 		try {
+			if (isGuest) {
+				try {
+					guestStorage.setTasks(
+						(prev ?? []).map((task) =>
+							task.id === id
+								? {
+										...task,
+										title: editTask.title,
+										description: editTask.description,
+										dueDate: editTask.dueDate || undefined,
+										project: editTask.project,
+								  }
+								: task
+						)
+					);
+				} catch {}
+				return;
+			}
 			const res = await fetch(`/api/tasks/${id}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
@@ -259,18 +306,22 @@ export default function WidgetTask() {
 	useEffect(() => {
 		(async () => {
 			try {
-				const res = await fetch("/api/tasks");
-				if (!res.ok)
-					throw new Error((await res.json()).error || "Failed to load tasks");
-				const data = await res.json();
-				setTasks(data);
+				if (isGuest) {
+					setTasks(guestStorage.getTasks());
+				} else {
+					const res = await fetch("/api/tasks");
+					if (!res.ok)
+						throw new Error((await res.json()).error || "Failed to load tasks");
+					const data = await res.json();
+					setTasks(data);
+				}
 			} catch (e: any) {
 				toast.error(e.message || "Failed to load tasks");
 			} finally {
 				setLoading(false);
 			}
 		})();
-	}, []);
+	}, [isGuest]);
 
 	return (
 		<div className="w-full h-full flex flex-col">
@@ -477,7 +528,10 @@ export default function WidgetTask() {
 						</div>
 					) : (
 						(tasks ?? []).map((task, index) => (
-							<div key={task.id} className="h-full overflow-visible min-h-0">
+							<div
+								key={`task-${task.id}`}
+								className="h-full overflow-visible min-h-0"
+							>
 								{editingTaskId === task.id ? (
 									// Edit task form
 									<div

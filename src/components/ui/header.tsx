@@ -2,9 +2,12 @@ import Profile from "./profile";
 import WidgetList from "./widget-list";
 import { HelpCircle } from "lucide-react";
 import { useOnboarding } from "@/src/contexts/OnboardingContext";
+import { useAuthUser } from "@/src/hooks/useAuthUser";
+import Link from "next/link";
 
 export default function Header() {
 	const { startTour } = useOnboarding();
+	const { isGuest } = useAuthUser();
 
 	return (
 		<header className="w-full relative flex flex-col gap-4 items-center justify-start">
@@ -24,7 +27,18 @@ export default function Header() {
 								<HelpCircle className="size-4 text-base-content/50" />
 							</button>
 						</div>
-						<Profile />
+						{isGuest ? (
+							<Link href="/login">
+								<button
+									className="btn btn-sm btn-primary"
+									aria-label="Sign in to save & sync"
+								>
+									Sign in to save & sync
+								</button>
+							</Link>
+						) : (
+							<Profile />
+						)}
 					</div>
 				</div>
 			</div>

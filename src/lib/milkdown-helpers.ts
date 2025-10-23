@@ -61,5 +61,22 @@ export async function createEditor(options: CreateEditorOptions) {
 		}
 	}
 
+	// Enable opening links on click (commonmark already parses [text](url)).
+	// Attach to root in capture phase to bypass ProseMirror's internal handlers.
+	try {
+		const handleClick = (e: Event) => {
+			const target = e.target as HTMLElement | null;
+			if (!target) return;
+			const anchor = target.closest("a") as HTMLAnchorElement | null;
+			if (!anchor) return;
+			const href = anchor.getAttribute("href");
+			if (!href) return;
+			e.preventDefault();
+			e.stopPropagation();
+			window.open(href, "_blank", "noopener,noreferrer");
+		};
+		root.addEventListener("click", handleClick, { capture: true });
+	} catch {}
+
 	return editor;
 }

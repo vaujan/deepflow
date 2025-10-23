@@ -7,8 +7,13 @@ import {
 	OnboardingProvider,
 	useOnboarding,
 } from "../contexts/OnboardingContext";
+import { useAuthUser } from "../hooks/useAuthUser";
+import { initializeGuestStorageIfNeeded } from "../lib/guestStorage";
+import { starterNotes } from "../data/starterNotes";
+import { starterTasks } from "../data/starterTasks";
 function PageContent() {
 	const { hasCompletedOnboarding, startTour } = useOnboarding();
+	const { isGuest } = useAuthUser();
 
 	// Auto-trigger tour on first visit
 	useEffect(() => {
@@ -20,6 +25,13 @@ function PageContent() {
 			return () => clearTimeout(timer);
 		}
 	}, [hasCompletedOnboarding, startTour]);
+
+	// Seed guest storage on first unauthenticated visit
+	useEffect(() => {
+		if (isGuest) {
+			initializeGuestStorageIfNeeded(starterNotes, starterTasks);
+		}
+	}, [isGuest]);
 
 	return (
 		<div className="flex flex-col bg-gray-2 h-screen">

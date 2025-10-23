@@ -83,8 +83,10 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.redirect(redirectUrl);
 	}
 
-	// If user is not signed in and the current path is not /login, redirect to login
-	if (!session && req.nextUrl.pathname !== "/login") {
+	// Allow guest access to main routes - only redirect to login for protected routes
+	// Guest mode is handled by the client-side useAuthUser hook
+	const protectedRoutes = ["/profile"];
+	if (!session && protectedRoutes.includes(req.nextUrl.pathname)) {
 		const redirectUrl = req.nextUrl.clone();
 		redirectUrl.pathname = "/login";
 		return NextResponse.redirect(redirectUrl);
