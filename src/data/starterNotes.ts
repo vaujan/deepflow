@@ -36,6 +36,10 @@ Use \`Backticks\` for short snippets.
 
 [Deepflow website](https://example.com)
 
+### Markdown Guide
+
+For a comprehensive guide on Markdown syntax, visit [markdown-it.github.io](https://markdown-it.github.io/) to learn about all available formatting options.
+
 ### Tips
 
 - Notes persist locally in guest mode

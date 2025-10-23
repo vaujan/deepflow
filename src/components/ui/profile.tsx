@@ -7,13 +7,11 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
 	BarChart3,
 	LogOut,
-	SunMoon,
 	User as UserIcon,
 	ChevronDown,
 	LogIn,
 	MessageSquare,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase/client";
 import FeedbackModal from "./feedback-modal";
@@ -50,7 +48,6 @@ export default function Profile({
 	onLogout,
 }: ProfileProps) {
 	const router = useRouter();
-	const { toggleTheme, theme } = useTheme();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [user, setUser] = useState<{
 		id: string;
@@ -124,11 +121,6 @@ export default function Profile({
 		getSession();
 	}, []);
 
-	const handleToggleTheme = () => {
-		toggleTheme();
-		toast.success(`Switched to ${theme === "dark" ? "light" : "dark"} theme`);
-	};
-
 	const handleLogout = async () => {
 		if (onLogout) {
 			onLogout();
@@ -175,12 +167,6 @@ export default function Profile({
 					icon: MessageSquare,
 					badge: badgeText,
 				},
-				{
-					type: "action",
-					label: "Toggle theme",
-					onSelect: handleToggleTheme,
-					icon: SunMoon,
-				},
 				{ type: "separator" },
 				{
 					type: "action",
@@ -205,12 +191,6 @@ export default function Profile({
 					label: "Log in",
 					onSelect: handleLogin,
 					icon: LogIn,
-				},
-				{
-					type: "action",
-					label: "Toggle theme",
-					onSelect: handleToggleTheme,
-					icon: SunMoon,
 				},
 		  ];
 

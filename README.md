@@ -165,10 +165,76 @@ This will start both the Next.js dev server and the Electron app.
    -- Similar policies for tasks, notes, and feedback...
    ```
 
-2. **Set up authentication**:
+2. **Create welcome note trigger for new users**:
+
+   ````sql
+   -- Function to create welcome note for new users
+   CREATE OR REPLACE FUNCTION create_welcome_note_for_new_user()
+   RETURNS TRIGGER AS $$
+   BEGIN
+       INSERT INTO notes (user_id, title, content)
+       VALUES (
+           NEW.id,
+           'Welcome to Deepflow Notes',
+           '# Welcome to Deepflow Notes
+
+   Deepflow Notes supports rich Markdown. The note title is taken from the first H1 heading above.
+
+   ## Quick start
+
+   - Type to edit — changes auto-save
+   - Use headings to organize ideas
+   - Add lists, simple links, and code blocks
+
+   ### Lists
+
+   1. Capture thoughts
+   2. Group by topics
+   3. Refine later
+
+   ### Code blocks
+
+   ```ts
+   function hello(name: string): string {
+     return ''Hello, '' + name + ''!'';
+   }
+
+   console.log(hello(''Deepflow''));
+   ````
+
+   ### Inline code
+
+   Use `Backticks` for short snippets.
+
+   ### Links
+
+   [Deepflow website](https://example.com)
+
+   ### Tips
+
+   - Notes persist locally in guest mode
+   - You can delete this note at any time'
+     );
+     RETURN NEW;
+     END;
+     $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+   -- Trigger to run function when new user signs up
+   CREATE TRIGGER on_auth_user_created
+   AFTER INSERT ON auth.users
+   FOR EACH ROW
+   EXECUTE FUNCTION create_welcome_note_for_new_user();
+
+   ```
+
+   ```
+
+3. **Set up authentication**:
    - Enable email/password authentication in Supabase
    - Configure OAuth providers (Google, GitHub) if desired
    - Set up redirect URLs for your domain
+
+**Note:** The welcome note trigger (step 3) should be run after creating the tables and RLS policies. This ensures that new users automatically get a welcome note when they sign up, preventing race conditions and allowing users to have truly empty notes if they choose to delete everything.
 
 ### Building for Production
 

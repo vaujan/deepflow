@@ -79,7 +79,7 @@ export async function middleware(req: NextRequest) {
 	// If user is signed in and the current path is /login, redirect to home
 	if (session && req.nextUrl.pathname === "/login") {
 		const redirectUrl = req.nextUrl.clone();
-		redirectUrl.pathname = "/";
+		redirectUrl.pathname = "/home";
 		return NextResponse.redirect(redirectUrl);
 	}
 
@@ -96,5 +96,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/", "/stats", "/profile"],
+	matcher: ["/home", "/stats", "/profile"],
 };

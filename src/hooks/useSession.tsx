@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { logger } from "../lib/logger";
+import { useAuthUser } from "./useAuthUser";
 
 export interface Session {
 	id: string;
@@ -32,6 +33,7 @@ export const useSession = () => {
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const [remainingTime, setRemainingTime] = useState<number | null>(null);
 	const [hasPendingSave, setHasPendingSave] = useState(false);
+	const { isGuest } = useAuthUser();
 
 	// Modal states for early stop handling
 	const [showEarlyStopModal, setShowEarlyStopModal] = useState(false);
@@ -57,33 +59,39 @@ export const useSession = () => {
 
 	const mapServerSession = (row: Record<string, unknown>): Session => {
 		return {
-			id: row.id,
-			goal: row.goal,
-			startTime: new Date(row.startTime ?? row.start_time),
+			id: String(row.id),
+			goal: String(row.goal),
+			startTime: new Date(String(row.startTime ?? row.start_time)),
 			duration:
 				typeof row.duration === "number"
 					? row.duration
 					: typeof row.planned_duration_minutes === "number"
 					? row.planned_duration_minutes
 					: undefined,
-			tags: Array.isArray(row.tags) ? row.tags : [],
-			notes: row.notes ?? undefined,
-			status: row.status,
-			elapsedTime: row.elapsedTime ?? row.elapsed_seconds ?? 0,
+			tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+			notes: typeof row.notes === "string" ? row.notes : undefined,
+			status: row.status as Session["status"],
+			elapsedTime: Number(row.elapsedTime ?? row.elapsed_seconds ?? 0),
 			endTime: row.endTime
-				? new Date(row.endTime)
+				? new Date(String(row.endTime))
 				: row.end_time
-				? new Date(row.end_time)
+				? new Date(String(row.end_time))
 				: undefined,
-			sessionType: row.sessionType ?? row.session_type,
+			sessionType: (row.sessionType ??
+				row.session_type) as Session["sessionType"],
 			deepWorkQuality:
-				row.deepWorkQuality ?? row.deep_work_quality ?? undefined,
+				typeof row.deepWorkQuality === "number"
+					? row.deepWorkQuality
+					: typeof row.deep_work_quality === "number"
+					? row.deep_work_quality
+					: undefined,
 			expectedEndTime: row.expectedEndTime
-				? new Date(row.expectedEndTime)
+				? new Date(String(row.expectedEndTime))
 				: row.expected_end_time
-				? new Date(row.expected_end_time)
+				? new Date(String(row.expected_end_time))
 				: undefined,
-			completionType: row.completionType ?? row.completion_type ?? undefined,
+			completionType: (row.completionType ??
+				row.completion_type) as Session["completionType"],
 		};
 	};
 
@@ -256,7 +264,18 @@ export const useSession = () => {
 				});
 			}
 
-			if (!res.ok) throw new Error(data?.error || "Failed to start session");
+			if (!res.ok) {
+				// Provide more specific error messages based on status code
+				if (res.status === 401) {
+					throw new Error("Please sign in to start a session");
+				} else if (res.status === 400) {
+					throw new Error(data?.error || "Invalid session configuration");
+				} else if (res.status >= 500) {
+					throw new Error("Server error. Please try again later");
+				} else {
+					throw new Error(data?.error || "Failed to start session");
+				}
+			}
 
 			const session = mapServerSession(data);
 			sessionIdRef.current = session.id;
@@ -412,6 +431,12 @@ export const useSession = () => {
 	// Hydrate from snapshot on mount and reconcile with server
 	useEffect(() => {
 		try {
+			// Clear any stale session snapshots for guests
+			if (isGuest) {
+				clearSnapshot();
+				return;
+			}
+
 			const raw =
 				typeof window !== "undefined"
 					? localStorage.getItem(STORAGE_KEY)
@@ -512,7 +537,7 @@ export const useSession = () => {
 			})();
 		} catch {}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isGuest]);
 
 	// Format time helpers
 	const formatTime = (seconds: number) => {
