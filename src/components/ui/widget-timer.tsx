@@ -19,9 +19,11 @@ import {
 import { ScrollArea } from "./scroll-area";
 import { useSession, type Session } from "../../hooks/useSession";
 import { usePomodoroSettings } from "../../hooks/usePomodoroSettings";
+import { useAuthUser } from "../../hooks/useAuthUser";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useWidgets } from "@/src/contexts/WidgetContext";
+import AuthPromptModal from "./auth-prompt-modal";
 
 // Unified Timer Widget: Start → Active → Completion in one component
 
@@ -32,6 +34,7 @@ export default function WidgetTimer() {
 	const [activeTab, setActiveTab] = useState<
 		"time-boxed" | "open" | "pomodoro"
 	>("time-boxed");
+	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const {
@@ -51,6 +54,7 @@ export default function WidgetTimer() {
 		hasPendingSave,
 	} = useSession();
 	const { settings, updateSettings } = usePomodoroSettings();
+	const { isGuest } = useAuthUser();
 
 	const { visibleWidgets } = useWidgets();
 
@@ -108,6 +112,13 @@ export default function WidgetTimer() {
 
 	const handleStartSession = async () => {
 		if (isStarting || !isGoalValid) return;
+
+		// Check if user is authenticated
+		if (isGuest) {
+			setShowAuthPrompt(true);
+			return;
+		}
+
 		setIsStarting(true);
 		const sessionConfig = {
 			goal: goal.trim(),
@@ -422,6 +433,11 @@ export default function WidgetTimer() {
 					</span>
 				</button>
 			</div>
+
+			{/* Authentication Prompt Modal */}
+			{showAuthPrompt && (
+				<AuthPromptModal onClose={() => setShowAuthPrompt(false)} />
+			)}
 		</div>
 	);
 }

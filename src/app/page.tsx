@@ -10,7 +10,6 @@ import {
 import { useAuthUser } from "../hooks/useAuthUser";
 import { initializeGuestStorageIfNeeded } from "../lib/guestStorage";
 import { starterNotes } from "../data/starterNotes";
-import { starterTasks } from "../data/starterTasks";
 function PageContent() {
 	const { hasCompletedOnboarding, startTour } = useOnboarding();
 	const { isGuest } = useAuthUser();
@@ -29,7 +28,7 @@ function PageContent() {
 	// Seed guest storage on first unauthenticated visit
 	useEffect(() => {
 		if (isGuest) {
-			initializeGuestStorageIfNeeded(starterNotes, starterTasks);
+			initializeGuestStorageIfNeeded(starterNotes, []);
 		}
 	}, [isGuest]);
 
