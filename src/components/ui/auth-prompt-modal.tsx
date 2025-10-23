@@ -47,7 +47,7 @@ export default function AuthPromptModal({ onClose }: AuthPromptModalProps) {
 			className="modal"
 			aria-labelledby="auth-prompt-title"
 		>
-			<div className="modal-box bg-base-300 border border-border p-0 w-full max-w-md">
+			<div className="modal-box bg-base-300 border border-border p-0 w-full max-w-xl">
 				<div className="p-5">
 					<div className="flex items-start justify-between gap-3 pb-4 mb-4">
 						<div>
