@@ -8,8 +8,6 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	X,
-	Sun,
-	Moon,
 	Folder,
 	GraduationCap,
 	Code,
@@ -19,7 +17,6 @@ import {
 } from "lucide-react";
 import { useTips, deepWorkTips } from "../../hooks/useTips";
 import Profile from "./profile";
-import { useTheme } from "../../contexts/ThemeContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import Link from "next/link";
 
@@ -63,8 +60,6 @@ export default function Sidebar() {
 		showTipsCardHandler,
 		totalTips,
 	} = useTips(deepWorkTips, 60000);
-
-	const { theme, toggleTheme } = useTheme();
 
 	return (
 		<div className="lg:drawer-open">
@@ -246,30 +241,6 @@ export default function Sidebar() {
 										</>
 									)}
 								</a>
-							</li>
-
-							{/* Theme Toggle */}
-							<li>
-								<button
-									onClick={toggleTheme}
-									className={`gap-3 ${
-										isCollapsed ? "btn btn-sm btn-ghost btn-square" : ""
-									}`}
-									title={
-										isCollapsed
-											? `Switch to ${theme === "dark" ? "light" : "dark"} theme`
-											: `Switch to ${theme === "dark" ? "light" : "dark"} theme`
-									}
-								>
-									{theme === "dark" ? (
-										<Sun className="w-4 h-4 text-base-content/50" />
-									) : (
-										<Moon className="w-4 h-4 text-base-content/50" />
-									)}
-									{!isCollapsed && (
-										<span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-									)}
-								</button>
 							</li>
 						</ul>
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, UserPlus } from "lucide-react";
+import Image from "next/image";
 
 interface AuthPromptModalProps {
 	onClose: () => void;
@@ -76,6 +77,16 @@ export default function AuthPromptModal({ onClose }: AuthPromptModalProps) {
 								<li>• Sync your data across devices</li>
 								<li>• Save session notes and ratings</li>
 							</ul>
+						</div>
+
+						<div className="mt-4">
+							<Image
+								src="/onboarding-4.png"
+								alt="Stats page showing active days and total focus time"
+								width={720}
+								height={420}
+								className="w-full h-auto rounded-lg border border-base-300"
+							/>
 						</div>
 
 						<div className="flex gap-3">
