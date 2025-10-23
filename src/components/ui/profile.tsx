@@ -16,7 +16,6 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import FeedbackModal from "./feedback-modal";
 
 type IconType = React.ComponentType<{ size?: number; className?: string }>;
@@ -53,7 +52,16 @@ export default function Profile({
 	const router = useRouter();
 	const { toggleTheme, theme } = useTheme();
 	const [menuOpen, setMenuOpen] = useState(false);
-	const [user, setUser] = useState<User | null>(null);
+	const [user, setUser] = useState<{
+		id: string;
+		email?: string;
+		user_metadata?: {
+			full_name?: string;
+			name?: string;
+			avatar_url?: string;
+			picture?: string;
+		};
+	} | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [imageError, setImageError] = useState(false);
 	const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -99,10 +107,12 @@ export default function Profile({
 				// Listen for auth changes
 				const {
 					data: { subscription },
-				} = supabase.auth.onAuthStateChange((event, session) => {
-					setUser(session?.user ?? null);
-					setLoading(false);
-				});
+				} = supabase.auth.onAuthStateChange(
+					async (_event: any, session: any) => {
+						setUser(session?.user ?? null);
+						setLoading(false);
+					}
+				);
 
 				return () => subscription.unsubscribe();
 			} catch (error) {

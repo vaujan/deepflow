@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { TourProvider, useTour } from "@reactour/tour";
 import { useOnboarding } from "@/src/contexts/OnboardingContext";
 import { useTheme } from "@/src/contexts/ThemeContext";
@@ -34,17 +35,18 @@ const tourSteps = [
 					<h3 className="card-title text-base-content">Your Focus Engine</h3>
 				</div>
 				<p className="text-sm text-base-content/80">
-					This is where the magic happens. Choose your flow style:
+					Choose a mode that fits your task. Time‑boxed for sprints, Open for
+					deep dives. The timer keeps you honest—without getting in your way.
 				</p>
-				<div>
-					<ul className="list-disc list-inside text-xs text-base-content/70 space-y-1">
-						<li>
-							<strong>Time-boxed:</strong> Set a specific duration
-						</li>
-						<li>
-							<strong>Open:</strong> Run without time limits
-						</li>
-					</ul>
+				<div className="mt-2">
+					<Image
+						src="/onboarding-1a.png"
+						alt="Timer widget showing modes and controls"
+						width={720}
+						height={420}
+						className="w-full h-auto rounded-lg border border-base-300"
+						priority
+					/>
 				</div>
 			</div>
 		),
@@ -58,54 +60,69 @@ const tourSteps = [
 					<h3 className="card-title text-base-content">Start Your Flow</h3>
 				</div>
 				<p className="text-sm text-base-content/80">
-					Hit start and watch your focus build. Set a goal, pick your style,
-					then go deep.
+					Set a goal, hit Start, and settle in. Pause or adjust anytime—
+					momentum matters more than perfection.
 				</p>
+				<div className="mt-2">
+					<Image
+						src="/onboarding-2.png"
+						alt="Start button ready to begin a focus session"
+						width={720}
+						height={420}
+						className="w-full h-auto rounded-lg border border-base-300"
+					/>
+				</div>
 			</div>
 		),
 		position: "top" as const,
-	},
-	{
-		selector: "[data-tour='widget-dock']",
-		content: (
-			<div className="space-y-3">
-				<div>
-					<h3 className="card-title text-base-content">Your Workspace</h3>
-				</div>
-				<p className="text-sm text-base-content/80">
-					Toggle widgets on and off to match your rhythm. Clean workspace, clear
-					mind.
-				</p>
-			</div>
-		),
-		position: "top" as const,
-	},
-	{
-		selector: "[data-tour='settings-button']",
-		content: (
-			<div className="space-y-3">
-				<div>
-					<h3 className="card-title text-base-content">Make It Yours</h3>
-				</div>
-				<p className="text-sm text-base-content/80">
-					Fine-tune your setup. Colors, widgets, preferences — whatever helps
-					you stay in flow.
-				</p>
-			</div>
-		),
-		position: "left" as const,
 	},
 	{
 		selector: "body",
 		content: (
 			<div className="space-y-3">
 				<div>
-					<h3 className="card-title text-base-content">You're Ready</h3>
+					<h3 className="card-title text-base-content">
+						Capture While You Focus
+					</h3>
 				</div>
 				<p className="text-sm text-base-content/80">
-					That's it. No tricks, no complexity. Just focus, when you need it. Hit
-					the "?" anytime to replay this tour.
+					Let the timer run and jot quick notes as you go. Keep thoughts moving
+					forward without context‑switching—everything is saved with your
+					session.
 				</p>
+				<div className="mt-2">
+					<Image
+						src="/onboarding-3.png"
+						alt="Running timer with notes widget being used"
+						width={720}
+						height={420}
+						className="w-full h-auto rounded-lg border border-base-300"
+					/>
+				</div>
+			</div>
+		),
+		position: "center" as const,
+	},
+	{
+		selector: "body",
+		content: (
+			<div className="space-y-3">
+				<div>
+					<h3 className="card-title text-base-content">See Your Progress</h3>
+				</div>
+				<p className="text-sm text-base-content/80">
+					Track active days, focus time, and trends in Stats. Open it from the
+					profile dropdown to review patterns and spot streaks.
+				</p>
+				<div className="mt-2">
+					<Image
+						src="/onboarding-4.png"
+						alt="Stats page showing active days and total focus time"
+						width={720}
+						height={420}
+						className="w-full h-auto rounded-lg border border-base-300"
+					/>
+				</div>
 			</div>
 		),
 		position: "center" as const,

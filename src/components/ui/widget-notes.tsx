@@ -4,6 +4,8 @@ import { Plus, Trash2, Notebook } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
+import { useAuthUser } from "@/src/hooks/useAuthUser";
+import { guestStorage } from "@/src/lib/guestStorage";
 
 const MilkdownEditor = dynamic(() => import("./milkdown-editor"), {
 	ssr: false,
@@ -18,6 +20,7 @@ interface Note {
 }
 
 export default function WidgetNotes() {
+	const { isGuest } = useAuthUser();
 	const [notes, setNotes] = useState<Note[] | null>(() => {
 		if (typeof window !== "undefined") {
 			try {
@@ -140,14 +143,30 @@ export default function WidgetNotes() {
 			}
 
 			try {
-				const res = await fetch("/api/notes");
-				if (!res.ok)
-					throw new Error((await res.json()).error || "Failed to load notes");
-				const data = await res.json();
+				const data = isGuest
+					? guestStorage.getNotes()
+					: await (async () => {
+							const res = await fetch("/api/notes");
+							if (!res.ok)
+								throw new Error(
+									(await res.json()).error || "Failed to load notes"
+								);
+							return await res.json();
+					  })();
 
 				// Merge server data with local unsaved notes
 				setNotes((current) => {
-					if (JSON.stringify(current) !== JSON.stringify(data)) {
+					// Create a normalized version of current data for comparison (without _clientId)
+					const currentNormalized =
+						current?.map(({ _clientId, ...note }: Note) => note) ?? [];
+					const dataNormalized = data.map(
+						({ _clientId, ...note }: Note) => note
+					);
+
+					// Compare normalized data to avoid false positives from _clientId differences
+					if (
+						JSON.stringify(currentNormalized) !== JSON.stringify(dataNormalized)
+					) {
 						// Preserve existing client IDs when syncing
 						const currentMap = new Map(
 							current?.map((n) => [n.id, n._clientId]) ?? []
@@ -163,12 +182,27 @@ export default function WidgetNotes() {
 						const unsavedNotes =
 							current?.filter((n) => n.id > 1000000000000) ?? [];
 
-						if (unsavedNotes.length > 0) {
-							// Merge: unsaved notes first, then synced notes
-							return [...unsavedNotes, ...syncedNotes];
-						}
+						// Deduplicate by ID - unsaved notes take priority over synced notes
+						const seenIds = new Set<number>();
+						const result: Note[] = [];
 
-						return syncedNotes;
+						// Add unsaved notes first
+						unsavedNotes.forEach((note) => {
+							if (!seenIds.has(note.id)) {
+								seenIds.add(note.id);
+								result.push(note);
+							}
+						});
+
+						// Add synced notes that aren't already present
+						syncedNotes.forEach((note: Note) => {
+							if (!seenIds.has(note.id)) {
+								seenIds.add(note.id);
+								result.push(note);
+							}
+						});
+
+						return result;
 					}
 					return current;
 				});
@@ -207,6 +241,11 @@ export default function WidgetNotes() {
 
 	// Add new note (local only until user types)
 	const addNote = async () => {
+		// Prevent creating multiple notes if one is already being created
+		if (newlyCreatedNoteId !== null) {
+			return;
+		}
+
 		// Generate a stable client ID for React key
 		const clientId = crypto.randomUUID();
 		const tempId = Date.now();
@@ -224,6 +263,12 @@ export default function WidgetNotes() {
 		setNewlyCreatedNoteId(tempId);
 
 		// Note will be created in database when user types content (via updateNote)
+		if (isGuest) {
+			// Persist guest notes immediately
+			try {
+				guestStorage.setNotes([newNote, ...(notes ?? [])]);
+			} catch {}
+		}
 	};
 
 	// Delete note with optimistic update
@@ -240,8 +285,14 @@ export default function WidgetNotes() {
 		const isTempNote = id > 1000000000000; // Temp notes have timestamp IDs
 		const previous = notes;
 
-		// Optimistic update - remove immediately from UI
-		setNotes((prev) => (prev ?? []).filter((note) => note.id !== id));
+		// Optimistic update - remove immediately from UI and persist in guest mode
+		const nextList = (previous ?? []).filter((note) => note.id !== id);
+		setNotes(nextList);
+		if (isGuest) {
+			try {
+				guestStorage.setNotes(nextList);
+			} catch {}
+		}
 
 		// If it's a new note or temp note that hasn't been saved, just clear the flag
 		if (isNewNote || isTempNote) {
@@ -249,6 +300,10 @@ export default function WidgetNotes() {
 			return;
 		}
 
+		if (isGuest) {
+			// already persisted above
+			return;
+		}
 		// Delete from server with retry
 		const deleteWithRetry = async (retryCount = 0) => {
 			try {
@@ -312,7 +367,21 @@ export default function WidgetNotes() {
 			setSaveStatus((prev) => new Map(prev).set(id, "saving"));
 
 			try {
-				if (isStillNewNote) {
+				if (isGuest) {
+					// Guest mode: persist locally only
+					setSaveStatus((prev) => new Map(prev).set(id, "saved"));
+					try {
+						const next = (prev: Note[] | null) =>
+							(prev ?? []).map((n) =>
+								n.id === id
+									? { ...n, content, title, timestamp: "Just now" }
+									: n
+							);
+						const current = next(notes);
+						guestStorage.setNotes(current);
+					} catch {}
+					return;
+				} else if (isStillNewNote) {
 					// Create new note in database
 					const res = await fetch("/api/notes", {
 						method: "POST",
@@ -423,9 +492,14 @@ export default function WidgetNotes() {
 			if (document.hidden || !notes) return;
 
 			try {
-				const res = await fetch("/api/notes");
-				if (!res.ok) return;
-				const data = await res.json();
+				const data = isGuest
+					? guestStorage.getNotes()
+					: await (async () => {
+							const res = await fetch("/api/notes");
+							if (!res.ok) return null;
+							return await res.json();
+					  })();
+				if (!data) return;
 
 				// Update if server has newer data
 				setNotes((current) => {
@@ -540,7 +614,7 @@ export default function WidgetNotes() {
 					// Notes
 					(notes ?? []).map((note) => (
 						<div
-							key={note._clientId || note.id}
+							key={`note-${note._clientId || note.id}`}
 							className="card bg-base-200 shadow-sm relative group"
 						>
 							{/* Note header */}
