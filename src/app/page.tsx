@@ -6,6 +6,7 @@ import LandingTimerDemo from "../components/ui/landing-timer-demo";
 import LandingNoteDemo from "../components/ui/landing-note-demo";
 import LandingHeatmapDemo from "../components/ui/landing-heatmap-demo";
 import { ArrowRight } from "lucide-react";
+import LandingPageHeader from "../components/ui/landing-page-header";
 
 const caveat = Caveat({
 	variable: "--font-caveat",
@@ -17,6 +18,7 @@ export default function LandingPage() {
 		<div
 			className={`${caveat.variable} h-screen overflow-y-scroll flex flex-col items-center bg-base-300`}
 		>
+			<LandingPageHeader />
 			<section className="flex w-full h-full flex-col items-center gap-4 py-10 px-12">
 				<div className="flex flex-col gap-2 items-center">
 					<h1
