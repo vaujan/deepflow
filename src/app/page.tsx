@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import Header from "../components/ui/stats-header";
-import { Instrument_Serif, Caveat } from "next/font/google";
-import Image from "next/image";
+import { Caveat } from "next/font/google";
 import LandingTimerDemo from "../components/ui/landing-timer-demo";
 import LandingNoteDemo from "../components/ui/landing-note-demo";
 import LandingHeatmapDemo from "../components/ui/landing-heatmap-demo";
+import { ArrowRight } from "lucide-react";
 
 const caveat = Caveat({
 	variable: "--font-caveat",
@@ -32,6 +31,15 @@ export default function LandingPage() {
 							think better, create more, and feel calm doing it.
 						</span>
 					</p>
+					<div className="flex gap-2">
+						<button className="btn btn-primary rounded-full">
+							Get started
+							<ArrowRight className="size-4" />
+						</button>
+						<button className="btn btn-secondary btn-soft rounded-full">
+							Learn more
+						</button>
+					</div>
 				</div>
 				<div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-500">
 					<LandingTimerDemo />

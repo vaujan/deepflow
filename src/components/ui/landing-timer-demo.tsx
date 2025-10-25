@@ -78,7 +78,9 @@ export default function LandingTimerDemo() {
 						<div className="h-6 overflow-hidden">
 							<div
 								className="text-base-content/40 transition-transform duration-500 ease-in-out"
-								style={{ transform: `translateY(-${currentPlaceholderIndex * 1.5}rem)` }}
+								style={{
+									transform: `translateY(-${currentPlaceholderIndex * 1.5}rem)`,
+								}}
 							>
 								{placeholders.map((placeholder, index) => (
 									<div key={index} className="h-6 flex items-center">
@@ -102,7 +104,9 @@ export default function LandingTimerDemo() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Duration: {formatTime(duration)}</p>
-							<span className="badge rounded-sm badge-accent badge-soft">Time-boxed</span>
+							<span className="badge rounded-sm badge-accent badge-soft">
+								Time-boxed
+							</span>
 						</div>
 						<div className="space-y-2">
 							<input
@@ -140,12 +144,18 @@ export default function LandingTimerDemo() {
 					<div className="space-y-4">
 						<div className="flex text-sm justify-between items-center">
 							<p className="font-medium">Flow-based session</p>
-							<span className="badge rounded-sm badge-soft badge-secondary">Max 4 hours</span>
+							<span className="badge rounded-sm badge-soft badge-secondary">
+								Max 4 hours
+							</span>
 						</div>
 						<div className="bg-base-300 p-3 rounded-box text-center">
-							<p className="text-sm text-base-content/70">Start when ready, end when you naturally done</p>
+							<p className="text-sm text-base-content/70">
+								Start when ready, end when you naturally done
+							</p>
 						</div>
-						<p className="text-xs text-base-content/60">Timer counts up to 4 hours, then stops automatically</p>
+						<p className="text-xs text-base-content/60">
+							Timer counts up to 4 hours, then stops automatically
+						</p>
 					</div>
 				</div>
 			</div>
@@ -154,7 +164,9 @@ export default function LandingTimerDemo() {
 			<div className="h-fit">
 				<div className="collapse border border-border bg-base-200 dark:bg-base-100">
 					<input type="checkbox" className="peer" />
-					<div className="collapse-title text-sm font-medium">Tags (Optional)</div>
+					<div className="collapse-title text-sm font-medium">
+						Tags (Optional)
+					</div>
 					<div className="collapse-content">
 						<div className="space-y-4 pt-2">
 							<div className="form-control">
@@ -173,8 +185,12 @@ export default function LandingTimerDemo() {
 									/>
 								</div>
 								<div className="flex flex-wrap gap-1 mt-2">
-									<span className="badge badge-sm badge-soft badge-neutral rounded-sm">#work</span>
-									<span className="badge badge-sm badge-soft badge-neutral rounded-sm">#urgent</span>
+									<span className="badge badge-sm badge-soft badge-neutral rounded-sm">
+										#work
+									</span>
+									<span className="badge badge-sm badge-soft badge-neutral rounded-sm">
+										#urgent
+									</span>
 								</div>
 							</div>
 						</div>

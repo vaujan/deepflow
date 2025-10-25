@@ -364,9 +364,9 @@ const YearlyHeatMap: React.FC<{
 	}, [weeks]);
 
 	return (
-			<div className="space-y-3 w-max">
+		<div className="space-y-3 w-max">
 			<div className="flex w-full gap-1">
-					<div className="flex w-max gap-1">
+				<div className="flex w-max gap-1">
 					{weeks.map((week, weekIndex) => (
 						<div key={weekIndex} className="flex w-full flex-col gap-1">
 							{week.map((day, dayIndex) => {
