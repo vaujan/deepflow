@@ -1,0 +1,442 @@
+"use client";
+
+import React, { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Pin } from "lucide-react";
+import { mockSessions } from "@/src/data/mockSessions";
+
+interface HeatMapDay {
+	date: Date;
+	value: number; // 0-4 for activity levels
+	sessions: number;
+	totalTime: number; // minutes
+}
+
+interface HeatMapProps {
+	className?: string;
+}
+
+export default function LandingHeatmapDemo({ className = "" }: HeatMapProps) {
+	const [currentMonth, setCurrentMonth] = useState(new Date());
+	const currentYear = new Date().getFullYear();
+
+	// Build per-day aggregation map from mock sessions
+	const perDayBuckets = useMemo(() => {
+		const yearStart = new Date(currentYear, 0, 1);
+		const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+		const map = new Map<string, { sessions: number; totalMinutes: number }>();
+		for (const s of mockSessions) {
+			const start =
+				typeof (s.startTime as any)?.toISOString === "function"
+					? (s.startTime as Date)
+					: new Date(s.startTime as any);
+			if (!Number.isFinite(start.getTime())) continue;
+			if (start < yearStart || start > yearEnd) continue;
+			const key = start.toISOString().split("T")[0];
+			const prev = map.get(key) || { sessions: 0, totalMinutes: 0 };
+			map.set(key, {
+				sessions: prev.sessions + 1,
+				totalMinutes: prev.totalMinutes + Math.round((s.elapsedTime || 0) / 60),
+			});
+		}
+		return map;
+	}, [currentYear]);
+
+	// Generate current month calendar grid (6 weeks × 7 days)
+	const heatMapData = useMemo(() => {
+		const year = currentMonth.getFullYear();
+		const month = currentMonth.getMonth();
+		const firstDay = new Date(year, month, 1);
+		const startDate = new Date(firstDay);
+		startDate.setDate(firstDay.getDate() - ((firstDay.getDay() + 6) % 7)); // Monday start
+
+		const days: HeatMapDay[] = [];
+		for (let i = 0; i < 42; i++) {
+			const date = new Date(startDate);
+			date.setDate(startDate.getDate() + i);
+			const isCurrent = date.getMonth() === month;
+			if (isCurrent) {
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
+				const agg = perDayBuckets.get(key);
+				const totalTime = agg?.totalMinutes || 0;
+				let value = 0;
+				if (totalTime > 0) {
+					if (totalTime < 30) value = 1;
+					else if (totalTime < 60) value = 2;
+					else if (totalTime < 120) value = 3;
+					else value = 4;
+				}
+				days.push({
+					date,
+					value,
+					sessions: agg?.sessions || 0,
+					totalTime,
+				});
+			} else {
+				days.push({ date, value: 0, sessions: 0, totalTime: 0 });
+			}
+		}
+		return days;
+	}, [currentMonth, perDayBuckets]);
+
+	// Colors
+	const getColorClass = (value: number) => {
+		const colors = [
+			"bg-base-200",
+			"bg-primary/20",
+			"bg-primary/40",
+			"bg-primary/60",
+			"bg-primary",
+		];
+		return colors[value] || colors[0];
+	};
+
+	// Navigation
+	const handleGoToPreviousMonth = () => {
+		setCurrentMonth((prev) => {
+			const candidate = new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
+			return candidate.getFullYear() === currentYear ? candidate : prev;
+		});
+	};
+	const handleGoToNextMonth = () => {
+		setCurrentMonth((prev) => {
+			const candidate = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+			return candidate.getFullYear() === currentYear ? candidate : prev;
+		});
+	};
+	const handleGoToToday = () => setCurrentMonth(new Date());
+
+	const isCurrentMonthView =
+		currentMonth.getMonth() === new Date().getMonth() &&
+		currentMonth.getFullYear() === new Date().getFullYear();
+	const isAtMinMonth =
+		currentMonth.getFullYear() === currentYear && currentMonth.getMonth() === 0;
+	const isAtMaxMonth =
+		currentMonth.getFullYear() === currentYear &&
+		currentMonth.getMonth() === 11;
+
+	const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+	return (
+		<div className={`space-y-4 mt-2  w-full ${className}`}>
+			{/* Header with month navigation */}
+			<div className="flex items-center justify-between">
+				<div className="flex gap-4 items-center">
+					<h3 className="text-lg font-semibold text-base-content">
+						{currentMonth.toLocaleDateString("en-US", {
+							month: "long",
+							year: "numeric",
+						})}
+					</h3>
+
+					{!isCurrentMonthView && (
+						<button
+							onClick={handleGoToToday}
+							className="btn btn-xs"
+							aria-label="Go to current month"
+						>
+							<Pin className="size-3 text-base-content/50" />
+							Today
+						</button>
+					)}
+				</div>
+
+				<div className="flex gap-2">
+					<button
+						onClick={handleGoToPreviousMonth}
+						disabled={isAtMinMonth}
+						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+						aria-label="Previous month"
+					>
+						<ChevronLeft className="size-4" />
+					</button>
+					<button
+						onClick={handleGoToNextMonth}
+						disabled={isAtMaxMonth}
+						className="btn btn-circle btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+						aria-label="Next month"
+					>
+						<ChevronRight className="size-4" />
+					</button>
+				</div>
+			</div>
+
+			{/* Heat map grid */}
+			<div className="space-y-1">
+				{/* Day labels */}
+				<div className="grid grid-cols-7 gap-1 text-xs text-base-content/60 text-center">
+					{dayLabels.map((day) => (
+						<div key={day} className="py-1 rounded-sm bg-base-100">
+							{day}
+						</div>
+					))}
+				</div>
+
+				{/* Calendar grid */}
+				<div className="grid grid-cols-7 gap-1">
+					{heatMapData.map((day, index) => {
+						const isCurrent = day.date.getMonth() === currentMonth.getMonth();
+						const isToday =
+							day.date.toDateString() === new Date().toDateString();
+
+						return (
+							<div
+								key={index}
+								className={`
+	                min-h-12 w-full h-full rounded-sm transition-all duration-200 hover:ring-2 ring-primary ease-out cursor-pointer
+	                ${getColorClass(day.value)}
+	                ${day.value === 0 ? "opacity-30" : ""}
+	                relative group flex items-center justify-center
+	              `}
+								title={`${day.date.toLocaleDateString()} - ${
+									day.sessions
+								} sessions, ${day.totalTime}min`}
+							>
+								{/* Date number */}
+								{isCurrent && (
+									<span
+										className={`
+											text-xs w-full h-full flex items-end p-1 relative
+											${isToday ? "text-primary font-bold" : "text-base-content/80"}
+											${day.value > 2 ? "text-white" : ""}
+										`}
+									>
+										{day.date.getDate()}
+										{/* Today indicator circle */}
+										{isToday && (
+											<div className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></div>
+										)}
+									</span>
+								)}
+
+								{/* Tooltip */}
+								<div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+									<div className="font-medium text-base-content/80">
+										{day.date.toLocaleDateString()}
+									</div>
+									<div className="mt-0.5 text-[11px] text-base-content/60">
+										{day.date.toLocaleDateString("en-US", { weekday: "long" })}
+									</div>
+									<div className="mt-1 flex items-center gap-2">
+										<span className="inline-block size-2 rounded-sm bg-primary" />
+										<span className="text-base-content/70">Sessions:</span>
+										<span className="font-mono text-base-content">
+											{day.sessions}
+										</span>
+									</div>
+									<div className="mt-1 flex items-center gap-2">
+										<span className="inline-block size-2 rounded-sm bg-primary/60" />
+										<span className="text-base-content/70">Total Time:</span>
+										<span className="font-mono text-base-content">
+											{day.totalTime}m
+										</span>
+									</div>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Yearly GitHub-style Heat Map */}
+			<div className="w-full overflow-x-auto overflow-y-hidden py-4 border-1 p-2 border-border rounded-box">
+				<YearlyHeatMap currentMonth={currentMonth} perDay={perDayBuckets} />
+			</div>
+
+			{/* Legend */}
+			<div className="flex items-center justify-center gap-3 text-xs">
+				<span className="text-base-content/60">Less</span>
+				<div className="flex gap-0.5">
+					{[0, 1, 2, 3, 4].map((level) => (
+						<div
+							key={level}
+							className={`w-4 h-2 rounded-xs ${getColorClass(level)}`}
+						/>
+					))}
+				</div>
+				<span className="text-base-content/60">More</span>
+			</div>
+		</div>
+	);
+}
+
+// Yearly GitHub-style Heat Map (mirrors the one in heat-map.tsx)
+const YearlyHeatMap: React.FC<{
+	currentMonth: Date;
+	perDay: Map<string, { sessions: number; totalMinutes: number }>;
+}> = ({ currentMonth, perDay }) => {
+	const yearlyData = useMemo(() => {
+		const currentYear = new Date().getFullYear();
+		const startDate = new Date(currentYear, 0, 1);
+		const firstMonday = new Date(startDate);
+		const dayOfWeek = (startDate.getDay() + 6) % 7; // Sunday=0 to Monday=0
+		firstMonday.setDate(startDate.getDate() - dayOfWeek);
+		const days: HeatMapDay[] = [];
+		for (let i = 0; i < 371; i++) {
+			const date = new Date(firstMonday);
+			date.setDate(firstMonday.getDate() + i);
+			const isCurrentYear = date.getFullYear() === currentYear;
+			if (isCurrentYear) {
+				const key = (
+					typeof (date as any)?.toISOString === "function"
+						? (date as Date)
+						: new Date(date as any)
+				)
+					.toISOString()
+					.split("T")[0];
+				const agg = perDay.get(key);
+				const totalTime = agg?.totalMinutes || 0;
+				let value = 0;
+				if (totalTime > 0) {
+					if (totalTime < 15) value = 1;
+					else if (totalTime < 30) value = 2;
+					else if (totalTime < 60) value = 3;
+					else value = 4;
+				}
+				days.push({ date, value, sessions: agg?.sessions || 0, totalTime });
+			} else {
+				days.push({ date, value: 0, sessions: 0, totalTime: 0 });
+			}
+		}
+		return days;
+	}, [perDay]);
+
+	const getColorClass = (value: number) => {
+		const colors = [
+			"bg-base-200",
+			"bg-primary/20",
+			"bg-primary/40",
+			"bg-primary/60",
+			"bg-primary",
+		];
+		return colors[value] || colors[0];
+	};
+
+	const weeks: HeatMapDay[][] = [];
+	for (let i = 0; i < 53; i++) {
+		weeks.push(yearlyData.slice(i * 7, (i + 1) * 7));
+	}
+
+	const monthLabels = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	];
+
+	const currentViewedMonth = currentMonth.getMonth();
+
+	const monthlyTotals = useMemo(() => {
+		const totals = Array(12).fill(0);
+		for (const d of yearlyData) {
+			const m = d.date.getMonth();
+			totals[m] += d.totalTime / 60;
+		}
+		return totals.map((t) => Math.round(t));
+	}, [yearlyData]);
+
+	const monthSpans = useMemo(() => {
+		const spans = Array(12).fill(0);
+		weeks.forEach((week) => {
+			const midWeekDay = week[3];
+			if (
+				midWeekDay &&
+				midWeekDay.date.getFullYear() === new Date().getFullYear()
+			) {
+				const m = midWeekDay.date.getMonth();
+				spans[m]++;
+			}
+		});
+		return spans;
+	}, [weeks]);
+
+	return (
+			<div className="space-y-3 w-max">
+			<div className="flex w-full gap-1">
+					<div className="flex w-max gap-1">
+					{weeks.map((week, weekIndex) => (
+						<div key={weekIndex} className="flex w-full flex-col gap-1">
+							{week.map((day, dayIndex) => {
+								const isCurrentYear =
+									day.date.getFullYear() === new Date().getFullYear();
+								const isToday =
+									day.date.toDateString() === new Date().toDateString();
+								const isCurrentMonth =
+									day.date.getMonth() === currentViewedMonth;
+
+								return (
+									<div
+										key={dayIndex}
+										className={`
+											w-2.5 h-2.5 rounded-xs transition-all duration-200 hover:scale-110 cursor-pointer
+											${getColorClass(day.value)}
+											${!isCurrentYear ? "opacity-0" : ""}
+											${isToday ? "ring-2 ring-primary ring-offset-1" : ""}
+											${isCurrentMonth ? "ring-[1.5px] ring-accent/50" : ""}
+											relative group
+										`}
+										title={`${day.date.toLocaleDateString()} - ${
+											day.sessions
+										} sessions, ${day.totalTime}min`}
+									>
+										<div className="absolute top-1/2 right-full transform -translate-y-1/2 mr-2 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+											<div className="font-medium text-base-content/80">
+												{day.date.toLocaleDateString()}
+											</div>
+											<div className="mt-0.5 text-[11px] text-base-content/60">
+												{day.date.toLocaleDateString("en-US", {
+													weekday: "long",
+												})}
+											</div>
+											<div className="mt-1 flex items-center gap-2">
+												<span className="inline-block size-2 rounded-sm bg-primary" />
+												<span className="text-base-content/70">Sessions:</span>
+												<span className="font-mono text-base-content">
+													{day.sessions}
+												</span>
+											</div>
+											<div className="mt-1 flex items-center gap-2">
+												<span className="inline-block size-2 rounded-sm bg-primary/60" />
+												<span className="text-base-content/70">
+													Total Time:
+												</span>
+												<span className="font-mono text-base-content">
+													{day.totalTime}m
+												</span>
+											</div>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					))}
+				</div>
+			</div>
+			<div className="flex text-xs min-w-[730px] text-base-content/60">
+				{monthLabels.map((label, idx) => (
+					<div
+						key={idx}
+						className="text-center flex flex-col items-center"
+						style={{ width: `calc(${monthSpans[idx] / 53} * 100%)` }}
+					>
+						<span>{label}</span>
+						<span className="text-[10px]">({monthlyTotals[idx]}h)</span>
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
