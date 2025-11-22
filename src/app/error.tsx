@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import Link from "next/link";
 import { logger } from "../lib/logger";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 
 interface ErrorProps {
 	error: Error & { digest?: string };
@@ -47,8 +47,7 @@ export default function Error({ error, reset }: ErrorProps) {
 						href="/"
 						className="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors"
 					>
-						<Home className="w-5 h-5 mr-2" />
-						Go Home
+						<Home className="w-5 h-5 mr-2" /> Go Home
 					</Link>
 				</div>
 

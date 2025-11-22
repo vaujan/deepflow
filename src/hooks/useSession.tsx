@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { logger } from "../lib/logger";
 import { useAuthUser } from "./useAuthUser";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface Session {
 	id: string;
@@ -34,6 +35,7 @@ export const useSession = () => {
 	const [remainingTime, setRemainingTime] = useState<number | null>(null);
 	const [hasPendingSave, setHasPendingSave] = useState(false);
 	const { isGuest } = useAuthUser();
+	const queryClient = useQueryClient();
 
 	// Modal states for early stop handling
 	const [showEarlyStopModal, setShowEarlyStopModal] = useState(false);
@@ -46,6 +48,7 @@ export const useSession = () => {
 	const sessionIdRef = useRef<string | null>(null);
 	// Track latest notes value to avoid stale reads during completion/save
 	const notesRef = useRef<string | null>(null);
+	const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const STORAGE_KEY = "df:current-session";
 
@@ -119,6 +122,182 @@ export const useSession = () => {
 		} catch {}
 	};
 
+	// Mutations
+	const startSessionMutation = useMutation({
+		mutationFn: async (payload: any) => {
+			const res = await fetch("/api/sessions", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:create"),
+				},
+				body: JSON.stringify(payload),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				if (res.status === 401)
+					throw new Error("Please sign in to start a session");
+				if (res.status === 400)
+					throw new Error(data?.error || "Invalid session configuration");
+				throw new Error(data?.error || "Failed to start session");
+			}
+			return data;
+		},
+		onSuccess: (data) => {
+			const session = mapServerSession(data);
+			sessionIdRef.current = session.id;
+			setCurrentSession(session);
+			setIsActive(true);
+			setIsPaused(false);
+			setElapsedTime(session.elapsedTime ?? 0);
+			setRemainingTime(session.duration ? session.duration * 60 : null);
+			startTimeRef.current = session.startTime;
+			pauseTimeRef.current = null;
+			totalPausedTimeRef.current = 0;
+			notesRef.current = session.notes ?? null;
+			saveSnapshot({
+				id: session.id,
+				status: session.status,
+				startTime: session.startTime.toISOString(),
+				expectedEndTime: session.expectedEndTime?.toISOString(),
+			});
+			beginTimer(session.duration);
+			logger.info("startSession - Session created successfully", {
+				sessionId: data?.id,
+			});
+		},
+		onError: (error) => {
+			logger.error("startSession - Session creation failed", error as Error);
+		},
+	});
+
+	const pauseSessionMutation = useMutation({
+		mutationFn: async (id: string) => {
+			const res = await fetch(`/api/sessions/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:pause"),
+				},
+				body: JSON.stringify({ action: "pause" }),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data?.error || "Failed to pause");
+			return data;
+		},
+		onSuccess: (data) => {
+			const session = mapServerSession(data);
+			setCurrentSession(session);
+			setElapsedTime(session.elapsedTime ?? 0);
+			notesRef.current = session.notes ?? null;
+			saveSnapshot({
+				id: session.id,
+				status: session.status,
+				startTime: session.startTime.toISOString(),
+				expectedEndTime: session.expectedEndTime?.toISOString(),
+			});
+		},
+	});
+
+	const resumeSessionMutation = useMutation({
+		mutationFn: async (id: string) => {
+			const res = await fetch(`/api/sessions/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:resume"),
+				},
+				body: JSON.stringify({ action: "resume" }),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data?.error || "Failed to resume");
+			return data;
+		},
+		onSuccess: (data) => {
+			const session = mapServerSession(data);
+			setCurrentSession(session);
+			setElapsedTime(session.elapsedTime ?? 0);
+			startTimeRef.current = session.startTime;
+			pauseTimeRef.current = null;
+			notesRef.current = session.notes ?? null;
+			saveSnapshot({
+				id: session.id,
+				status: session.status,
+				startTime: session.startTime.toISOString(),
+				expectedEndTime: session.expectedEndTime?.toISOString(),
+			});
+			beginTimer(session.duration);
+		},
+	});
+
+	const stopSessionMutation = useMutation({
+		mutationFn: async (id: string) => {
+			const res = await fetch(`/api/sessions/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:stop"),
+				},
+				body: JSON.stringify({ action: "stop" }),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data?.error || "Failed to stop");
+			return data;
+		},
+		onSuccess: (data) => {
+			const session = mapServerSession(data);
+			setCurrentSession(session);
+			setElapsedTime(session.elapsedTime ?? 0);
+			setRemainingTime(null);
+			clearSnapshot();
+		},
+	});
+
+	const completeSessionMutation = useMutation({
+		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+			const res = await fetch(`/api/sessions/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:complete"),
+				},
+				body: JSON.stringify(payload),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data?.error || "Failed to save session");
+			return data;
+		},
+		onSuccess: (data) => {
+			const session = mapServerSession(data);
+			setCurrentSession(session);
+			setElapsedTime(session.elapsedTime ?? elapsedTime);
+			notesRef.current = session.notes ?? null;
+			setHasPendingSave(false);
+			clearSnapshot();
+		},
+	});
+
+	const updateMetaMutation = useMutation({
+		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+			const res = await fetch(`/api/sessions/${id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
+				},
+				body: JSON.stringify(payload),
+			});
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data?.error || "Failed to update session metadata");
+			}
+			return payload; // Optimistic/Partial return
+		},
+		onError: (error) => {
+			logger.error("Failed to update session metadata", error as Error);
+		},
+	});
+
 	const stopSession = useCallback(async () => {
 		if (!sessionIdRef.current) return;
 
@@ -135,22 +314,9 @@ export const useSession = () => {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 		}
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:stop"),
-			},
-			body: JSON.stringify({ action: "stop" }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to stop");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? 0);
-		setRemainingTime(null);
-		clearSnapshot();
-	}, [elapsedTime]);
+
+		stopSessionMutation.mutate(sessionIdRef.current);
+	}, [elapsedTime, stopSessionMutation]);
 
 	const completeSession = useCallback(
 		async (_sessionId: string) => {
@@ -238,65 +404,9 @@ export const useSession = () => {
 			};
 
 			logger.debug("startSession - Creating session", { payload });
-
-			const res = await fetch("/api/sessions", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Idempotency-Key": toIdempotencyKey("sessions:create"),
-				},
-				body: JSON.stringify(payload),
-			});
-			const data = await res.json();
-
-			if (!res.ok) {
-				logger.error(
-					"startSession - Session creation failed",
-					new Error(data?.error || "Unknown error"),
-					{
-						status: res.status,
-						data,
-					}
-				);
-			} else {
-				logger.info("startSession - Session created successfully", {
-					sessionId: data?.id,
-				});
-			}
-
-			if (!res.ok) {
-				// Provide more specific error messages based on status code
-				if (res.status === 401) {
-					throw new Error("Please sign in to start a session");
-				} else if (res.status === 400) {
-					throw new Error(data?.error || "Invalid session configuration");
-				} else if (res.status >= 500) {
-					throw new Error("Server error. Please try again later");
-				} else {
-					throw new Error(data?.error || "Failed to start session");
-				}
-			}
-
-			const session = mapServerSession(data);
-			sessionIdRef.current = session.id;
-			setCurrentSession(session);
-			setIsActive(true);
-			setIsPaused(false);
-			setElapsedTime(session.elapsedTime ?? 0);
-			setRemainingTime(session.duration ? session.duration * 60 : null);
-			startTimeRef.current = session.startTime;
-			pauseTimeRef.current = null;
-			totalPausedTimeRef.current = 0;
-			notesRef.current = session.notes ?? null;
-			saveSnapshot({
-				id: session.id,
-				status: session.status,
-				startTime: session.startTime.toISOString(),
-				expectedEndTime: session.expectedEndTime?.toISOString(),
-			});
-			beginTimer(session.duration);
+			startSessionMutation.mutate(payload);
 		},
-		[beginTimer]
+		[startSessionMutation]
 	);
 
 	const pauseSession = useCallback(async () => {
@@ -308,58 +418,18 @@ export const useSession = () => {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 		}
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:pause"),
-			},
-			body: JSON.stringify({ action: "pause" }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to pause");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? 0);
-		notesRef.current = session.notes ?? null;
-		saveSnapshot({
-			id: session.id,
-			status: session.status,
-			startTime: session.startTime.toISOString(),
-			expectedEndTime: session.expectedEndTime?.toISOString(),
-		});
 		pauseTimeRef.current = new Date();
-	}, [isActive, isPaused]);
+		pauseSessionMutation.mutate(sessionIdRef.current);
+	}, [isActive, isPaused, pauseSessionMutation]);
 
 	const resumeSession = useCallback(async () => {
 		if (isActive || !isPaused || !sessionIdRef.current) return;
 		// Optimistic UI: resume immediately
 		setIsPaused(false);
 		setIsActive(true);
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:resume"),
-			},
-			body: JSON.stringify({ action: "resume" }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to resume");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? 0);
-		startTimeRef.current = session.startTime;
-		pauseTimeRef.current = null;
-		notesRef.current = session.notes ?? null;
-		saveSnapshot({
-			id: session.id,
-			status: session.status,
-			startTime: session.startTime.toISOString(),
-			expectedEndTime: session.expectedEndTime?.toISOString(),
-		});
-		beginTimer(session.duration);
-	}, [isActive, isPaused, beginTimer]);
+
+		resumeSessionMutation.mutate(sessionIdRef.current);
+	}, [isActive, isPaused, beginTimer, resumeSessionMutation]);
 
 	const saveCompletedSession = useCallback(async () => {
 		if (
@@ -383,24 +453,11 @@ export const useSession = () => {
 			sessionId: currentSession.id,
 		});
 
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:complete"),
-			},
-			body: JSON.stringify(payload),
+		return completeSessionMutation.mutateAsync({
+			id: sessionIdRef.current,
+			payload,
 		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to save session");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? elapsedTime);
-		notesRef.current = session.notes ?? null;
-		setHasPendingSave(false);
-		clearSnapshot();
-		return session;
-	}, [currentSession, elapsedTime]);
+	}, [currentSession, elapsedTime, completeSessionMutation]);
 
 	const dismissSession = useCallback(() => {
 		setCurrentSession(null);
@@ -424,6 +481,9 @@ export const useSession = () => {
 		return () => {
 			if (timerRef.current) {
 				clearInterval(timerRef.current);
+			}
+			if (notesTimeoutRef.current) {
+				clearTimeout(notesTimeoutRef.current);
 			}
 		};
 	}, []);
@@ -571,19 +631,16 @@ export const useSession = () => {
 				(currentSession && currentSession.status === "completed")
 			)
 				return;
-			await fetch(`/api/sessions/${sessionIdRef.current}`, {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-					"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
-				},
-				body: JSON.stringify({
+
+			updateMetaMutation.mutate({
+				id: sessionIdRef.current,
+				payload: {
 					action: "updateMeta",
 					deepWorkQuality: clamped,
-				}),
+				},
 			});
 		},
-		[hasPendingSave, currentSession]
+		[hasPendingSave, currentSession, updateMetaMutation]
 	);
 
 	const updateSessionNotes = useCallback(
@@ -608,29 +665,27 @@ export const useSession = () => {
 				return;
 			}
 
-			const payload = { action: "updateMeta", notes };
-
-			try {
-				await fetch(`/api/sessions/${sessionIdRef.current}`, {
-					method: "PATCH",
-					headers: {
-						"Content-Type": "application/json",
-						"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
-					},
-					body: JSON.stringify(payload),
-				});
-				logger.info("updateSessionNotes - Notes saved successfully", {
-					sessionId: sessionIdRef.current,
-				});
-			} catch (error) {
-				logger.error(
-					"updateSessionNotes - Failed to save notes",
-					error as Error,
-					{ sessionId: sessionIdRef.current }
-				);
+			// Debounce the server update
+			if (notesTimeoutRef.current) {
+				clearTimeout(notesTimeoutRef.current);
 			}
+
+			notesTimeoutRef.current = setTimeout(() => {
+				if (!sessionIdRef.current) return;
+				const payload = { action: "updateMeta", notes };
+				updateMetaMutation.mutate({
+					id: sessionIdRef.current,
+					payload,
+				});
+				logger.info(
+					"updateSessionNotes - Notes saved successfully (debounced)",
+					{
+						sessionId: sessionIdRef.current,
+					}
+				);
+			}, 2000);
 		},
-		[hasPendingSave]
+		[hasPendingSave, updateMetaMutation]
 	);
 
 	const updateSessionMeta = useCallback(
@@ -639,30 +694,17 @@ export const useSession = () => {
 			meta: { notes?: string; deepWorkQuality?: number; tags?: string[] }
 		) => {
 			if (!sessionId) return;
-			try {
-				const res = await fetch(`/api/sessions/${sessionId}`, {
-					method: "PATCH",
-					headers: {
-						"Content-Type": "application/json",
-						"Idempotency-Key": toIdempotencyKey("sessions:updateMeta"),
-					},
-					body: JSON.stringify({
-						action: "updateMeta",
-						...meta,
-					}),
-				});
-				if (!res.ok) {
-					const data = await res.json();
-					throw new Error(data?.error || "Failed to update session metadata");
-				}
-				// Update local state
-				setCurrentSession((prev) => (prev ? { ...prev, ...meta } : prev));
-			} catch (error) {
-				logger.error("Failed to update session metadata", error as Error);
-				throw error;
-			}
+			updateMetaMutation.mutate({
+				id: sessionId,
+				payload: {
+					action: "updateMeta",
+					...meta,
+				},
+			});
+			// Update local state
+			setCurrentSession((prev) => (prev ? { ...prev, ...meta } : prev));
 		},
-		[]
+		[updateMetaMutation]
 	);
 
 	// Handle early stop modal interactions
@@ -700,22 +742,9 @@ export const useSession = () => {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 		}
-		const res = await fetch(`/api/sessions/${sessionIdRef.current}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				"Idempotency-Key": toIdempotencyKey("sessions:forceStop"),
-			},
-			body: JSON.stringify({ action: "stop" }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data?.error || "Failed to stop");
-		const session = mapServerSession(data);
-		setCurrentSession(session);
-		setElapsedTime(session.elapsedTime ?? 0);
-		setRemainingTime(null);
-		clearSnapshot();
-	}, []);
+
+		stopSessionMutation.mutate(sessionIdRef.current);
+	}, [stopSessionMutation]);
 
 	return {
 		// Session state
